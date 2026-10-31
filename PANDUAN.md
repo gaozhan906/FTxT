@@ -147,10 +147,18 @@ Panel Battery Info memiliki **3 tab** di bagian bawah: **Monitor**, **Overlay**,
 ### Network Speed
 Panel Network memiliki **2 tab**: **Monitor** dan **Overlay**.
 
-**Tab Monitor** — Memiliki header **Pemakaian**, **Aplikasi**, dan **Alat**; tab Pemakaian memuat rekap pemakaian data seluruh perangkat:
-- Total unduh/unggah hari ini, rata-rata per jam, kecepatan puncak, dan grafik batang 7 hari terakhir
-- Tombol Reset Hari Ini
-- Angka dihitung dari selisih counter `TrafficStats`; pemakaian yang terlewat tetap tercatat saat aplikasi dibuka atau modul kembali aktif
+**Tab Monitor** — Memiliki dua sub-tab: **Pemakaian** dan **Alat**.
+
+Sub-tab **Pemakaian** memuat rekap pemakaian data perangkat:
+- Filter **periode** Hari ini / 7 hari / 30 hari dan **jaringan** Semua / WiFi / Seluler lewat dua tombol dropdown sejajar; pilihan kembali ke default setiap aplikasi dibuka
+- Ringkasan total unduh/unggah, rata-rata per bucket, dan puncak pemakaian
+- Grafik batang RX/TX adaptif: per jam untuk Hari ini, per hari untuk 7/30 hari
+- **Riwayat harian** 7/30 hari lewat tautan **Riwayat ›** di judul grafik; daftar hari muncul di bottom sheet, ketuk baris untuk detail hari
+- **Donut komposisi** top 7 aplikasi + Lainnya, lengkap dengan persen dan ukuran
+- **Daftar aplikasi** dengan ikon, nama, total, RX/TX, dan persen terhadap total periode
+- Sumber data `NetworkStatsManager`; snapshot live dipadukan dengan cache dan riwayat SQLite 90 hari. Data seluler mengikuti izin/ketersediaan sistem.
+
+Sub-tab **Alat** masih berupa placeholder.
 
 **Tab Overlay** — Dua badge kecepatan terpisah:
 - Badge unduh dan unggah masing-masing menampilkan kecepatan real-time; otomatis memakai MB/s di atas 1024 KB/s

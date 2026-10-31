@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding="utf-8"?>
+            <androidx.core.widget.NestedScrollView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/networkSubSpeedPage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:overScrollMode="always"
+                android:scrollbars="vertical"
+                android:fillViewport="true">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <!-- Network Switch + Kunci Posisi -->
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/networkSwitch"
+                        android:text="Network Speed"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/networkLockSwitch"
+                        android:text="Kunci Posisi"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/network_sectionDisplayHeader"
+                    android:text="▾ Tampilan"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/network_sectionDisplay"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/networkValueOnlyCheck"
+                        android:text="Sembunyikan Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="4dp">
+
+                        <TextView
+                            android:text="Update="
+                            android:textSize="14sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkIntervalValue"
+                            android:text="1"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:gravity="center"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="3dp"
+                            android:background="#555555"
+                            android:textColor="#FFFFFF"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:minWidth="36dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:text="s"
+                            android:textSize="14sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:text="Unit Label:"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <RadioGroup
+                        android:id="@+id/networkUnitGroup"
+                        android:orientation="horizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <RadioButton
+                            android:id="@+id/networkUnitKb"
+                            android:text="KB/s"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <RadioButton
+                            android:id="@+id/networkUnitBps"
+                            android:text="bps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </RadioGroup>
+
+                    <CheckBox
+                        android:id="@+id/networkUnitTrimCheck"
+                        android:text="Pangkas"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:text="Tata Letak Teks:"
+                        android:textSize="14sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <RadioGroup
+                        android:id="@+id/networkTextAlignGroup"
+                        android:orientation="horizontal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <RadioButton
+                            android:id="@+id/networkTextAlignLeft"
+                            android:text="Kiri"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"/>
+
+                        <RadioButton
+                            android:id="@+id/networkTextAlignCenter"
+                            android:text="Tengah"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"/>
+
+                        <RadioButton
+                            android:id="@+id/networkTextAlignRight"
+                            android:text="Kanan"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"/>
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/networkSizeLabel"
+                    android:text="Ukuran Teks: 16"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
+                <SeekBar
+                    android:id="@+id/networkSizeSeekBar"
+                    android:max="100"
+                    android:progress="16"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/networkBoldCheck"
+                        android:text="Bold"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/networkItalicCheck"
+                        android:text="Italic"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/networkVerticalCheck"
+                        android:text="Vertikal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/networkDecimalCheck"
+                        android:text="Desimal"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/networkWidthLabel"
+                    android:text="Panjang Badge: 120dp"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
+                <SeekBar
+                    android:id="@+id/networkWidthSeekBar"
+                    android:max="160"
+                    android:progress="120"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/networkBarCheck"
+                        android:text="Color Bar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/networkBarInvertCheck"
+                        android:text="Invert"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#FF0000"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Warna"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkLabelColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#00FF00"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Label"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkShadowColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#FF0000"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Shadow"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkBgColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#FF0000"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Background"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_marginTop="12dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkBarDownColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#804CAF50"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Bar Unduh"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
+                            android:id="@+id/networkBarUpColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#802196F3"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Bar Unggah"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_height="1dp"
+                    android:background="#CCC"
+                    android:layout_marginVertical="8dp"
+                    android:layout_width="match_parent"/>
+
+                <TextView
+                    android:id="@+id/network_sectionPositionHeader"
+                    android:text="▾ Posisi"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/network_sectionPosition"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <!-- Network Position Controls -->
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:text="Kontrol Posisi"
+                        android:textStyle="bold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/network_posCoordDisplay"
+                        android:text="540X1200"
+                        android:layout_marginStart="8dp"
+                        android:textSize="12sp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/active_preset_label"
+                    android:textSize="12sp"
+                    android:textColor="#888888"
+                    android:visibility="gone"
+                    android:layout_marginTop="4dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="12dp">
+
+                        <TextView
+                            android:id="@+id/network_posXLabel"
+                            android:text="X: 0.50"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <SeekBar
+                            android:id="@+id/network_posXSeekBar"
+                            android:max="1000"
+                            android:progress="500"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/network_posYLabel"
+                            android:text="Y: 0.50"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <SeekBar
+                            android:id="@+id/network_posYSeekBar"
+                            android:max="1000"
+                            android:progress="500"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <ImageButton
+                                android:id="@+id/network_btnMinus"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:src="@drawable/ic_minus"
+                                android:contentDescription="@null"
+                                android:scaleType="centerInside"/>
+
+                            <ImageButton
+                                android:id="@+id/network_btnUp"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:src="@drawable/ic_arrow_up"
+                                android:contentDescription="@null"
+                                android:scaleType="centerInside"/>
+
+                            <ImageButton
+                                android:id="@+id/network_btnPlus"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:src="@drawable/ic_plus"
+                                android:contentDescription="@null"
+                                android:scaleType="centerInside"/>
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content">
+
+                            <ImageButton
+                                android:id="@+id/network_btnLeft"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:src="@drawable/ic_arrow_left"
+                                android:contentDescription="@null"
+                                android:scaleType="centerInside"/>
+
+                            <TextView
+                                android:id="@+id/network_dpadInterval"
+                                android:layout_width="60dp"
+                                android:layout_height="35dp"
+                                android:gravity="center"
+                                android:textSize="11sp"
+                                android:textColor="#888888"
+                                android:clickable="true"
+                                android:focusable="true"/>
+
+                            <ImageButton
+                                android:id="@+id/network_btnRight"
+                                android:layout_width="35dp"
+                                android:layout_height="35dp"
+                                android:src="@drawable/ic_arrow_right"
+                                android:contentDescription="@null"
+                                android:scaleType="centerInside"/>
+
+                        </LinearLayout>
+
+                        <ImageButton
+                            android:id="@+id/network_btnDown"
+                            android:layout_width="35dp"
+                            android:layout_height="35dp"
+                            android:src="@drawable/ic_arrow_down"
+                            android:contentDescription="@null"
+                            android:scaleType="centerInside"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+
+
+                <CheckBox
+                    android:id="@+id/networkSafeArea"
+                    android:text="Gunakan Area Aman"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_height="1dp"
+                    android:background="#CCC"
+                    android:layout_marginVertical="8dp"
+                    android:layout_width="match_parent"/>
+
+                <TextView
+                    android:id="@+id/network_sectionShadowHeader"
+                    android:text="▾ Shadow"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/network_sectionShadow"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Shadow -->
+                    <CheckBox
+                        android:id="@+id/networkShadowSwitch"
+                        android:text="Shadow"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <LinearLayout
+                        android:id="@+id/shadowConfigNetwork"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/networkShadowBlurLabel"
+                            android:text="Blur Shadow: 5"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkShadowBlurSeekBar"
+                            android:max="50"
+                            android:progress="5"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkShadowOffsetXLabel"
+                            android:text="Shadow X: 3"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkShadowOffsetXSeekBar"
+                            android:max="120"
+                            android:progress="60"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkShadowOffsetYLabel"
+                            android:text="Shadow Y: 3"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkShadowOffsetYSeekBar"
+                            android:max="120"
+                            android:progress="60"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <View
+                    android:layout_height="1dp"
+                    android:background="#CCC"
+                    android:layout_marginVertical="8dp"
+                    android:layout_width="match_parent"/>
+
+                <TextView
+                    android:id="@+id/network_sectionBackgroundHeader"
+                    android:text="▾ Background"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/network_sectionBackground"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Background -->
+                    <CheckBox
+                        android:id="@+id/networkBgSwitch"
+                        android:text="Background"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <LinearLayout
+                        android:id="@+id/bgConfigNetwork"
+                        android:orientation="vertical"
+                        android:visibility="gone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/networkBgPaddingLabel"
+                            android:text="Ukuran Background: 8"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkBgPaddingSeekBar"
+                            android:max="80"
+                            android:progress="8"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkBgOffsetXLabel"
+                            android:text="Offset X: 0"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkBgOffsetXSeekBar"
+                            android:max="120"
+                            android:progress="60"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkBgOffsetYLabel"
+                            android:text="Offset Y: 0"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkBgOffsetYSeekBar"
+                            android:max="120"
+                            android:progress="60"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkBgMarginLabel"
+                            android:text="Margin: 0"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkBgMarginSeekBar"
+                            android:max="30"
+                            android:progress="0"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/networkBgRadiusLabel"
+                            android:text="Radius: 0"
+                            android:layout_marginTop="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <SeekBar
+                            android:id="@+id/networkBgRadiusSeekBar"
+                            android:max="50"
+                            android:progress="0"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            </androidx.core.widget.NestedScrollView>

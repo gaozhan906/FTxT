@@ -102,6 +102,13 @@ public final class ConfigLoader {
         NetworkConfig.bg.radius = prefs.getInt("network_bg_radius", 0);
         NetworkConfig.textBold = prefs.getBoolean("network_text_bold", false);
         NetworkConfig.textItalic = prefs.getBoolean("network_text_italic", false);
+        NetworkConfig.showDecimal = prefs.getBoolean("network_show_decimal", false);
+        NetworkConfig.decimalPlaces = Math.max(1, Math.min(3, prefs.getInt("network_decimal_places", 1)));
+        NetworkConfig.textAlign = Math.max(NetworkConfig.ALIGN_LEFT,
+                Math.min(NetworkConfig.ALIGN_RIGHT,
+                        prefs.getInt("network_text_align", NetworkConfig.ALIGN_CENTER)));
+        NetworkConfig.unitMode = prefs.getInt("network_unit_mode", NetworkConfig.UNIT_KB);
+        NetworkConfig.unitTrimmed = prefs.getBoolean("network_unit_trimmed", false);
         NetworkConfig.barColorDown = prefs.getInt("network_bar_color_down", NetworkConfig.DEFAULT_BAR_COLOR_DOWN);
         NetworkConfig.barColorUp = prefs.getInt("network_bar_color_up", NetworkConfig.DEFAULT_BAR_COLOR_UP);
         NetworkConfig.barEnabled = true;
@@ -164,6 +171,22 @@ public final class ConfigLoader {
         BatteryBarConfig.chargeWaveEnabled = prefs.getBoolean("batbar_charge_wave_enabled", false);
         BatteryBarConfig.chargeWaveSpeed = prefs.getInt("batbar_charge_wave_speed", 1000);
         BatteryBarConfig.chargeWaveAmplitude = prefs.getInt("batbar_charge_wave_amplitude", 60);
+        BatteryBarConfig.edgeGlowEnabled = prefs.getBoolean("batbar_edge_glow_enabled", true);
+        BatteryBarConfig.edgeGlowSpeed = prefs.getInt("batbar_edge_glow_speed", 1200);
+        BatteryBarConfig.edgeGlowIntensity = prefs.getInt("batbar_edge_glow_intensity", 70);
+        BatteryBarConfig.startupSweepEnabled = prefs.getBoolean("batbar_startup_sweep_enabled", true);
+        BatteryBarConfig.startupSweepSpeed = prefs.getInt("batbar_startup_sweep_speed", 700);
+        BatteryBarConfig.drainTickEnabled = prefs.getBoolean("batbar_drain_tick_enabled", true);
+        BatteryBarConfig.drainTickSpeed = prefs.getInt("batbar_drain_tick_speed", 500);
+        BatteryBarConfig.dischargeAlertEnabled = prefs.getBoolean("batbar_discharge_alert_enabled", false);
+        BatteryBarConfig.dischargeAlertMode = prefs.getInt("batbar_discharge_alert_mode", 0);
+        BatteryBarConfig.dischargeAlertTargets = prefs.getString("batbar_discharge_alert_targets", "90,75,50,20,10,5");
+        BatteryBarConfig.dischargeAlertPitch = prefs.getInt("batbar_discharge_alert_pitch", 880);
+        BatteryBarConfig.dischargeAlertDuration = prefs.getInt("batbar_discharge_alert_duration", 80);
+        BatteryBarConfig.dischargeAlertRepeat = prefs.getInt("batbar_discharge_alert_repeat", 1);
+        BatteryBarConfig.dischargeAlertVolume = prefs.getInt("batbar_discharge_alert_volume", 70);
+        BatteryBarConfig.dischargeAlertVibrate = prefs.getBoolean("batbar_discharge_alert_vibrate", false);
+        BatteryBarConfig.dischargeAlertVibrateDuration = prefs.getInt("batbar_discharge_alert_vibrate_duration", 40);
         BatteryBarConfig.updateInterval = readFloatPref(prefs, "batbar_update_interval", 1f);
         BatteryBarConfig.touchPassthrough = prefs.getBoolean("batbar_lock", true);
         BatteryBarConfig.safeArea = true;

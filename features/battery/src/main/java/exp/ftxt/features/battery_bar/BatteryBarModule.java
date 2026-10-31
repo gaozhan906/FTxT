@@ -40,6 +40,11 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
     private int batteryScale = 100;
     private int batteryStatus = BatteryManager.BATTERY_STATUS_UNKNOWN;
 
+    private DischargeAlertPlayer alertPlayer;
+    private final java.util.Set<Integer> firedAlertTargets = new java.util.HashSet<>();
+    private int lastAlertMode = -1;
+    private String lastAlertTargets = "";
+
     private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context c, Intent intent) {
@@ -71,6 +76,7 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         prefs = ctx.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE);
 
         view = new BatteryBarView(ctx);
+        if (alertPlayer == null) alertPlayer = new DischargeAlertPlayer(ctx);
         view.setBarConfig(BatteryBarConfig.color, BatteryBarConfig.emptyColor,
                 BatteryBarConfig.showEmptyStrip, dp(BatteryBarConfig.radius),
                 BatteryBarConfig.colorScheme, BatteryBarConfig.lowColor, isHorizontalBar());
@@ -80,6 +86,9 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         view.setShineConfig(BatteryBarConfig.shineEnabled, BatteryBarConfig.shineSpeed, BatteryBarConfig.shineWidth);
         view.setWaveConfig(BatteryBarConfig.waveEnabled, BatteryBarConfig.waveSpeed, BatteryBarConfig.waveAmplitude);
         view.setChargeWaveConfig(BatteryBarConfig.chargeWaveEnabled, BatteryBarConfig.chargeWaveSpeed, BatteryBarConfig.chargeWaveAmplitude);
+        view.setEdgeGlowConfig(BatteryBarConfig.edgeGlowEnabled, BatteryBarConfig.edgeGlowSpeed, BatteryBarConfig.edgeGlowIntensity);
+        view.setStartupSweepConfig(BatteryBarConfig.startupSweepEnabled, BatteryBarConfig.startupSweepSpeed);
+        view.setDrainTickConfig(BatteryBarConfig.drainTickEnabled, BatteryBarConfig.drainTickSpeed);
 
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -120,6 +129,13 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
     public void stop() {
         running = false;
         handler.removeCallbacks(tickRunnable);
+        if (alertPlayer != null) {
+            alertPlayer.release();
+            alertPlayer = null;
+        }
+        firedAlertTargets.clear();
+        lastAlertMode = -1;
+        lastAlertTargets = "";
         try {
             context.unregisterReceiver(batteryReceiver);
         } catch (Exception e) {
@@ -292,6 +308,9 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         view.setShineConfig(BatteryBarConfig.shineEnabled, BatteryBarConfig.shineSpeed, BatteryBarConfig.shineWidth);
         view.setWaveConfig(BatteryBarConfig.waveEnabled, BatteryBarConfig.waveSpeed, BatteryBarConfig.waveAmplitude);
         view.setChargeWaveConfig(BatteryBarConfig.chargeWaveEnabled, BatteryBarConfig.chargeWaveSpeed, BatteryBarConfig.chargeWaveAmplitude);
+        view.setEdgeGlowConfig(BatteryBarConfig.edgeGlowEnabled, BatteryBarConfig.edgeGlowSpeed, BatteryBarConfig.edgeGlowIntensity);
+        view.setStartupSweepConfig(BatteryBarConfig.startupSweepEnabled, BatteryBarConfig.startupSweepSpeed);
+        view.setDrainTickConfig(BatteryBarConfig.drainTickEnabled, BatteryBarConfig.drainTickSpeed);
         updateDisplay();
     }
 
@@ -362,11 +381,72 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         boolean charging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING
                 || batteryStatus == BatteryManager.BATTERY_STATUS_FULL;
         boolean low = percent < BatteryBarConfig.lowThreshold;
+        if (!BatteryBarConfig.dischargeAlertEnabled) {
+            firedAlertTargets.clear();
+            lastAlertMode = -1;
+            lastAlertTargets = "";
+        }
         if (percent == lastPercent && charging == lastCharging && low == lastLow) return;
+        int oldPercent = lastPercent;
         lastPercent = percent;
         lastCharging = charging;
         lastLow = low;
+        if (charging) {
+            firedAlertTargets.clear();
+            lastAlertMode = -1;
+            lastAlertTargets = "";
+        } else if (oldPercent >= 0) {
+            if (percent > oldPercent) {
+                firedAlertTargets.removeIf(target -> percent > target);
+            } else if (percent < oldPercent) {
+                checkDischargeAlert(percent, oldPercent);
+            }
+        }
         view.updateStatus(percent, charging, low);
+    }
+
+    private void checkDischargeAlert(int percent, int oldPercent) {
+        if (!BatteryBarConfig.dischargeAlertEnabled) {
+            firedAlertTargets.clear();
+            return;
+        }
+        int mode = BatteryBarConfig.dischargeAlertMode;
+        String targets = BatteryBarConfig.dischargeAlertTargets;
+        if (targets == null) targets = "";
+        if (mode != lastAlertMode || !targets.equals(lastAlertTargets)) {
+            firedAlertTargets.clear();
+            lastAlertMode = mode;
+            lastAlertTargets = targets;
+        }
+        if (alertPlayer == null) return;
+
+        if (mode == 0) {
+            alertPlayer.play();
+            return;
+        }
+
+        boolean crossed = false;
+        for (int target : parseAlertTargets()) {
+            if (oldPercent > target && percent <= target && !firedAlertTargets.contains(target)) {
+                firedAlertTargets.add(target);
+                crossed = true;
+            }
+        }
+        if (crossed) alertPlayer.play();
+    }
+
+    private java.util.List<Integer> parseAlertTargets() {
+        java.util.TreeSet<Integer> values = new java.util.TreeSet<>(java.util.Collections.reverseOrder());
+        String raw = BatteryBarConfig.dischargeAlertTargets;
+        if (raw == null) return new java.util.ArrayList<>();
+        for (String part : raw.split(",")) {
+            try {
+                int value = Integer.parseInt(part.trim());
+                if (value >= 1 && value <= 100) values.add(value);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return new java.util.ArrayList<>(values);
     }
 
     private String posSuffix() {

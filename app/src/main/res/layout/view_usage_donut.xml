@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/usageDonutCard"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bat_card_bg"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/usageDonutTitle"
+        android:textSize="12sp"
+        android:textColor="?android:attr/textColorSecondary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="6dp">
+
+        <exp.ftxt.ui.widget.UsageDonutView
+            android:id="@+id/usageDonut"
+            android:layout_width="108dp"
+            android:layout_height="108dp"/>
+
+        <LinearLayout
+            android:id="@+id/usageDonutLegend"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical"/>
+
+    </LinearLayout>
+
+</LinearLayout>

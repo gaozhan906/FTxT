@@ -91,8 +91,14 @@ FTxT/
 │   │       ├── NetworkConfig.java — Konfigurasi statis Network overlay
 │   │       ├── NetworkModule.java — Kecepatan internet ↓↑ via TrafficStats, 1 detik
 │   │       ├── NetworkOverlayView.java — Dua badge + color bar (arah & gaya teks)
-│   │       ├── DataUsageTracker.java — Pencatat usage harian untuk tab Monitor
-│   │       └── UsageBarsView.java — Grafik batang usage 7 hari
+│   │       ├── NetworkStatsSource.java — Query NetworkStatsManager per UID (WiFi/seluler)
+│   │       └── usage/
+│   │           ├── NetworkUsageSource.java — Facade live + cache + SQLite
+│   │           ├── UsageHistoryStore.java — Riwayat harian SQLite retensi 90 hari
+│   │           ├── UsageCache.java — Cache snapshot 30 detik
+│   │           ├── UsagePeriod.java, UsageNetwork.java, UsageSource.java, UsageQuery.java — Model filter
+│   │           ├── UsageBucket.java, UsageApp.java, UsageDay.java, UsageSnapshot.java — Model hasil
+│   │           └── UsageChartView.java — Grafik batang RX/TX adaptif
 │   │
 │   ├── floating-text/            — Fitur Floating Text
 │   │   ├── build.gradle          — Library: namespace exp.ftxt.features.floating_text, depend :shared:config, :shared:ui
@@ -197,7 +203,13 @@ FTxT/
     │   │   │   ├── MemoryPanelController.java          — UI panel Memory Stats (tab Monitor + Overlay): OrderZones, export/copy
     │   │   │   ├── MemoryPositionController.java       — Kontrol posisi Memory Stats + preset
     │   │   │   ├── MemoryOrderZonesView.java           — Custom view zona drag chip dua zona untuk urutan item Memory Stats
-    │   │   │   ├── NetworkPanelController.java         — UI panel Network: tab Monitor/Overlay, teks, panjang/arah bar, warna, background
+    │   │   │   ├── NetworkPanelController.java         — Shell UI panel Network: sub-tab Monitor/Overlay, delegasi lifecycle
+    │   │   │   ├── NetworkOverlayController.java       — UI tab Overlay: teks, panjang/arah bar, warna, background
+    │   │   │   ├── NetworkUsageController.java         — UI tab Pemakaian: filter, ringkasan, grafik, riwayat, donut, aplikasi
+    │   │   │   ├── UsageAppAdapter.java                — Adapter daftar aplikasi pemakaian data
+    │   │   │   ├── UsageHistoryAdapter.java            — Adapter daftar riwayat harian di bottom sheet
+    │   │   │   ├── widget/
+    │   │   │   │   └── UsageDonutView.java             — Custom view donut komposisi aplikasi
     │   │   │   ├── NetworkPositionController.java      — Kontrol posisi Network
     │   │   │   ├── ColorPickerPanelController.java     — UI panel Color Picker: wheel, sliders, saved colors
     │   │   │   ├── CrosshairPanelController.java       — UI panel Crosshair: galeri 44 gaya, size/opacity/rotasi, lock/safe area

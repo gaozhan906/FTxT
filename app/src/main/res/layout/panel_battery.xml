@@ -840,6 +840,54 @@
 
                 </LinearLayout>
 
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:id="@+id/batbarSubTabDisplay"
+                        android:text="Tampilan"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/bat_monitor_header"
+                        android:gravity="center"
+                        android:paddingVertical="6dp"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarSubTabAnimation"
+                        android:text="Animasi"
+                        android:textSize="13sp"
+                        android:textColor="@color/bat_monitor_label"
+                        android:gravity="center"
+                        android:paddingVertical="6dp"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarSubTabSound"
+                        android:text="Suara"
+                        android:textSize="13sp"
+                        android:textColor="@color/bat_monitor_label"
+                        android:gravity="center"
+                        android:paddingVertical="6dp"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/batbarPageDisplay"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
                 <!-- Mode Cepat / Manual: radio button (satu pilihan aktif) -->
                 <RadioGroup
                     android:id="@+id/batbar_modeGroup"
@@ -1284,10 +1332,68 @@
 
                 </LinearLayout>
 
-                <!-- Animasi Pengisian Daya -->
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/batbarPageAnimation"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                <!-- Transisi Level -->
+                <TextView
+                    android:id="@+id/batbar_sectionTransitionHeader"
+                    android:text="▾ Transisi"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/batbar_sectionTransition"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <CheckBox
+                        android:id="@+id/batbarStartupSweepCheck"
+                        android:text="Startup Fill Sweep"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarStartupSweepSpeedLabel"
+                        android:text="Kecepatan Sweep: 0.7s"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarStartupSweepSpeedSeekBar"
+                        android:max="48"
+                        android:progress="5"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <CheckBox
+                        android:id="@+id/batbarDrainTickCheck"
+                        android:text="Drain Tick"
+                        android:layout_marginTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <!-- Pengisian -->
                 <TextView
                     android:id="@+id/batbar_sectionChargeHeader"
-                    android:text="▾ Animasi Pengisian Daya"
+                    android:text="▾ Pengisian"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:clickable="true"
@@ -1373,12 +1479,103 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
+                    <CheckBox
+                        android:id="@+id/batbarEdgeGlowCheck"
+                        android:text="Animasi Edge Glow"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarEdgeGlowSpeedLabel"
+                        android:text="Kecepatan Glow: 1.2s"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarEdgeGlowSpeedSeekBar"
+                        android:max="48"
+                        android:progress="10"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarEdgeGlowIntensityLabel"
+                        android:text="Intensitas Glow: 70%"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarEdgeGlowIntensitySeekBar"
+                        android:max="90"
+                        android:progress="60"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
                 </LinearLayout>
 
-                <!-- Animasi Baterai Rendah -->
+                <!-- Pengosongan -->
+                <TextView
+                    android:id="@+id/batbar_sectionDischargeHeader"
+                    android:text="▾ Pengosongan"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingVertical="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+                <LinearLayout
+                    android:id="@+id/batbar_sectionDischarge"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <CheckBox
+                        android:id="@+id/batbarWaveCheck"
+                        android:text="Animasi Wave"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarWaveSpeedLabel"
+                        android:text="Kecepatan Wave: 1.0s"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarWaveSpeedSeekBar"
+                        android:max="48"
+                        android:progress="8"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarWaveAmplitudeLabel"
+                        android:text="Intensitas Wave: 60%"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarWaveAmplitudeSeekBar"
+                        android:max="90"
+                        android:progress="50"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
+
+                <!-- Baterai Kritis -->
                 <TextView
                     android:id="@+id/batbar_sectionLowAnimHeader"
-                    android:text="▾ Animasi Baterai Rendah"
+                    android:text="▾ Baterai Kritis"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:clickable="true"
@@ -1470,38 +1667,156 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
+                </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/batbarPageSound"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <LinearLayout
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <CheckBox
+                            android:id="@+id/batbarDischargeAlertCheck"
+                            android:text="Beep Pengosongan"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="wrap_content"/>
+
+                        <Button
+                            android:id="@+id/batbarDischargeTestButton"
+                            android:text="Cek Suara"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <RadioGroup
+                        android:id="@+id/batbarDischargeAlertModeGroup"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="4dp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <RadioButton
+                            android:id="@+id/batbarDischargeAlertModeEvery"
+                            android:text="Tiap 1%"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:checked="true"/>
+
+                        <RadioButton
+                            android:id="@+id/batbarDischargeAlertModeManual"
+                            android:text="Manual"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"/>
+
+                    </RadioGroup>
+
+                    <TextView
+                        android:id="@+id/batbarDischargeAlertTargetsLabel"
+                        android:text="Persen Manual: 90, 75, 50, 20, 10, 5"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <TextView
+                        android:id="@+id/batbarDischargePitchLabel"
+                        android:text="Pitch: 880 Hz"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarDischargePitchSeekBar"
+                        android:max="5800"
+                        android:progress="680"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarDischargeDurationLabel"
+                        android:text="Durasi Bunyi: 80 ms"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarDischargeDurationSeekBar"
+                        android:max="480"
+                        android:progress="60"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarDischargeRepeatLabel"
+                        android:text="Repeat: 1x"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarDischargeRepeatSeekBar"
+                        android:max="9"
+                        android:progress="0"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <TextView
+                        android:id="@+id/batbarDischargeVolumeLabel"
+                        android:text="Volume: 70%"
+                        android:layout_marginTop="8dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <SeekBar
+                        android:id="@+id/batbarDischargeVolumeSeekBar"
+                        android:max="100"
+                        android:progress="70"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
                     <CheckBox
-                        android:id="@+id/batbarWaveCheck"
-                        android:text="Animasi Wave"
+                        android:id="@+id/batbarDischargeVibrateCheck"
+                        android:text="Getar"
                         android:layout_marginTop="8dp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        android:id="@+id/batbarWaveSpeedLabel"
-                        android:text="Kecepatan Wave: 1.0s"
+                        android:id="@+id/batbarDischargeVibrateDurationLabel"
+                        android:text="Durasi Getar: 40 ms"
                         android:layout_marginTop="8dp"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:clickable="true"
+                        android:focusable="true"/>
 
                     <SeekBar
-                        android:id="@+id/batbarWaveSpeedSeekBar"
-                        android:max="48"
-                        android:progress="8"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:id="@+id/batbarWaveAmplitudeLabel"
-                        android:text="Intensitas Wave: 60%"
-                        android:layout_marginTop="8dp"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <SeekBar
-                        android:id="@+id/batbarWaveAmplitudeSeekBar"
-                        android:max="90"
-                        android:progress="50"
+                        android:id="@+id/batbarDischargeVibrateDurationSeekBar"
+                        android:max="490"
+                        android:progress="30"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"/>
 

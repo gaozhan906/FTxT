@@ -2,6 +2,8 @@ package exp.ftxt.utils;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AppOpsManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -55,5 +57,29 @@ public class PermissionHelper {
         Toast.makeText(activity, "Nonaktifkan optimasi baterai", Toast.LENGTH_LONG).show();
         activity.startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
                 Uri.parse("package:" + activity.getPackageName())));
+    }
+
+    public static boolean hasUsageAccess(Context context) {
+        AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+        if (appOps == null) return false;
+
+        int mode;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            mode = appOps.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(), context.getPackageName());
+        } else {
+            mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(), context.getPackageName());
+        }
+        return mode == AppOpsManager.MODE_ALLOWED;
+    }
+
+    public static void requestUsageAccess(Activity activity) {
+        Toast.makeText(activity, "Izinkan akses penggunaan di pengaturan", Toast.LENGTH_LONG).show();
+        try {
+            activity.startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+        } catch (Exception e) {
+            activity.startActivity(new Intent(Settings.ACTION_SETTINGS));
+        }
     }
 }

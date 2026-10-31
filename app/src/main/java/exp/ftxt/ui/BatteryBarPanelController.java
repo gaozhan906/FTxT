@@ -1,11 +1,15 @@
 package exp.ftxt.ui;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
+import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioButton;
@@ -13,11 +17,15 @@ import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 
 import exp.ftxt.MainActivity;
 import exp.ftxt.R;
 import exp.ftxt.core.FloatingService;
 import exp.ftxt.features.battery_bar.BatteryBarConfig;
+import exp.ftxt.features.battery_bar.DischargeAlertPlayer;
 import exp.ftxt.shared.color.ColorPickerDialog;
 import exp.ftxt.shared.ui.SectionHelper;
 import exp.ftxt.shared.ui.SliderLabelEditor;
@@ -33,6 +41,12 @@ public class BatteryBarPanelController {
     private RadioButton barModeManual;
     private View quickSideRow;
     private TextView barQuickSideValue;
+    private TextView batbarSubTabDisplay;
+    private TextView batbarSubTabAnimation;
+    private TextView batbarSubTabSound;
+    private View batbarPageDisplay;
+    private View batbarPageAnimation;
+    private View batbarPageSound;
     private RadioGroup barOrientationGroup;
     private RadioButton barOrientationH;
     private RadioButton barOrientationV;
@@ -69,6 +83,32 @@ public class BatteryBarPanelController {
     private TextView barChargeWaveSpeedLabel;
     private SeekBar barChargeWaveAmplitudeSeekBar;
     private TextView barChargeWaveAmplitudeLabel;
+    private CheckBox barEdgeGlowCheck;
+    private SeekBar barEdgeGlowSpeedSeekBar;
+    private TextView barEdgeGlowSpeedLabel;
+    private SeekBar barEdgeGlowIntensitySeekBar;
+    private TextView barEdgeGlowIntensityLabel;
+    private CheckBox barStartupSweepCheck;
+    private SeekBar barStartupSweepSpeedSeekBar;
+    private TextView barStartupSweepSpeedLabel;
+    private CheckBox barDrainTickCheck;
+    private CheckBox barDischargeAlertCheck;
+    private RadioGroup barDischargeAlertModeGroup;
+    private RadioButton barDischargeAlertModeEvery;
+    private RadioButton barDischargeAlertModeManual;
+    private TextView barDischargeAlertTargetsLabel;
+    private TextView barDischargePitchLabel;
+    private SeekBar barDischargePitchSeekBar;
+    private TextView barDischargeDurationLabel;
+    private SeekBar barDischargeDurationSeekBar;
+    private TextView barDischargeRepeatLabel;
+    private SeekBar barDischargeRepeatSeekBar;
+    private TextView barDischargeVolumeLabel;
+    private SeekBar barDischargeVolumeSeekBar;
+    private CheckBox barDischargeVibrateCheck;
+    private TextView barDischargeVibrateDurationLabel;
+    private SeekBar barDischargeVibrateDurationSeekBar;
+    private Button barDischargeTestButton;
     private CheckBox barLockSwitch;
     private CheckBox barSafeAreaCheck;
     private boolean savedSafeArea = true;
@@ -114,6 +154,12 @@ public class BatteryBarPanelController {
         barModeManual = rootView.findViewById(R.id.batbar_modeManual);
         quickSideRow = rootView.findViewById(R.id.batbar_quickSideRow);
         barQuickSideValue = rootView.findViewById(R.id.batbarQuickSideValue);
+        batbarSubTabDisplay = rootView.findViewById(R.id.batbarSubTabDisplay);
+        batbarSubTabAnimation = rootView.findViewById(R.id.batbarSubTabAnimation);
+        batbarSubTabSound = rootView.findViewById(R.id.batbarSubTabSound);
+        batbarPageDisplay = rootView.findViewById(R.id.batbarPageDisplay);
+        batbarPageAnimation = rootView.findViewById(R.id.batbarPageAnimation);
+        batbarPageSound = rootView.findViewById(R.id.batbarPageSound);
         barOrientationGroup = rootView.findViewById(R.id.batbar_orientationGroup);
         barOrientationH = rootView.findViewById(R.id.batbar_orientationH);
         barOrientationV = rootView.findViewById(R.id.batbar_orientationV);
@@ -150,6 +196,32 @@ public class BatteryBarPanelController {
         barChargeWaveSpeedLabel = rootView.findViewById(R.id.batbarChargeWaveSpeedLabel);
         barChargeWaveAmplitudeSeekBar = rootView.findViewById(R.id.batbarChargeWaveAmplitudeSeekBar);
         barChargeWaveAmplitudeLabel = rootView.findViewById(R.id.batbarChargeWaveAmplitudeLabel);
+        barEdgeGlowCheck = rootView.findViewById(R.id.batbarEdgeGlowCheck);
+        barEdgeGlowSpeedSeekBar = rootView.findViewById(R.id.batbarEdgeGlowSpeedSeekBar);
+        barEdgeGlowSpeedLabel = rootView.findViewById(R.id.batbarEdgeGlowSpeedLabel);
+        barEdgeGlowIntensitySeekBar = rootView.findViewById(R.id.batbarEdgeGlowIntensitySeekBar);
+        barEdgeGlowIntensityLabel = rootView.findViewById(R.id.batbarEdgeGlowIntensityLabel);
+        barStartupSweepCheck = rootView.findViewById(R.id.batbarStartupSweepCheck);
+        barStartupSweepSpeedSeekBar = rootView.findViewById(R.id.batbarStartupSweepSpeedSeekBar);
+        barStartupSweepSpeedLabel = rootView.findViewById(R.id.batbarStartupSweepSpeedLabel);
+        barDrainTickCheck = rootView.findViewById(R.id.batbarDrainTickCheck);
+        barDischargeAlertCheck = rootView.findViewById(R.id.batbarDischargeAlertCheck);
+        barDischargeAlertModeGroup = rootView.findViewById(R.id.batbarDischargeAlertModeGroup);
+        barDischargeAlertModeEvery = rootView.findViewById(R.id.batbarDischargeAlertModeEvery);
+        barDischargeAlertModeManual = rootView.findViewById(R.id.batbarDischargeAlertModeManual);
+        barDischargeAlertTargetsLabel = rootView.findViewById(R.id.batbarDischargeAlertTargetsLabel);
+        barDischargePitchLabel = rootView.findViewById(R.id.batbarDischargePitchLabel);
+        barDischargePitchSeekBar = rootView.findViewById(R.id.batbarDischargePitchSeekBar);
+        barDischargeDurationLabel = rootView.findViewById(R.id.batbarDischargeDurationLabel);
+        barDischargeDurationSeekBar = rootView.findViewById(R.id.batbarDischargeDurationSeekBar);
+        barDischargeRepeatLabel = rootView.findViewById(R.id.batbarDischargeRepeatLabel);
+        barDischargeRepeatSeekBar = rootView.findViewById(R.id.batbarDischargeRepeatSeekBar);
+        barDischargeVolumeLabel = rootView.findViewById(R.id.batbarDischargeVolumeLabel);
+        barDischargeVolumeSeekBar = rootView.findViewById(R.id.batbarDischargeVolumeSeekBar);
+        barDischargeVibrateCheck = rootView.findViewById(R.id.batbarDischargeVibrateCheck);
+        barDischargeVibrateDurationLabel = rootView.findViewById(R.id.batbarDischargeVibrateDurationLabel);
+        barDischargeVibrateDurationSeekBar = rootView.findViewById(R.id.batbarDischargeVibrateDurationSeekBar);
+        barDischargeTestButton = rootView.findViewById(R.id.batbarDischargeTestButton);
         barLockSwitch = rootView.findViewById(R.id.batbarLockSwitch);
         barSafeAreaCheck = rootView.findViewById(R.id.batbarSafeAreaCheck);
 
@@ -159,8 +231,12 @@ public class BatteryBarPanelController {
 
         SectionHelper.setupCollapsible(rootView.findViewById(R.id.batbar_sectionAppearanceHeader),
                 rootView.findViewById(R.id.batbar_sectionAppearance));
+        SectionHelper.setupCollapsible(rootView.findViewById(R.id.batbar_sectionTransitionHeader),
+                rootView.findViewById(R.id.batbar_sectionTransition));
         SectionHelper.setupCollapsible(rootView.findViewById(R.id.batbar_sectionChargeHeader),
                 rootView.findViewById(R.id.batbar_sectionCharge));
+        SectionHelper.setupCollapsible(rootView.findViewById(R.id.batbar_sectionDischargeHeader),
+                rootView.findViewById(R.id.batbar_sectionDischarge));
         SectionHelper.setupCollapsible(rootView.findViewById(R.id.batbar_sectionLowAnimHeader),
                 rootView.findViewById(R.id.batbar_sectionLowAnim));
     }
@@ -199,6 +275,27 @@ public class BatteryBarPanelController {
         activity.applyCheckboxTint(barChargeWaveCheck, BatteryBarConfig.chargeWaveEnabled);
         barChargeWaveSpeedSeekBar.setProgress((BatteryBarConfig.chargeWaveSpeed - 200) / 100);
         barChargeWaveAmplitudeSeekBar.setProgress(BatteryBarConfig.chargeWaveAmplitude - 10);
+        barEdgeGlowCheck.setChecked(BatteryBarConfig.edgeGlowEnabled);
+        activity.applyCheckboxTint(barEdgeGlowCheck, BatteryBarConfig.edgeGlowEnabled);
+        barEdgeGlowSpeedSeekBar.setProgress((BatteryBarConfig.edgeGlowSpeed - 200) / 100);
+        barEdgeGlowIntensitySeekBar.setProgress(BatteryBarConfig.edgeGlowIntensity - 10);
+        barStartupSweepCheck.setChecked(BatteryBarConfig.startupSweepEnabled);
+        activity.applyCheckboxTint(barStartupSweepCheck, BatteryBarConfig.startupSweepEnabled);
+        barStartupSweepSpeedSeekBar.setProgress((BatteryBarConfig.startupSweepSpeed - 200) / 100);
+        barDrainTickCheck.setChecked(BatteryBarConfig.drainTickEnabled);
+        activity.applyCheckboxTint(barDrainTickCheck, BatteryBarConfig.drainTickEnabled);
+        barDischargeAlertCheck.setChecked(BatteryBarConfig.dischargeAlertEnabled);
+        activity.applyCheckboxTint(barDischargeAlertCheck, BatteryBarConfig.dischargeAlertEnabled);
+        barDischargeAlertModeEvery.setChecked(BatteryBarConfig.dischargeAlertMode == 0);
+        barDischargeAlertModeManual.setChecked(BatteryBarConfig.dischargeAlertMode == 1);
+        barDischargeAlertTargetsLabel.setText("Persen Manual: " + BatteryBarConfig.dischargeAlertTargets);
+        barDischargePitchSeekBar.setProgress(clampInt(BatteryBarConfig.dischargeAlertPitch, 200, 6000) - 200);
+        barDischargeDurationSeekBar.setProgress(clampInt(BatteryBarConfig.dischargeAlertDuration, 20, 500) - 20);
+        barDischargeRepeatSeekBar.setProgress(clampInt(BatteryBarConfig.dischargeAlertRepeat, 1, 10) - 1);
+        barDischargeVolumeSeekBar.setProgress(clampInt(BatteryBarConfig.dischargeAlertVolume, 0, 100));
+        barDischargeVibrateCheck.setChecked(BatteryBarConfig.dischargeAlertVibrate);
+        activity.applyCheckboxTint(barDischargeVibrateCheck, BatteryBarConfig.dischargeAlertVibrate);
+        barDischargeVibrateDurationSeekBar.setProgress(clampInt(BatteryBarConfig.dischargeAlertVibrateDuration, 10, 500) - 10);
         barLockSwitch.setChecked(BatteryBarConfig.touchPassthrough);
         barLockSwitch.setEnabled(false);
         barLockSwitch.setAlpha(0.3f);
@@ -216,6 +313,15 @@ public class BatteryBarPanelController {
         barWaveAmplitudeLabel.setText("Intensitas Wave: " + BatteryBarConfig.waveAmplitude + "%");
         barChargeWaveSpeedLabel.setText("Kecepatan Wave: " + formatSec(BatteryBarConfig.chargeWaveSpeed));
         barChargeWaveAmplitudeLabel.setText("Intensitas Wave: " + BatteryBarConfig.chargeWaveAmplitude + "%");
+        barEdgeGlowSpeedLabel.setText("Kecepatan Glow: " + formatSec(BatteryBarConfig.edgeGlowSpeed));
+        barEdgeGlowIntensityLabel.setText("Intensitas Glow: " + BatteryBarConfig.edgeGlowIntensity + "%");
+        barStartupSweepSpeedLabel.setText("Kecepatan Sweep: " + formatSec(BatteryBarConfig.startupSweepSpeed));
+        barDischargePitchLabel.setText("Pitch: " + BatteryBarConfig.dischargeAlertPitch + " Hz");
+        barDischargeDurationLabel.setText("Durasi Bunyi: " + BatteryBarConfig.dischargeAlertDuration + " ms");
+        barDischargeRepeatLabel.setText("Repeat: " + BatteryBarConfig.dischargeAlertRepeat + "x");
+        barDischargeVolumeLabel.setText("Volume: " + BatteryBarConfig.dischargeAlertVolume + "%");
+        barDischargeVibrateDurationLabel.setText("Durasi Getar: " + BatteryBarConfig.dischargeAlertVibrateDuration + " ms");
+        updateDischargeAlertControls();
         updateLowColorEnabled();
     }
 
@@ -233,6 +339,11 @@ public class BatteryBarPanelController {
     }
 
     private void setupListeners() {
+        batbarSubTabDisplay.setOnClickListener(v -> selectBatteryStripTab(0));
+        batbarSubTabAnimation.setOnClickListener(v -> selectBatteryStripTab(1));
+        batbarSubTabSound.setOnClickListener(v -> selectBatteryStripTab(2));
+        selectBatteryStripTab(0);
+
         barSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked && !PermissionHelper.hasOverlayPermission(activity)) {
                 barSwitch.setChecked(false);
@@ -359,6 +470,68 @@ public class BatteryBarPanelController {
 
         barChargeWaveAmplitudeSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyChargeWaveAmplitude));
 
+        barEdgeGlowCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryBarConfig.edgeGlowEnabled = isChecked;
+            activity.applyCheckboxTint(barEdgeGlowCheck, isChecked);
+            prefs().edit().putBoolean("batbar_edge_glow_enabled", isChecked).apply();
+            restart();
+        });
+
+        barEdgeGlowSpeedSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyEdgeGlowSpeed));
+
+        barEdgeGlowIntensitySeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyEdgeGlowIntensity));
+
+        barStartupSweepCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryBarConfig.startupSweepEnabled = isChecked;
+            activity.applyCheckboxTint(barStartupSweepCheck, isChecked);
+            prefs().edit().putBoolean("batbar_startup_sweep_enabled", isChecked).apply();
+            restart();
+        });
+
+        barStartupSweepSpeedSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyStartupSweepSpeed));
+
+        barDrainTickCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryBarConfig.drainTickEnabled = isChecked;
+            activity.applyCheckboxTint(barDrainTickCheck, isChecked);
+            prefs().edit().putBoolean("batbar_drain_tick_enabled", isChecked).apply();
+            restart();
+        });
+
+        barDischargeAlertCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryBarConfig.dischargeAlertEnabled = isChecked;
+            activity.applyCheckboxTint(barDischargeAlertCheck, isChecked);
+            prefs().edit().putBoolean("batbar_discharge_alert_enabled", isChecked).apply();
+            updateDischargeAlertControls();
+        });
+
+        barDischargeAlertModeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            BatteryBarConfig.dischargeAlertMode =
+                    checkedId == R.id.batbarDischargeAlertModeManual ? 1 : 0;
+            prefs().edit().putInt("batbar_discharge_alert_mode", BatteryBarConfig.dischargeAlertMode).apply();
+            updateDischargeAlertControls();
+        });
+
+        barDischargeAlertTargetsLabel.setOnClickListener(v -> showDischargeTargetsDialog());
+
+        barDischargePitchSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyDischargePitch));
+
+        barDischargeDurationSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyDischargeDuration));
+
+        barDischargeRepeatSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyDischargeRepeat));
+
+        barDischargeVolumeSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyDischargeVolume));
+
+        barDischargeVibrateCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryBarConfig.dischargeAlertVibrate = isChecked;
+            activity.applyCheckboxTint(barDischargeVibrateCheck, isChecked);
+            prefs().edit().putBoolean("batbar_discharge_alert_vibrate", isChecked).apply();
+            updateDischargeAlertControls();
+        });
+
+        barDischargeVibrateDurationSeekBar.setOnSeekBarChangeListener(simpleSeekBar(this::applyDischargeVibrateDuration));
+
+        barDischargeTestButton.setOnClickListener(v -> DischargeAlertPlayer.preview(activity));
+
         barSafeAreaCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
             BatteryBarConfig.safeArea = isChecked;
             activity.applyCheckboxTint(barSafeAreaCheck, isChecked);
@@ -380,6 +553,8 @@ public class BatteryBarPanelController {
                 SliderLabelEditor.showSliderEditor(activity, "Intensitas Wave", barWaveAmplitudeSeekBar, 10, 100, 10, barWaveAmplitudeLabel, "Intensitas Wave: ", "%", this::applyWaveAmplitude));
         barChargeWaveAmplitudeLabel.setOnClickListener(v ->
                 SliderLabelEditor.showSliderEditor(activity, "Intensitas Wave", barChargeWaveAmplitudeSeekBar, 10, 100, 10, barChargeWaveAmplitudeLabel, "Intensitas Wave: ", "%", this::applyChargeWaveAmplitude));
+        barEdgeGlowIntensityLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Intensitas Glow", barEdgeGlowIntensitySeekBar, 10, 100, 10, barEdgeGlowIntensityLabel, "Intensitas Glow: ", "%", this::applyEdgeGlowIntensity));
         barShineSpeedLabel.setOnClickListener(v ->
                 SliderLabelEditor.showSecEditor(activity, "Kecepatan Shine", barShineSpeedSeekBar, 0.2f, 5.0f, barShineSpeedLabel, "Kecepatan Shine: ", this::applyShineSpeed));
         barFadeSpeedLabel.setOnClickListener(v ->
@@ -388,6 +563,34 @@ public class BatteryBarPanelController {
                 SliderLabelEditor.showSecEditor(activity, "Kecepatan Wave", barWaveSpeedSeekBar, 0.2f, 5.0f, barWaveSpeedLabel, "Kecepatan Wave: ", this::applyWaveSpeed));
         barChargeWaveSpeedLabel.setOnClickListener(v ->
                 SliderLabelEditor.showSecEditor(activity, "Kecepatan Wave", barChargeWaveSpeedSeekBar, 0.2f, 5.0f, barChargeWaveSpeedLabel, "Kecepatan Wave: ", this::applyChargeWaveSpeed));
+        barEdgeGlowSpeedLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSecEditor(activity, "Kecepatan Glow", barEdgeGlowSpeedSeekBar, 0.2f, 5.0f, barEdgeGlowSpeedLabel, "Kecepatan Glow: ", this::applyEdgeGlowSpeed));
+        barStartupSweepSpeedLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSecEditor(activity, "Kecepatan Sweep", barStartupSweepSpeedSeekBar, 0.2f, 5.0f, barStartupSweepSpeedLabel, "Kecepatan Sweep: ", this::applyStartupSweepSpeed));
+        barDischargePitchLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Pitch", barDischargePitchSeekBar, 200, 6000, 200, barDischargePitchLabel, "Pitch: ", " Hz", this::applyDischargePitch));
+        barDischargeDurationLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Durasi Bunyi", barDischargeDurationSeekBar, 20, 500, 20, barDischargeDurationLabel, "Durasi Bunyi: ", " ms", this::applyDischargeDuration));
+        barDischargeRepeatLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Repeat", barDischargeRepeatSeekBar, 1, 10, 1, barDischargeRepeatLabel, "Repeat: ", "x", this::applyDischargeRepeat));
+        barDischargeVolumeLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Volume", barDischargeVolumeSeekBar, 0, 100, 0, barDischargeVolumeLabel, "Volume: ", "%", this::applyDischargeVolume));
+        barDischargeVibrateDurationLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Durasi Getar", barDischargeVibrateDurationSeekBar, 10, 500, 10, barDischargeVibrateDurationLabel, "Durasi Getar: ", " ms", this::applyDischargeVibrateDuration));
+    }
+
+    private void selectBatteryStripTab(int index) {
+        batbarPageDisplay.setVisibility(index == 0 ? View.VISIBLE : View.GONE);
+        batbarPageAnimation.setVisibility(index == 1 ? View.VISIBLE : View.GONE);
+        batbarPageSound.setVisibility(index == 2 ? View.VISIBLE : View.GONE);
+        applyBatteryStripTabState(batbarSubTabDisplay, index == 0);
+        applyBatteryStripTabState(batbarSubTabAnimation, index == 1);
+        applyBatteryStripTabState(batbarSubTabSound, index == 2);
+    }
+
+    private void applyBatteryStripTabState(TextView tab, boolean active) {
+        tab.setTextColor(active ? activity.getColor(R.color.bat_monitor_header) : activity.getColor(R.color.bat_monitor_label));
+        tab.setTypeface(active ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
     }
 
     private void setQuickMode(boolean quick) {
@@ -598,14 +801,149 @@ public class BatteryBarPanelController {
         BatteryBarConfig.waveSpeed = 200 + progress * 100;
         barWaveSpeedLabel.setText("Kecepatan Wave: " + formatSec(BatteryBarConfig.waveSpeed));
         prefs().edit().putInt("batbar_wave_speed", BatteryBarConfig.waveSpeed).apply();
-        restart();
+        FloatingService.updateBatteryBarInPlace();
     }
 
     private void applyChargeWaveSpeed(int progress) {
         BatteryBarConfig.chargeWaveSpeed = 200 + progress * 100;
         barChargeWaveSpeedLabel.setText("Kecepatan Wave: " + formatSec(BatteryBarConfig.chargeWaveSpeed));
         prefs().edit().putInt("batbar_charge_wave_speed", BatteryBarConfig.chargeWaveSpeed).apply();
+        FloatingService.updateBatteryBarInPlace();
+    }
+
+    private void applyEdgeGlowSpeed(int progress) {
+        BatteryBarConfig.edgeGlowSpeed = 200 + progress * 100;
+        barEdgeGlowSpeedLabel.setText("Kecepatan Glow: " + formatSec(BatteryBarConfig.edgeGlowSpeed));
+        prefs().edit().putInt("batbar_edge_glow_speed", BatteryBarConfig.edgeGlowSpeed).apply();
         restart();
+    }
+
+    private void applyEdgeGlowIntensity(int progress) {
+        BatteryBarConfig.edgeGlowIntensity = 10 + progress;
+        barEdgeGlowIntensityLabel.setText("Intensitas Glow: " + BatteryBarConfig.edgeGlowIntensity + "%");
+        prefs().edit().putInt("batbar_edge_glow_intensity", BatteryBarConfig.edgeGlowIntensity).apply();
+        restart();
+    }
+
+    private void applyStartupSweepSpeed(int progress) {
+        BatteryBarConfig.startupSweepSpeed = 200 + progress * 100;
+        barStartupSweepSpeedLabel.setText("Kecepatan Sweep: " + formatSec(BatteryBarConfig.startupSweepSpeed));
+        prefs().edit().putInt("batbar_startup_sweep_speed", BatteryBarConfig.startupSweepSpeed).apply();
+        restart();
+    }
+
+    private void applyDischargePitch(int progress) {
+        BatteryBarConfig.dischargeAlertPitch = 200 + progress;
+        barDischargePitchLabel.setText("Pitch: " + BatteryBarConfig.dischargeAlertPitch + " Hz");
+        prefs().edit().putInt("batbar_discharge_alert_pitch", BatteryBarConfig.dischargeAlertPitch).apply();
+    }
+
+    private void applyDischargeDuration(int progress) {
+        BatteryBarConfig.dischargeAlertDuration = 20 + progress;
+        barDischargeDurationLabel.setText("Durasi Bunyi: " + BatteryBarConfig.dischargeAlertDuration + " ms");
+        prefs().edit().putInt("batbar_discharge_alert_duration", BatteryBarConfig.dischargeAlertDuration).apply();
+    }
+
+    private void applyDischargeRepeat(int progress) {
+        BatteryBarConfig.dischargeAlertRepeat = 1 + progress;
+        barDischargeRepeatLabel.setText("Repeat: " + BatteryBarConfig.dischargeAlertRepeat + "x");
+        prefs().edit().putInt("batbar_discharge_alert_repeat", BatteryBarConfig.dischargeAlertRepeat).apply();
+    }
+
+    private void applyDischargeVolume(int progress) {
+        BatteryBarConfig.dischargeAlertVolume = progress;
+        barDischargeVolumeLabel.setText("Volume: " + BatteryBarConfig.dischargeAlertVolume + "%");
+        prefs().edit().putInt("batbar_discharge_alert_volume", BatteryBarConfig.dischargeAlertVolume).apply();
+    }
+
+    private void applyDischargeVibrateDuration(int progress) {
+        BatteryBarConfig.dischargeAlertVibrateDuration = 10 + progress;
+        barDischargeVibrateDurationLabel.setText("Durasi Getar: " + BatteryBarConfig.dischargeAlertVibrateDuration + " ms");
+        prefs().edit().putInt("batbar_discharge_alert_vibrate_duration", BatteryBarConfig.dischargeAlertVibrateDuration).apply();
+    }
+
+    private void updateDischargeAlertControls() {
+        boolean enabled = BatteryBarConfig.dischargeAlertEnabled;
+        boolean manual = BatteryBarConfig.dischargeAlertMode == 1;
+        boolean vibrate = BatteryBarConfig.dischargeAlertVibrate;
+        float on = 1f;
+        float off = 0.3f;
+
+        setControlEnabled(barDischargeAlertModeEvery, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeAlertModeManual, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeAlertTargetsLabel, enabled && manual, enabled && manual ? on : off);
+        setControlEnabled(barDischargePitchLabel, enabled, enabled ? on : off);
+        setControlEnabled(barDischargePitchSeekBar, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeDurationLabel, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeDurationSeekBar, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeRepeatLabel, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeRepeatSeekBar, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeVolumeLabel, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeVolumeSeekBar, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeVibrateCheck, enabled, enabled ? on : off);
+        setControlEnabled(barDischargeVibrateDurationLabel, enabled && vibrate, enabled && vibrate ? on : off);
+        setControlEnabled(barDischargeVibrateDurationSeekBar, enabled && vibrate, enabled && vibrate ? on : off);
+        setControlEnabled(barDischargeTestButton, enabled, enabled ? on : off);
+    }
+
+    private void showDischargeTargetsDialog() {
+        final EditText input = new EditText(activity);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
+        input.setText(BatteryBarConfig.dischargeAlertTargets);
+        input.setSelectAllOnFocus(true);
+
+        AlertDialog dialog = new AlertDialog.Builder(activity)
+                .setTitle("Persen Manual")
+                .setMessage("Masukkan persentase dipisah koma, mis. 90,75,50,20,10,5")
+                .setView(input)
+                .setPositiveButton("Simpan", null)
+                .setNegativeButton("Batal", null)
+                .create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String normalized = normalizeTargets(input.getText().toString());
+            if (normalized == null) {
+                Toast.makeText(activity, "Isi angka 1–100 dipisah koma", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            BatteryBarConfig.dischargeAlertTargets = normalized;
+            barDischargeAlertTargetsLabel.setText("Persen Manual: " + normalized);
+            prefs().edit().putString("batbar_discharge_alert_targets", normalized).apply();
+        });
+    }
+
+    private String normalizeTargets(String raw) {
+        java.util.TreeSet<Integer> values = new java.util.TreeSet<>(java.util.Collections.reverseOrder());
+        if (raw != null) {
+            for (String part : raw.split(",")) {
+                String trimmed = part.trim();
+                if (trimmed.isEmpty()) continue;
+                try {
+                    int value = Integer.parseInt(trimmed);
+                    if (value < 1 || value > 100) return null;
+                    values.add(value);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        if (values.isEmpty()) return null;
+        StringBuilder builder = new StringBuilder();
+        for (int value : values) {
+            if (builder.length() > 0) builder.append(",");
+            builder.append(value);
+        }
+        return builder.toString();
+    }
+
+    private static int clampInt(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static void setControlEnabled(View view, boolean enabled, float alpha) {
+        view.setEnabled(enabled);
+        view.setAlpha(alpha);
     }
 
     private String schemeLabel(int scheme) {

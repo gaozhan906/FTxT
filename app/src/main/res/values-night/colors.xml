@@ -64,4 +64,20 @@
     <!-- Warna panel Crosshair -->
     <color name="ui_control_bg">#2A2C31</color>
     <color name="ui_accent_crosshair">#4DDDEE</color>
+
+    <!-- Network usage -->
+    <color name="usage_accent">#64B5F6</color>
+    <color name="usage_accent_track">#3364B5F6</color>
+    <color name="usage_filter_selected_bg">#1565C0</color>
+    <color name="usage_filter_stroke">#33FFFFFF</color>
+    <color name="usage_filter_unselected_text">#C7C7CC</color>
+    <color name="usage_warning">#FFB74D</color>
+    <color name="usage_donut_1">#64B5F6</color>
+    <color name="usage_donut_2">#81C784</color>
+    <color name="usage_donut_3">#FFB74D</color>
+    <color name="usage_donut_4">#BA68C8</color>
+    <color name="usage_donut_5">#EF5350</color>
+    <color name="usage_donut_6">#4DD0E1</color>
+    <color name="usage_donut_7">#FFD54F</color>
+    <color name="usage_donut_other">#9E9E9E</color>
 </resources>

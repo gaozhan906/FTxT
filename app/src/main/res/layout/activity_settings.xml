@@ -743,6 +743,51 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/networkDecimalPlacesRow"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone">
+
+            <TextView
+                android:text="Jumlah angka desimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"/>
+
+            <RadioGroup
+                android:id="@+id/networkDecimalPlacesGroup"
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <RadioButton
+                    android:id="@+id/networkDecimal1"
+                    android:text="1 angka"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <RadioButton
+                    android:id="@+id/networkDecimal2"
+                    android:text="2 angka"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+                <RadioButton
+                    android:id="@+id/networkDecimal3"
+                    android:text="3 angka"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"/>
+
+            </RadioGroup>
+
+        </LinearLayout>
+
         <TextView
             android:id="@+id/exportDbBtn"
             android:text="Ekstrak Database ke Documents/FTxT/extract/db"

@@ -1,3 +1,38 @@
+# [4.96.0] 2026/11/01 04:59 WITA 333 ***ONGOING***
+### 🔖 Deskripsi
+> Rilis ini memusatkan tab Monitor Network pada satu layar Pemakaian data yang lebih lengkap, disertai kontrol kecepatan overlay yang lebih kaya serta animasi dan peringatan pada Battery Strip.
+
+### ✨ Fitur Baru
+- **Pemakaian data terpadu di Monitor Network** — Tab Monitor kini memiliki sub-tab **Pemakaian** dan **Alat**. Sub-tab Pemakaian menggabungkan ringkasan, grafik, riwayat, komposisi aplikasi, dan daftar aplikasi dalam satu layar. Filter periode Hari ini/7 hari/30 hari dan jaringan Semua/WiFi/Seluler lewat dua dropdown; ringkasan menampilkan total, rata-rata per jam/hari, dan puncak pemakaian; grafik tampil per jam untuk Hari ini dan per hari untuk 7/30 hari; donut menampilkan top 7 aplikasi + Lainnya; daftar aplikasi menampilkan ikon, nama, total, RX/TX, dan persen terhadap total periode. Sumber data live `NetworkStatsManager` dipadukan dengan cache dan riwayat SQLite 90 hari; jika izin akses penggunaan belum diberikan, layar menampilkan penjelasan dan tombol menuju pengaturan izin.
+- **Riwayat harian 7/30 hari** — Tautan **Riwayat ›** di judul grafik membuka bottom sheet daftar hari; tiap baris menampilkan tanggal, total, WiFi, seluler, persen, dan status sumber data. Ketuk satu hari untuk membuka rincian harian berisi total per jaringan serta daftar aplikasi hari tersebut, tanpa mengubah filter global.
+- **Opsi Desimal pada kecepatan overlay Network** — Checkbox **Desimal** mengaktifkan tampilan angka di belakang koma pada nilai kecepatan. Jumlah angka diatur 1–3 lewat pengaturan Developer dan langsung diterapkan.
+- **Unit Label dan Pangkas** — Pilihan unit **KB/s** atau **bps** lewat radio button; mode KB/s otomatis naik ke **MB/s**, sedangkan mode bps otomatis naik ke **Kbps/Mbps/Gbps**. Checkbox **Pangkas** memendekkan label menjadi **KB**, **MB**, **b**, **Kb**, **Mb**, atau **Gb**. Pilihan tersimpan.
+- **Tata letak teks overlay Network** — Radio **Kiri/Tengah/Kanan** di antara Unit Label dan Ukuran Teks mengatur perataan teks di dalam badge; default Tengah dan pilihan tersimpan.
+- **Jumlah angka desimal di Developer** — Pilihan **1–3 angka** tepat di bawah Tampilkan panel Debugging; pengaturan hanya muncul saat fitur Developer terbuka dan pilihan tersimpan.
+- **Edge Glow pada Battery Strip** — Glow berdenyut di ujung fill saat charging, mengikuti orientasi dan Invert; tersedia kontrol kecepatan serta intensitas.
+- **Startup Fill Sweep pada Battery Strip** — Fill bergerak dari 0 ke level baterai saat overlay pertama kali muncul, dengan slider kecepatan yang bisa diatur.
+- **Drain Tick pada Battery Strip** — Kilau lebih tegas dan lebih lama di ujung fill yang menyusut setiap kali persentase baterai turun saat discharge, sehingga perubahan level lebih mudah disadari.
+- **Beep & Getar Pengosongan pada Battery Strip** — Bunyi singkat dan/atau getar saat persentase baterai turun, dengan mode **Tiap 1%** (setiap penurunan) atau **Manual** (daftar persen kustom, mis. 90,75,50,20,10,5). Pitch (200–6000 Hz), durasi bunyi, jumlah ulangan beep (1–10 kali dengan jeda pendek), volume, serta durasi getar dapat diatur; tombol **Cek Suara** memutar contoh sesuai pengaturan, dan fitur default nonaktif dengan pemicu hanya saat discharge.
+
+### 🚮 Fitur Dihapus
+- **Tab Aplikasi terpisah dan tombol Reset Hari Ini dihapus** — Fungsi tab Aplikasi dilebur ke sub-tab Pemakaian, sedangkan Reset Hari Ini tidak lagi tersedia karena rekap mengikuti periode yang dipilih.
+
+### ♻️ Perubahan Fitur
+- **Pengaturan Battery Strip dipisah menjadi subtab Tampilan, Animasi, dan Suara** — Tampilan memuat mode cepat/manual, posisi, serta warna dan ukuran bar; Animasi memuat Transisi, Pengisian, Pengosongan, dan Baterai Kritis; Suara memuat pengaturan Beep & Getar Pengosongan. Header Battery Strip dan Kunci Posisi tetap di atas subtab.
+
+### 🔧 Optimasi & Penyesuaian
+- **Label dan tata letak kontrol overlay Network dipadatkan** — Label "Teks Bold", "Teks Italic", "Susunan Vertikal", "Tampilkan Color Bar", dan "Balik Arah Bar" dipendekkan menjadi "Bold", "Italic", "Vertikal", "Color Bar", dan "Invert"; Bold/Italic/Vertikal/Desimal disejajarkan dalam satu baris, diikuti Panjang Badge, lalu Color Bar/Invert dalam satu baris.
+- **Section animasi Battery Strip ditata ulang** — Header dirapikan menjadi **Transisi**, **Pengisian**, **Pengosongan**, dan **Baterai Kritis**; opsi **Animasi Wave** dipindah dari Baterai Kritis ke section Pengosongan.
+
+### 🐞 Bug Fixes
+- **Aplikasi non-sistem tidak muncul di daftar aplikasi Pemakaian** — Pemetaan UID kini memakai nama paket dari sistem dan deklarasi visibilitas paket launcher, sehingga aplikasi pengguna tetap tampil dengan nama/ikonnya meski pembatasan visibilitas paket Android 11+ aktif.
+- **Animasi Wave Battery Strip tidak berjalan dan kecepatannya tidak bisa diatur** — Wave kini aktif setiap kali baterai tidak dalam kondisi mengisi, berapa pun persentasenya, dan perubahan slider kecepatan langsung diterapkan ke animasi yang sedang berjalan; berlaku juga untuk Wave pengisian.
+
+### 💡 Memo
+- Angka per aplikasi berasal dari data pemakaian sistem sehingga bisa terlambat beberapa menit dari pemakaian sebenarnya; data seluler per aplikasi di Android 8–9 memerlukan izin telepon.
+
+---
+
 # [4.95.0] 2026/10/27 14:39 WITA 310 ***PUSH***
 ### 🔖 Deskripsi
 > Memperluas panel Network dengan header tab di Monitor serta merombak tampilan overlay Network menjadi dua badge kecepatan dengan color bar. Rincian tiap perubahan tersedia di section di bawah.

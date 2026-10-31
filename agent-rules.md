@@ -17,7 +17,7 @@ Aturan ini mengatur **perilaku kerja** dan **cara komunikasi** agent di chat. Be
 - Refactor tanpa diminta.
 - Audit project tanpa diminta.
 - Buat daftar "Next Steps" lalu mengeksekusinya sendiri — rencana menunggu persetujuan user.
-- Build / revert tanpa konfirmasi. Verifikasi cepat via inspeksi (grep/diff); build tersedia dan boleh dijalankan setelah konfirmasi.
+- Revert tanpa konfirmasi. Verifikasi cepat via inspeksi (grep/diff). Build tidak dijalankan, ditawarkan, atau dimintakan konfirmasi kecuali user memberi perintah eksplisit untuk build.
 
 ---
 
@@ -29,6 +29,7 @@ Aturan ini mengatur **perilaku kerja** dan **cara komunikasi** agent di chat. Be
 4. **Tanya hanya jika tidak bisa ditebak & berdampak** — scope tidak jelas, keputusan destruktif, atau instruksi bertentangan dengan kode.
 5. **Hal kecil yang bisa ditafsirkan** (nama, warna, tata letak) → ambil yang paling konsisten dengan pola existing, kerjakan, sebutkan asumsinya.
 6. **Selesai sesuai perintah, berhenti.**
+7. **Build bukan langkah rutin.** Jangan menjalankan, menawarkan, atau meminta konfirmasi build; build hanya dijalankan jika user secara eksplisit memerintahkannya.
 
 ---
 
@@ -40,7 +41,7 @@ Informasi mesin/dev-env yang berlaku di environment ini:
 - **Gradle:** hanya lewat `./gradlew` (wrapper Gradle 8.13). JANGAN pakai perintah `gradle` global — Gradle 6.1.1 yang pernah ada di `/opt/gradle` sudah dihapus (tak kompatibel JDK 21) dan folder dist dihapus.
 - **Android SDK:** `ANDROID_HOME=/opt/android_sdk`. `aapt2` berada di `/usr/bin/aapt2` (override untuk aarch64 sudah diatur di `app/build.gradle`).
 - **NDK & CMake:** tersedia jika native build (`externalNativeBuild`) atau JNI kelak diperlukan — pakai yang terinstal, jangan sampai men-download versi yang lebih rendah: NDK `29.0.14206865` di `/opt/android_sdk/ndk/29.0.14206865`, CMake `4.1.2` di `/opt/android_sdk/cmake/4.1.2`.
-- Build project hanya dilakukan lewat `./gradlew` setelah konfirmasi user.
+- Build project hanya dijalankan lewat `./gradlew` jika user secara eksplisit memerintahkan build. Jangan menawarkan build atau mengulang permintaan konfirmasi; ketentuan ini menggantikan bagian build di `AGENTS.md`.
 
 ---
 

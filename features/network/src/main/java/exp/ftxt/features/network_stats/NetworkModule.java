@@ -59,6 +59,10 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
         view.setOverlayTextSize(NetworkConfig.size);
         view.setTextColors(NetworkConfig.color, NetworkConfig.labelColor);
         view.setTextStyleConfig(NetworkConfig.textBold, NetworkConfig.textItalic);
+        view.setShowDecimal(NetworkConfig.showDecimal);
+        view.setDecimalPlaces(NetworkConfig.decimalPlaces);
+        view.setTextAlign(NetworkConfig.textAlign);
+        view.setUnitConfig(NetworkConfig.unitMode, NetworkConfig.unitTrimmed);
         view.setBadgeWidthDp(NetworkConfig.displayWidthDp);
         view.setVerticalLayout(NetworkConfig.verticalLayout);
         view.setBarColors(NetworkConfig.barColorDown, NetworkConfig.barColorUp);
@@ -108,9 +112,6 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
     public void stop() {
         running = false;
         handler.removeCallbacks(tickRunnable);
-        if (context != null) {
-            DataUsageTracker.get(context).flush();
-        }
         if (view != null && wm != null) {
             try {
                 wm.removeView(view);
@@ -165,6 +166,10 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
         view.setBarInverted(NetworkConfig.barInverted);
         view.setTextColors(NetworkConfig.color, NetworkConfig.labelColor);
         view.setTextStyleConfig(NetworkConfig.textBold, NetworkConfig.textItalic);
+        view.setShowDecimal(NetworkConfig.showDecimal);
+        view.setDecimalPlaces(NetworkConfig.decimalPlaces);
+        view.setTextAlign(NetworkConfig.textAlign);
+        view.setUnitConfig(NetworkConfig.unitMode, NetworkConfig.unitTrimmed);
         updateDisplay();
         view.post(this::updatePosition);
     }
@@ -355,16 +360,12 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
             long rxBytes = TrafficStats.getTotalRxBytes();
             long txBytes = TrafficStats.getTotalTxBytes();
 
-            DataUsageTracker tracker = DataUsageTracker.get(context);
-            tracker.observe(rxBytes, txBytes);
-
             long elapsed = now - lastTimestamp;
             if (elapsed > 0) {
                 long rxSpeed = ((rxBytes - lastRxBytes) * 1000) / elapsed;
                 long txSpeed = ((txBytes - lastTxBytes) * 1000) / elapsed;
                 lastRxSpeed = rxSpeed;
                 lastTxSpeed = txSpeed;
-                tracker.noteSpeed(rxSpeed, txSpeed);
                 updateDisplay();
             }
 

@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.net.TrafficStats;
 import android.net.Uri;
 import android.util.TypedValue;
 import android.graphics.Color;
@@ -47,7 +46,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import exp.ftxt.core.ConfigLoader;
 import exp.ftxt.core.CrashLogger;
 import exp.ftxt.core.FloatingService;
-import exp.ftxt.features.network_stats.DataUsageTracker;
 import exp.ftxt.ui.PanelManager;
 import exp.ftxt.utils.ApkDownloadHelper;
 import exp.ftxt.utils.PermissionHelper;
@@ -227,8 +225,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        DataUsageTracker.get(this).observe(
-                TrafficStats.getTotalRxBytes(), TrafficStats.getTotalTxBytes());
         refreshSidebar();
         if (panelManager != null) {
             panelManager.onPanelShown();
@@ -255,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        DataUsageTracker.get(this).flush();
     }
 
     private void requestRemainingPermissions() {

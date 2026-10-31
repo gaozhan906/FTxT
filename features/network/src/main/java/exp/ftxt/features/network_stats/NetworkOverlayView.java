@@ -31,6 +31,11 @@ public class NetworkOverlayView extends LinearLayout {
     private int labelColor = NetworkConfig.labelColor;
     private boolean textBold = NetworkConfig.textBold;
     private boolean textItalic = NetworkConfig.textItalic;
+    private boolean showDecimal = NetworkConfig.showDecimal;
+    private int decimalPlaces = NetworkConfig.decimalPlaces;
+    private int textAlign = NetworkConfig.textAlign;
+    private int unitMode = NetworkConfig.unitMode;
+    private boolean unitTrimmed = NetworkConfig.unitTrimmed;
     private int barColorDown = NetworkConfig.barColorDown;
     private int barColorUp = NetworkConfig.barColorUp;
     private boolean barEnabled = NetworkConfig.barEnabled;
@@ -86,6 +91,29 @@ public class NetworkOverlayView extends LinearLayout {
         requestLayout();
     }
 
+    public void setShowDecimal(boolean show) {
+        showDecimal = show;
+    }
+
+    public void setDecimalPlaces(int places) {
+        decimalPlaces = Math.max(1, Math.min(3, places));
+    }
+
+    public void setTextAlign(int align) {
+        textAlign = Math.max(NetworkConfig.ALIGN_LEFT,
+                Math.min(NetworkConfig.ALIGN_RIGHT, align));
+        int horizontal = textAlign == NetworkConfig.ALIGN_LEFT
+                ? Gravity.START
+                : textAlign == NetworkConfig.ALIGN_RIGHT ? Gravity.END : Gravity.CENTER_HORIZONTAL;
+        downBadge.setGravity(horizontal | Gravity.CENTER_VERTICAL);
+        upBadge.setGravity(horizontal | Gravity.CENTER_VERTICAL);
+    }
+
+    public void setUnitConfig(int mode, boolean trimmed) {
+        unitMode = mode;
+        unitTrimmed = trimmed;
+    }
+
     public void setShadowConfig(ShadowConfig config) {
         downBadge.setShadowConfig(config);
         upBadge.setShadowConfig(config);
@@ -139,34 +167,31 @@ public class NetworkOverlayView extends LinearLayout {
         long rx = Math.max(0, rxBytesPerSec);
         long tx = Math.max(0, txBytesPerSec);
 
-        String down = formatUnit(rx);
-        String up = formatUnit(tx);
+        String downValue = formatValue(rx);
+        String upValue = formatValue(tx);
+        String downUnit = unitSuffix(rx);
+        String upUnit = unitSuffix(tx);
 
-        if (valueOnly) {
-            setBadgeText(downBadge, stripUnit(down));
-            setBadgeText(upBadge, stripUnit(up));
-        } else {
-            setBadgeText(downBadge, "↓" + down);
-            setBadgeText(upBadge, "↑" + up);
-        }
+        setBadgeText(downBadge, downValue, downUnit, "↓", valueOnly);
+        setBadgeText(upBadge, upValue, upUnit, "↑", valueOnly);
 
         downFraction = fraction(rx);
         upFraction = fraction(tx);
         invalidate();
     }
 
-    private void setBadgeText(BadgeView badge, String text) {
+    private void setBadgeText(BadgeView badge, String value, String unit, String arrow, boolean valueOnly) {
         badge.setTextColor(textColor);
-        if (text.indexOf('↓') < 0 && text.indexOf('↑') < 0) {
-            badge.setText(text);
+        if (valueOnly) {
+            badge.setText(value);
             return;
         }
+        String text = arrow + value + unit;
         SpannableString spannable = new SpannableString(text);
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (c == '↓' || c == '↑' || c == 'M' || c == 'B' || c == 'K' || c == '/' || c == 's') {
-                spannable.setSpan(new ForegroundColorSpan(labelColor), i, i + 1, 0);
-            }
+        spannable.setSpan(new ForegroundColorSpan(labelColor), 0, 1, 0);
+        int unitStart = 1 + value.length();
+        if (unitStart < text.length()) {
+            spannable.setSpan(new ForegroundColorSpan(labelColor), unitStart, text.length(), 0);
         }
         badge.setText(spannable);
     }
@@ -193,15 +218,44 @@ public class NetworkOverlayView extends LinearLayout {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
-    private static String formatUnit(long bytesPerSec) {
-        if (bytesPerSec >= 1048576L) {
-            return String.format(Locale.US, "%.2fMB/s", bytesPerSec / 1048576.0);
+    private String formatValue(long bytesPerSec) {
+        if (unitMode == NetworkConfig.UNIT_BPS) {
+            double bits = bytesPerSec * 8.0;
+            if (bits >= 1_000_000_000d) return formatNumber(bits / 1_000_000_000d);
+            if (bits >= 1_000_000d) return formatNumber(bits / 1_000_000d);
+            if (bits >= 1_000d) return formatNumber(bits / 1_000d);
+            return formatNumber(bits);
         }
-        return (bytesPerSec / 1024L) + "KB/s";
+        if (bytesPerSec >= 1024L * 1024L) {
+            return formatNumber(bytesPerSec / (1024.0 * 1024.0));
+        }
+        return formatNumber(bytesPerSec / 1024.0);
     }
 
-    private static String stripUnit(String value) {
-        return value.replace("MB/s", "").replace("KB/s", "");
+    private String unitSuffix(long bytesPerSec) {
+        if (unitMode == NetworkConfig.UNIT_BPS) {
+            double bits = bytesPerSec * 8.0;
+            String prefix = "";
+            if (bits >= 1_000_000_000d) {
+                prefix = "G";
+            } else if (bits >= 1_000_000d) {
+                prefix = "M";
+            } else if (bits >= 1_000d) {
+                prefix = "K";
+            }
+            return prefix + (unitTrimmed ? "b" : "bps");
+        }
+        if (bytesPerSec >= 1024L * 1024L) {
+            return unitTrimmed ? "MB" : "MB/s";
+        }
+        return unitTrimmed ? "KB" : "KB/s";
+    }
+
+    private String formatNumber(double value) {
+        if (showDecimal) {
+            return String.format(Locale.US, "%." + decimalPlaces + "f", value);
+        }
+        return String.valueOf((long) value);
     }
 
     private static float fraction(long bytesPerSec) {

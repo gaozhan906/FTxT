@@ -18,6 +18,16 @@ public class NetworkConfig {
     public static int labelColor = Color.CYAN;
     public static boolean textBold = false;
     public static boolean textItalic = false;
+    public static final int UNIT_KB = 0;
+    public static final int UNIT_BPS = 1;
+    public static boolean showDecimal = false;
+    public static int decimalPlaces = 1;
+    public static final int ALIGN_LEFT = 0;
+    public static final int ALIGN_CENTER = 1;
+    public static final int ALIGN_RIGHT = 2;
+    public static int textAlign = ALIGN_CENTER;
+    public static int unitMode = UNIT_KB;
+    public static boolean unitTrimmed = false;
     public static int barColorDown = DEFAULT_BAR_COLOR_DOWN;
     public static int barColorUp = DEFAULT_BAR_COLOR_UP;
     public static boolean barEnabled = true;

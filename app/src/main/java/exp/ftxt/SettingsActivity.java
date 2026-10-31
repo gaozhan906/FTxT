@@ -51,6 +51,7 @@ import exp.ftxt.core.FloatingService;
 import exp.ftxt.core.NotificationHelper;
 import exp.ftxt.core.SmartPanelConfig;
 import exp.ftxt.features.memory_stats.MemoryConfig;
+import exp.ftxt.features.network_stats.NetworkConfig;
 import exp.ftxt.features.memory_stats.MemoryMonitor;
 import exp.ftxt.features.memory_stats.MemoryModule;
 
@@ -65,6 +66,8 @@ public class SettingsActivity extends AppCompatActivity {
     private int iconSelectionIndex = 0;
     private AlertDialog iconPickerDialog;
     private Switch debuggingSidebarSwitch;
+    private LinearLayout networkDecimalPlacesRow;
+    private RadioGroup networkDecimalPlacesGroup;
     private EditText debuggingPasswordInput;
     private TextView developerStatusLabel;
     private TextView debuggingUnlockBtn;
@@ -346,6 +349,22 @@ public class SettingsActivity extends AppCompatActivity {
             if (!isChecked) sendPanelHiddenBroadcast("debugging");
         });
 
+        networkDecimalPlacesRow = findViewById(R.id.networkDecimalPlacesRow);
+        networkDecimalPlacesGroup = findViewById(R.id.networkDecimalPlacesGroup);
+        int decimalPlaces = Math.max(1, Math.min(3,
+                prefs.getInt("network_decimal_places", NetworkConfig.decimalPlaces)));
+        networkDecimalPlacesGroup.check(decimalPlaces == 3
+                ? R.id.networkDecimal3
+                : decimalPlaces == 2 ? R.id.networkDecimal2 : R.id.networkDecimal1);
+        networkDecimalPlacesGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int places = checkedId == R.id.networkDecimal3
+                    ? 3
+                    : checkedId == R.id.networkDecimal2 ? 2 : 1;
+            NetworkConfig.decimalPlaces = places;
+            prefs.edit().putInt("network_decimal_places", places).apply();
+            FloatingService.updateLayoutForModule(FloatingService.networkModule());
+        });
+
         debuggingUnlockBtn.setOnClickListener(v -> {
             String input = debuggingPasswordInput.getText().toString();
             if (input.equals(DEBUGGING_PASSWORD)) {
@@ -536,6 +555,7 @@ public class SettingsActivity extends AppCompatActivity {
         debuggingPasswordInput.setVisibility(unlocked ? android.view.View.GONE : android.view.View.VISIBLE);
         debuggingUnlockBtn.setVisibility(unlocked ? android.view.View.GONE : android.view.View.VISIBLE);
         debuggingRelockBtn.setVisibility(unlocked ? android.view.View.VISIBLE : android.view.View.GONE);
+        networkDecimalPlacesRow.setVisibility(unlocked ? android.view.View.VISIBLE : android.view.View.GONE);
         memorySidebarSwitch.setEnabled(unlocked);
         debuggingSidebarSwitch.setEnabled(unlocked);
         exportDbBtn.setEnabled(unlocked);
