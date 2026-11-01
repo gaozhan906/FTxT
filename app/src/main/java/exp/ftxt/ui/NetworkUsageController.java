@@ -8,9 +8,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.text.format.Formatter;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -71,7 +73,6 @@ public class NetworkUsageController {
     private TextView networkUsagePeak;
     private TextView networkUsagePartialNote;
     private TextView networkUsageChartTitle;
-    private TextView networkUsageEmptyText;
     private TextView networkUsageErrorText;
     private TextView networkUsagePeriodFilter;
     private TextView networkUsageNetworkFilter;
@@ -87,7 +88,6 @@ public class NetworkUsageController {
     private View networkUsageLoading;
     private View networkUsagePermission;
     private View networkUsageError;
-    private View networkUsageEmpty;
     private View networkUsageTabUsage;
     private View networkUsageTabTools;
     private View networkUsageDonutCard;
@@ -101,8 +101,8 @@ public class NetworkUsageController {
     private boolean destroyed;
     private boolean panelShown;
     private BottomSheetDialog daySheetDialog;
-    private BottomSheetDialog filterSheetDialog;
     private BottomSheetDialog historySheetDialog;
+    private PopupMenu filterPopup;
 
     public NetworkUsageController(MainActivity activity, View rootView) {
         this.activity = activity;
@@ -154,7 +154,6 @@ public class NetworkUsageController {
         networkUsagePeak = rootView.findViewById(R.id.networkUsagePeak);
         networkUsagePartialNote = rootView.findViewById(R.id.networkUsagePartialNote);
         networkUsageChartTitle = rootView.findViewById(R.id.networkUsageChartTitle);
-        networkUsageEmptyText = rootView.findViewById(R.id.networkUsageEmptyText);
         networkUsageErrorText = rootView.findViewById(R.id.networkUsageErrorText);
         networkUsagePeriodFilter = rootView.findViewById(R.id.networkUsagePeriodFilter);
         networkUsageNetworkFilter = rootView.findViewById(R.id.networkUsageNetworkFilter);
@@ -169,7 +168,6 @@ public class NetworkUsageController {
         networkUsageLoading = rootView.findViewById(R.id.networkUsageLoading);
         networkUsagePermission = rootView.findViewById(R.id.networkUsagePermission);
         networkUsageError = rootView.findViewById(R.id.networkUsageError);
-        networkUsageEmpty = rootView.findViewById(R.id.networkUsageEmpty);
         networkUsageTabUsage = rootView.findViewById(R.id.networkUsageTabUsage);
         networkUsageTabTools = rootView.findViewById(R.id.networkUsageTabTools);
         networkUsageDonutCard = rootView.findViewById(R.id.networkUsageDonutCard);
@@ -209,8 +207,8 @@ public class NetworkUsageController {
     }
 
     private void setupFilters() {
-        networkUsagePeriodFilter.setOnClickListener(v -> showFilterSheet(true));
-        networkUsageNetworkFilter.setOnClickListener(v -> showFilterSheet(false));
+        networkUsagePeriodFilter.setOnClickListener(v -> showFilterPopup(true));
+        networkUsageNetworkFilter.setOnClickListener(v -> showFilterPopup(false));
     }
 
     private void selectPeriod(UsagePeriod period) {
@@ -238,59 +236,46 @@ public class NetworkUsageController {
         return "Hari ini";
     }
 
-    private void showFilterSheet(boolean period) {
+    private void showFilterPopup(boolean period) {
         if (destroyed || activity.isFinishing()) return;
-        dismissSheets();
 
-        BottomSheetDialog dialog = new BottomSheetDialog(activity);
-        View sheet = LayoutInflater.from(activity).inflate(R.layout.sheet_usage_filter, null);
-        dialog.setContentView(sheet);
-        dialog.setOnDismissListener(d -> {
-            if (filterSheetDialog == dialog) filterSheetDialog = null;
+        dismissFilterPopup();
+        TextView anchor = period ? networkUsagePeriodFilter : networkUsageNetworkFilter;
+        PopupMenu popup = new PopupMenu(activity, anchor);
+        filterPopup = popup;
+        popup.setOnDismissListener(p -> {
+            if (filterPopup == popup) filterPopup = null;
         });
-        filterSheetDialog = dialog;
-
-        TextView title = sheet.findViewById(R.id.usageFilterSheetTitle);
-        title.setText(period ? "Periode" : "Jaringan");
-        LinearLayout options = sheet.findViewById(R.id.usageFilterSheetOptions);
-        LayoutInflater inflater = LayoutInflater.from(activity);
+        int group = period ? 0 : 1;
         if (period) {
-            addFilterOption(inflater, options, "Hari ini",
-                    selectedPeriod == UsagePeriod.TODAY,
-                    () -> selectPeriod(UsagePeriod.TODAY));
-            addFilterOption(inflater, options, "7 hari",
-                    selectedPeriod == UsagePeriod.DAYS_7,
-                    () -> selectPeriod(UsagePeriod.DAYS_7));
-            addFilterOption(inflater, options, "30 hari",
-                    selectedPeriod == UsagePeriod.DAYS_30,
-                    () -> selectPeriod(UsagePeriod.DAYS_30));
+            addPopupItem(popup, group, 0, "Hari ini", selectedPeriod == UsagePeriod.TODAY);
+            addPopupItem(popup, group, 1, "7 hari", selectedPeriod == UsagePeriod.DAYS_7);
+            addPopupItem(popup, group, 2, "30 hari", selectedPeriod == UsagePeriod.DAYS_30);
         } else {
-            addFilterOption(inflater, options, "Semua",
-                    selectedNetwork == UsageNetwork.ALL,
-                    () -> selectNetwork(UsageNetwork.ALL));
-            addFilterOption(inflater, options, "WiFi",
-                    selectedNetwork == UsageNetwork.WIFI,
-                    () -> selectNetwork(UsageNetwork.WIFI));
-            addFilterOption(inflater, options, "Seluler",
-                    selectedNetwork == UsageNetwork.MOBILE,
-                    () -> selectNetwork(UsageNetwork.MOBILE));
+            addPopupItem(popup, group, 0, "Semua", selectedNetwork == UsageNetwork.ALL);
+            addPopupItem(popup, group, 1, "WiFi", selectedNetwork == UsageNetwork.WIFI);
+            addPopupItem(popup, group, 2, "Seluler", selectedNetwork == UsageNetwork.MOBILE);
         }
-        dialog.show();
+        popup.getMenu().setGroupCheckable(group, true, true);
+        popup.setOnMenuItemClickListener(item -> {
+            if (period) {
+                if (item.getItemId() == 0) selectPeriod(UsagePeriod.TODAY);
+                else if (item.getItemId() == 1) selectPeriod(UsagePeriod.DAYS_7);
+                else selectPeriod(UsagePeriod.DAYS_30);
+            } else {
+                if (item.getItemId() == 0) selectNetwork(UsageNetwork.ALL);
+                else if (item.getItemId() == 1) selectNetwork(UsageNetwork.WIFI);
+                else selectNetwork(UsageNetwork.MOBILE);
+            }
+            return true;
+        });
+        popup.show();
     }
 
-    private void addFilterOption(LayoutInflater inflater, LinearLayout container, String label,
-                                 boolean selected, Runnable action) {
-        View row = inflater.inflate(R.layout.item_usage_filter_option, container, false);
-        TextView labelView = row.findViewById(R.id.itemUsageFilterLabel);
-        TextView checkView = row.findViewById(R.id.itemUsageFilterCheck);
-        labelView.setText(label);
-        checkView.setVisibility(selected ? View.VISIBLE : View.GONE);
-        row.setContentDescription(label + (selected ? ", dipilih" : ""));
-        row.setOnClickListener(v -> {
-            dismissFilterSheet();
-            action.run();
-        });
-        container.addView(row);
+    private void addPopupItem(PopupMenu popup, int group, int id, String label, boolean checked) {
+        MenuItem item = popup.getMenu().add(group, id, id, label);
+        item.setCheckable(true);
+        item.setChecked(checked);
     }
 
     private void reloadUsage() {
@@ -331,23 +316,24 @@ public class NetworkUsageController {
     }
 
     private void showState(View target) {
-        networkUsageHistoryToggle.setVisibility(View.GONE);
         networkUsageContent.setVisibility(target == networkUsageContent ? View.VISIBLE : View.GONE);
         networkUsageLoading.setVisibility(target == networkUsageLoading ? View.VISIBLE : View.GONE);
         networkUsagePermission.setVisibility(target == networkUsagePermission ? View.VISIBLE : View.GONE);
         networkUsageError.setVisibility(target == networkUsageError ? View.VISIBLE : View.GONE);
-        networkUsageEmpty.setVisibility(target == networkUsageEmpty ? View.VISIBLE : View.GONE);
     }
 
     private void showLoading() {
+        networkUsageHistoryToggle.setVisibility(View.GONE);
         showState(networkUsageLoading);
     }
 
     private void showPermission() {
+        networkUsageHistoryToggle.setVisibility(View.GONE);
         showState(networkUsagePermission);
     }
 
     private void showError() {
+        networkUsageHistoryToggle.setVisibility(View.GONE);
         networkUsageErrorText.setText("Gagal memuat data pemakaian. Coba lagi.");
         showState(networkUsageError);
     }
@@ -355,13 +341,8 @@ public class NetworkUsageController {
     private void renderSnapshot(PreparedSnapshot prepared) {
         UsageSnapshot snapshot = prepared.snapshot;
         currentAppInfos = prepared.appInfos;
-        if (snapshot.totalBytes() <= 0) {
-            showEmpty(snapshot);
-            return;
-        }
-
-        showState(networkUsageContent);
         networkUsageRange.setText(formatRange(snapshot));
+        showState(networkUsageContent);
         networkUsageTotal.setText(formatBytes(snapshot.totalBytes()));
         networkUsageRx.setText("↓ " + formatBytes(snapshot.totalRxBytes));
         networkUsageTx.setText("↑ " + formatBytes(snapshot.totalTxBytes));
@@ -377,7 +358,7 @@ public class NetworkUsageController {
 
         networkUsagePeak.setText(formatPeak(snapshot));
         updatePartialNote(snapshot);
-        networkUsageChartTitle.setText("Tren · " + periodFilterLabel(snapshot.query.period)
+        networkUsageChartTitle.setText("Tren pemakaian · " + formatPeriodLabel(snapshot.query.period)
                 + " · " + formatNetworkLabel(snapshot.query.network));
         networkUsageChart.setData(snapshot.buckets, snapshot.query.period, snapshot.query.zone);
         networkUsageChart.setContentDescription(buildChartDescription(snapshot));
@@ -513,10 +494,6 @@ public class NetworkUsageController {
 
     private void bindDonut(View card, List<DonutEntry> entries, long total, String title) {
         if (card == null) return;
-        if (entries.isEmpty() || total <= 0) {
-            card.setVisibility(View.GONE);
-            return;
-        }
         card.setVisibility(View.VISIBLE);
 
         TextView titleView = card.findViewById(R.id.usageDonutTitle);
@@ -698,22 +675,22 @@ public class NetworkUsageController {
     }
 
     private void dismissSheets() {
+        dismissFilterPopup();
         dismissDaySheet();
-        dismissFilterSheet();
         dismissHistorySheet();
+    }
+
+    private void dismissFilterPopup() {
+        if (filterPopup != null) {
+            filterPopup.dismiss();
+            filterPopup = null;
+        }
     }
 
     private void dismissDaySheet() {
         if (daySheetDialog != null) {
             daySheetDialog.dismiss();
             daySheetDialog = null;
-        }
-    }
-
-    private void dismissFilterSheet() {
-        if (filterSheetDialog != null) {
-            filterSheetDialog.dismiss();
-            filterSheetDialog = null;
         }
     }
 
@@ -806,21 +783,6 @@ public class NetworkUsageController {
             return app.packageName;
         }
         return "uid:" + app.uid;
-    }
-
-    private void showEmpty(UsageSnapshot snapshot) {
-        String text;
-        if (snapshot.query.network == UsageNetwork.MOBILE && snapshot.mobileUnavailable) {
-            text = "Data seluler tidak tersedia di perangkat ini.";
-        } else if (snapshot.source == UsageSource.CACHE) {
-            text = "Riwayat lokal belum memiliki data untuk periode ini.";
-        } else if (snapshot.source == UsageSource.MIXED) {
-            text = "Data untuk periode ini belum lengkap.";
-        } else {
-            text = "Belum ada pemakaian pada periode ini.";
-        }
-        networkUsageEmptyText.setText(text);
-        showState(networkUsageEmpty);
     }
 
     private String formatRange(UsageSnapshot snapshot) {

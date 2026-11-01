@@ -30,6 +30,7 @@ Aturan ini mengatur **perilaku kerja** dan **cara komunikasi** agent di chat. Be
 5. **Hal kecil yang bisa ditafsirkan** (nama, warna, tata letak) → ambil yang paling konsisten dengan pola existing, kerjakan, sebutkan asumsinya.
 6. **Selesai sesuai perintah, berhenti.**
 7. **Build bukan langkah rutin.** Jangan menjalankan, menawarkan, atau meminta konfirmasi build; build hanya dijalankan jika user secara eksplisit memerintahkannya.
+8. **Jangan menawarkan revert, build, saran, atau opsi tindakan apa pun yang tidak diminta.** Jangan menutup jawaban dengan pertanyaan penawaran ("mau saya revert?", "mau saya build?", "mau pakai yang mana?"). Kerjakan perintah, laporkan hasil, lalu diam. Konfirmasi hanya diberikan untuk tindakan destruktif yang sudah diperintahkan dan akan benar-benar dijalankan — bukan sebagai tawaran pilihan.
 
 ---
 
@@ -49,5 +50,6 @@ Informasi mesin/dev-env yang berlaku di environment ini:
 
 - JANGAN gunakan tabel markdown di chat.
 - DILARANG tulis laporan section (Accomplished, Next Steps, Ringkasan, dll) di chat — langsung ke inti.
+- DILARANG menutup jawaban dengan tawaran tindakan atau pertanyaan balik yang tidak diminta (revert, build, saran, pilihan opsi).
 - Bicaralah yang jelas, manusiawi & praktis namun akurat (saya programmer, bukan AI yang hafal seluruh ekosistem Android).
 - Gunakan Bahasa Indonesia untuk thinking & respons.

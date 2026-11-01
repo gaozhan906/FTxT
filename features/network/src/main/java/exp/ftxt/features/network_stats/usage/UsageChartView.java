@@ -74,7 +74,6 @@ public class UsageChartView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (buckets.isEmpty()) return;
 
         float labelHeight = Math.max(dp(18), sp(14));
         float chartTop = dp(8);
@@ -82,13 +81,14 @@ public class UsageChartView extends View {
         float chartHeight = chartBottom - chartTop;
         if (chartHeight <= 0) return;
 
+        canvas.drawLine(0, chartBottom, getWidth(), chartBottom, baselinePaint);
+        if (buckets.isEmpty()) return;
+
         long max = 0;
         for (UsageBucket bucket : buckets) {
             max = Math.max(max, bucket.totalBytes());
         }
         if (max <= 0) max = 1;
-
-        canvas.drawLine(0, chartBottom, getWidth(), chartBottom, baselinePaint);
 
         int count = buckets.size();
         float slotWidth = (float) getWidth() / count;

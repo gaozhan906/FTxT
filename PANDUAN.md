@@ -153,7 +153,7 @@ Sub-tab **Pemakaian** memuat rekap pemakaian data perangkat:
 - Filter **periode** Hari ini / 7 hari / 30 hari dan **jaringan** Semua / WiFi / Seluler lewat dua tombol dropdown sejajar; pilihan kembali ke default setiap aplikasi dibuka
 - Ringkasan total unduh/unggah, rata-rata per bucket, dan puncak pemakaian
 - Grafik batang RX/TX adaptif: per jam untuk Hari ini, per hari untuk 7/30 hari
-- **Riwayat harian** 7/30 hari lewat tautan **Riwayat ›** di judul grafik; daftar hari muncul di bottom sheet, ketuk baris untuk detail hari
+- **Riwayat harian** 7/30 hari lewat tautan **Riwayat ›** di samping label rentang waktu; daftar hari muncul di bottom sheet, ketuk baris untuk detail hari
 - **Donut komposisi** top 7 aplikasi + Lainnya, lengkap dengan persen dan ukuran
 - **Daftar aplikasi** dengan ikon, nama, total, RX/TX, dan persen terhadap total periode
 - Sumber data `NetworkStatsManager`; snapshot live dipadukan dengan cache dan riwayat SQLite 90 hari. Data seluler mengikuti izin/ketersediaan sistem.
