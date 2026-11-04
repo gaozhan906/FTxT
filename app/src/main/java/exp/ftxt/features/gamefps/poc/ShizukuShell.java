@@ -3,14 +3,23 @@ package exp.ftxt.features.gamefps.poc;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import rikka.shizuku.Shizuku;
 import rikka.shizuku.ShizukuRemoteProcess;
 
 public class ShizukuShell {
     private static final String TAG = "GameFpsPoC";
+
+    private static final Object SESSION_LOCK = new Object();
+    private static ShellSession session;
 
     private static String[] splitCommand(String cmd) {
         String[] parts = cmd.trim().split("\\s+");
@@ -30,6 +39,131 @@ public class ShizukuShell {
         public String output;
         public String error;
         public int exitCode = -1;
+    }
+
+    public static Result exec(String cmd, long timeoutMs) {
+        Result viaSession = execViaSession(cmd, timeoutMs);
+        if (viaSession != null) return viaSession;
+        return execOnce(splitCommand(cmd), cmd, timeoutMs);
+    }
+
+    public static Result execArgs(String[] argv, long timeoutMs) {
+        StringBuilder sb = new StringBuilder();
+        for (String arg : argv) {
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(shellQuote(arg));
+        }
+        String cmd = sb.toString();
+        Result viaSession = execViaSession(cmd, timeoutMs);
+        if (viaSession != null) return viaSession;
+        return execOnce(argv, cmd, timeoutMs);
+    }
+
+    private static String shellQuote(String value) {
+        if (value == null) return "''";
+        return "'" + value.replace("'", "'\\''") + "'";
+    }
+
+    public static void closeSession() {
+        synchronized (SESSION_LOCK) {
+            if (session != null) {
+                session.close();
+                session = null;
+            }
+        }
+    }
+
+    private static Result execViaSession(String cmd, long timeoutMs) {
+        synchronized (SESSION_LOCK) {
+            try {
+                if (session == null || !session.isAlive()) {
+                    if (session != null) session.close();
+                    session = new ShellSession();
+                }
+                return session.run(cmd, timeoutMs);
+            } catch (Throwable t) {
+                Log.w(TAG, "shell session failed, fallback to one-shot", t);
+                if (session != null) {
+                    session.close();
+                    session = null;
+                }
+                return null;
+            }
+        }
+    }
+
+    private static class ShellSession {
+        private final Process process;
+        private final BufferedWriter writer;
+        private final BlockingQueue<String> lines = new LinkedBlockingQueue<>();
+        private final AtomicInteger seq = new AtomicInteger();
+        private volatile boolean alive = true;
+
+        ShellSession() throws Exception {
+            process = Shizuku.newProcess(new String[]{"sh"}, null, null);
+            if (process == null) throw new IllegalStateException("Shizuku.newProcess returned null");
+            writer = new BufferedWriter(new OutputStreamWriter(process.getOutputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            Thread thread = new Thread(() -> {
+                try {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        lines.put(line);
+                    }
+                } catch (Throwable ignored) {
+                } finally {
+                    alive = false;
+                    try { lines.put("__FTXT_EOF__"); } catch (Throwable ignored) {}
+                }
+            });
+            thread.setDaemon(true);
+            thread.setName("ftxt-shizuku-reader");
+            thread.start();
+        }
+
+        boolean isAlive() {
+            return alive;
+        }
+
+        synchronized Result run(String cmd, long timeoutMs) throws Exception {
+            if (!alive) throw new IllegalStateException("shell session not alive");
+            int id = seq.incrementAndGet();
+            String marker = "__FTXT_END_" + id + "__";
+            writer.write("{ " + cmd + " ; } 2>&1; rc=$?; echo; echo \"" + marker + " $rc\"");
+            writer.newLine();
+            writer.flush();
+
+            Result res = new Result();
+            StringBuilder out = new StringBuilder();
+            long deadline = System.currentTimeMillis() + timeoutMs;
+            while (true) {
+                long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0) throw new TimeoutException("shell command timeout");
+                String line = lines.poll(remaining, TimeUnit.MILLISECONDS);
+                if (line == null) throw new TimeoutException("shell command timeout");
+                if ("__FTXT_EOF__".equals(line)) throw new IllegalStateException("shell session EOF");
+                if (line.startsWith(marker)) {
+                    String tail = line.substring(marker.length()).trim();
+                    try {
+                        res.exitCode = Integer.parseInt(tail);
+                    } catch (Exception ignored) {}
+                    res.output = out.toString();
+                    res.error = "";
+                    res.ok = res.exitCode == 0
+                            || res.output.contains("Total frames rendered")
+                            || res.output.contains("Janky frames")
+                            || res.output.contains("Graphics info");
+                    return res;
+                }
+                out.append(line).append('\n');
+            }
+        }
+
+        void close() {
+            alive = false;
+            try { writer.close(); } catch (Throwable ignored) {}
+            try { process.destroyForcibly(); } catch (Throwable ignored) {}
+        }
     }
 
     private static boolean waitForCompat(Process proc, long timeoutMs)
@@ -62,7 +196,7 @@ public class ShizukuShell {
         return false;
     }
 
-    public static Result exec(String cmd, long timeoutMs) {
+    private static Result execOnce(String[] argv, String cmd, long timeoutMs) {
         Result res = new Result();
         if (!ShizukuHelper.isBinderAlive()) {
             res.error = "Shizuku binder not alive";
@@ -75,8 +209,6 @@ public class ShizukuShell {
 
         Process p = null;
         try {
-            // Prefer direct argv invocation; sh -c is only a fallback.
-            String[] argv = splitCommand(cmd);
             try {
                 p = Shizuku.newProcess(argv, null, null);
             } catch (Throwable directErr) {

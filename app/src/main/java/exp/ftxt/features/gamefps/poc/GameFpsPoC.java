@@ -1,10 +1,14 @@
 package exp.ftxt.features.gamefps.poc;
 
+import android.app.AppOpsManager;
+import android.app.usage.UsageEvents;
+import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.util.Log;
 
 import java.util.Locale;
@@ -17,6 +21,7 @@ import java.util.regex.Pattern;
 public class GameFpsPoC {
     private static final String TAG = "GameFpsPoC";
     private static final long DEFAULT_INTERVAL = 1000L;
+    private static final long IDLE_INTERVAL = 2000L;
     private static final long DEFAULT_TIMEOUT = 4000L;
 
     private final Context context;
@@ -85,10 +90,18 @@ public class GameFpsPoC {
         } catch (Throwable ignored) {}
     }
 
+    public String getTargetPackage() {
+        return targetPackage;
+    }
+
     public void setTargetPackage(String pkg) {
         this.targetPackage = pkg;
         this.lastTotalFrames = -1;
         this.lastTotalFramesTime = 0;
+        this.sfLayers = null;
+        this.sfLayerIndex = 0;
+        this.sfLayerCheckedAt = 0;
+        this.lastStatus = null;
         try {
             android.content.SharedPreferences sp = this.context.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE);
             sp.edit().putString("game_fps_poc_target", pkg).apply();
@@ -100,32 +113,62 @@ public class GameFpsPoC {
         this.intervalMs = ms;
     }
 
+    private volatile java.util.List<String> sfLayers = null;
+    private int sfLayerIndex = 0;
+    private long sfLayerCheckedAt = 0;
+    private volatile String lastStatus = null;
+
+    public boolean isRunning() {
+        return running.get();
+    }
+
     public void start() {
         if (running.get()) return;
         if (!ShizukuHelper.isBinderAlive()) {
             Log.w(TAG, "Shizuku binder not alive");
             GameFpsLog.add("START gagal: Shizuku binder tidak aktif");
-            notifyStatus("Shizuku tidak aktif");
+            setStatus("Shizuku tidak aktif");
             return;
         }
         if (!ShizukuHelper.hasPermission()) {
             Log.w(TAG, "Shizuku permission not granted");
             GameFpsLog.add("START gagal: izin Shizuku belum diberikan");
-            notifyStatus("Izin Shizuku belum diberikan");
+            setStatus("Izin Shizuku belum diberikan");
             return;
         }
         running.set(true);
         handler.post(pollRunnable);
         Log.i(TAG, "PoC started, target=" + targetPackage);
         GameFpsLog.add("START target=" + (targetPackage == null ? "-" : targetPackage));
-        notifyStatus("Memantau: " + (targetPackage == null ? "-" : targetPackage));
+        if (targetPackage == null || targetPackage.isEmpty()) {
+            setStatus("Pilih game dulu");
+        } else {
+            setStatus("Menunggu " + getAppName(context, targetPackage) + " dibuka...");
+        }
     }
 
     public void stop() {
         if (!running.get()) return;
         running.set(false);
         handler.removeCallbacks(pollRunnable);
+        sfLayers = null;
+        sfLayerIndex = 0;
+        sfLayerCheckedAt = 0;
+        lastStatus = null;
         Log.i(TAG, "PoC stopped");
+    }
+
+    public void shutdown() {
+        stop();
+        executor.shutdownNow();
+    }
+
+    private void setStatus(String msg) {
+        if (msg == null) return;
+        if (msg.equals(lastStatus)) return;
+        lastStatus = msg;
+        GameFpsLog.add("STATUS " + msg);
+        notifyStatus(msg);
     }
 
     private final Runnable pollRunnable = new Runnable() {
@@ -133,78 +176,172 @@ public class GameFpsPoC {
         public void run() {
             if (!running.get()) return;
             executor.execute(() -> {
+                boolean flowing = false;
                 try {
-                    String pkg = targetPackage;
-                    if (pkg == null || pkg.isEmpty()) {
-                        Log.d(TAG, "No target package set, skipping poll");
-                        notifyStatus("Pilih aplikasi dulu");
-                        return;
-                    }
-                    String cmd = "dumpsys gfxinfo " + pkg;
-                    GameFpsLog.add("RUN " + cmd);
-                    ShizukuShell.Result res = ShizukuShell.exec(cmd, timeoutMs);
-                    GameFpsLog.add("EXIT " + res.exitCode + " ok=" + res.ok
-                            + " outLen=" + (res.output == null ? 0 : res.output.length()));
-                    if (res.error != null && !res.error.trim().isEmpty()) {
-                        GameFpsLog.add("STDERR " + res.error.trim());
-                    }
-                    if (!res.ok) {
-                        String err = res.error == null ? "-" : res.error.trim();
-                        if (err.length() > 160) err = err.substring(0, 160);
-                        Log.w(TAG, "dumpsys failed: " + err);
-                        logOutputHead(res.output);
-                        String combined = (res.output == null ? "" : res.output) + " " + err;
-                        if (combined.contains("No process found")
-                                || combined.contains("Unknown package")
-                                || combined.contains("Unable to find package")) {
-                            notifyStatus("Aplikasi belum berjalan: " + pkg);
-                        } else {
-                            notifyStatus("dumpsys gagal: " + err);
-                        }
-                        return;
-                    }
-                    long totalFrames = extractTotalFrames(res.output);
-                    long now = System.currentTimeMillis();
-                    if (totalFrames >= 0 && lastTotalFrames >= 0 && now > lastTotalFramesTime) {
-                        long deltaFrames = totalFrames - lastTotalFrames;
-                        long deltaMs = now - lastTotalFramesTime;
-                        if (deltaFrames > 0 && deltaMs > 0) {
-                            float fps = (float) (deltaFrames * 1000.0 / deltaMs);
-                            Log.i(TAG, String.format("FPS=%.1f source=delta pkg=%s", fps, pkg));
-                            GameFpsLog.add(String.format(Locale.US,
-                                    "FPS %.1f (delta frames=%d ms=%d)", fps, deltaFrames, deltaMs));
-                            notifyFps(fps, "delta");
-                        }
-                    }
-                    if (totalFrames >= 0) {
-                        GameFpsLog.add("TOTAL frames=" + totalFrames);
-                        lastTotalFrames = totalFrames;
-                        lastTotalFramesTime = now;
-                    } else {
-                        GfxInfoParser.FpsResult fpsRes = GfxInfoParser.parse(res.output);
-                        if (fpsRes.parsed && fpsRes.fps > 0) {
-                            Log.i(TAG, String.format("FPS=%.1f source=%s pkg=%s", fpsRes.fps, fpsRes.source, pkg));
-                            GameFpsLog.add(String.format(Locale.US,
-                                    "FPS %.1f (parse source=%s)", fpsRes.fps, fpsRes.source));
-                            notifyFps(fpsRes.fps, fpsRes.source);
-                        } else {
-                            Log.d(TAG, "No FPS parsed pkg=" + pkg + " snippet=" + (fpsRes.rawSnippet == null ? "-" : fpsRes.rawSnippet));
-                            GameFpsLog.add("PARSE gagal: Total frames rendered tidak ditemukan");
-                            logOutputHead(res.output);
-                            notifyStatus("FPS belum terbaca dari output gfxinfo");
-                        }
-                    }
+                    flowing = pollOnce();
                 } catch (Throwable t) {
                     Log.e(TAG, "poll error", t);
                     GameFpsLog.add("ERROR " + t);
                 } finally {
                     if (running.get()) {
-                        handler.postDelayed(pollRunnable, intervalMs);
+                        handler.postDelayed(pollRunnable, flowing ? intervalMs : IDLE_INTERVAL);
                     }
                 }
             });
         }
     };
+
+    private boolean pollOnce() {
+        String pkg = targetPackage;
+        if (pkg == null || pkg.isEmpty()) {
+            setStatus("Pilih game dulu");
+            return false;
+        }
+        String appName = getAppName(context, pkg);
+        long now = System.currentTimeMillis();
+
+        if (!isTargetForeground(pkg)) {
+            sfLayers = null;
+            sfLayerIndex = 0;
+            sfLayerCheckedAt = 0;
+            lastTotalFrames = -1;
+            lastTotalFramesTime = 0;
+            setStatus("Menunggu " + appName + " dibuka...");
+            return false;
+        }
+
+        if (sfLayers == null || (sfLayers.isEmpty() && now - sfLayerCheckedAt > 3000)) {
+            sfLayers = SurfaceFlingerFps.findLayers(pkg, timeoutMs);
+            sfLayerIndex = 0;
+            sfLayerCheckedAt = now;
+            if (!sfLayers.isEmpty()) {
+                GameFpsLog.add("LAYER " + sfLayers.get(0));
+            }
+        }
+
+        while (sfLayers != null && sfLayerIndex < sfLayers.size()) {
+            String layer = sfLayers.get(sfLayerIndex);
+            float sfFps = SurfaceFlingerFps.readFps(layer, timeoutMs);
+            if (sfFps > 0) {
+                setStatus("Memantau " + appName);
+                notifyFps(sfFps, "surfaceflinger");
+                return true;
+            }
+            if (sfFps == 0f) {
+                setStatus("Game terdeteksi, menunggu frame...");
+                return false;
+            }
+            sfLayerIndex++;
+        }
+        if (sfLayers != null) {
+            sfLayers = null;
+            sfLayerIndex = 0;
+            lastTotalFrames = -1;
+            lastTotalFramesTime = 0;
+        }
+
+        String cmd = "dumpsys gfxinfo " + pkg;
+        ShizukuShell.Result res = ShizukuShell.exec(cmd, timeoutMs);
+        if (res.error != null && !res.error.trim().isEmpty()) {
+            GameFpsLog.add("STDERR " + res.error.trim());
+        }
+        String err = res.error == null ? "-" : res.error.trim();
+        String combined = (res.output == null ? "" : res.output) + " " + err;
+        boolean noProcess = combined.contains("No process found")
+                || combined.contains("Unknown package")
+                || combined.contains("Unable to find package");
+        if (noProcess) {
+            lastTotalFrames = -1;
+            lastTotalFramesTime = 0;
+            setStatus("Menunggu " + appName + " dibuka...");
+            return false;
+        }
+        if (!res.ok) {
+            if (err.length() > 160) err = err.substring(0, 160);
+            Log.w(TAG, "dumpsys failed: " + err);
+            logOutputHead(res.output);
+            setStatus("Gagal baca: " + err);
+            return false;
+        }
+        long totalFrames = extractTotalFrames(res.output);
+        if (totalFrames < 0) {
+            GfxInfoParser.FpsResult fpsRes = GfxInfoParser.parse(res.output);
+            if (fpsRes.parsed && fpsRes.fps > 0) {
+                setStatus("Memantau " + appName);
+                notifyFps(fpsRes.fps, fpsRes.source);
+                return true;
+            }
+            GameFpsLog.add("PARSE gagal: Total frames rendered tidak ditemukan");
+            logOutputHead(res.output);
+            setStatus("FPS belum terbaca, menunggu frame...");
+            return false;
+        }
+
+        boolean flowing = false;
+        if (lastTotalFrames >= 0 && now > lastTotalFramesTime) {
+            long deltaFrames = totalFrames - lastTotalFrames;
+            long deltaMs = now - lastTotalFramesTime;
+            if (deltaFrames > 0 && deltaMs > 0) {
+                float fps = (float) (deltaFrames * 1000.0 / deltaMs);
+                setStatus("Memantau " + appName);
+                notifyFps(fps, "gfxinfo");
+                flowing = true;
+            } else {
+                setStatus("Game terdeteksi, menunggu frame...");
+            }
+        } else {
+            setStatus("Game terdeteksi, menunggu frame...");
+        }
+        lastTotalFrames = totalFrames;
+        lastTotalFramesTime = now;
+        return flowing;
+    }
+
+    private Boolean usageAccess;
+
+    private boolean hasUsageAccess() {
+        if (usageAccess == null) {
+            try {
+                AppOpsManager ops = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
+                int mode = ops == null ? AppOpsManager.MODE_DEFAULT
+                        : ops.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                        Process.myUid(), context.getPackageName());
+                usageAccess = mode == AppOpsManager.MODE_ALLOWED;
+            } catch (Throwable t) {
+                usageAccess = false;
+            }
+        }
+        return usageAccess;
+    }
+
+    private boolean isTargetForeground(String pkg) {
+        if (!hasUsageAccess()) return true;
+        try {
+            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+            if (usm == null) return true;
+            long now = System.currentTimeMillis();
+            UsageEvents events = usm.queryEvents(now - 60_000L, now);
+            if (events == null) return true;
+            UsageEvents.Event event = new UsageEvents.Event();
+            String lastPkg = null;
+            long lastTime = 0;
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event);
+                int type = event.getEventType();
+                if (type == UsageEvents.Event.MOVE_TO_FOREGROUND
+                        || type == UsageEvents.Event.ACTIVITY_RESUMED) {
+                    if (event.getTimeStamp() >= lastTime) {
+                        lastTime = event.getTimeStamp();
+                        lastPkg = event.getPackageName();
+                    }
+                }
+            }
+            if (lastPkg == null) return true;
+            return pkg.equals(lastPkg);
+        } catch (Throwable t) {
+            return true;
+        }
+    }
 
     public static String getAppName(Context ctx, String pkg) {
         try {

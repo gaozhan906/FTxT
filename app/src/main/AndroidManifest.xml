@@ -153,6 +153,12 @@
             android:exported="false"
             android:foregroundServiceType="specialUse"/>
 
+        <service
+            android:name=".features.gamefps.GameFpsService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse"/>
+
         <receiver
             android:name=".core.BootReceiver"
             android:enabled="true"

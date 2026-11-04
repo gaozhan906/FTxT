@@ -10,9 +10,9 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ScrollView;
@@ -34,8 +34,8 @@ import exp.ftxt.MainActivity;
 import exp.ftxt.R;
 import exp.ftxt.core.FloatingService;
 import exp.ftxt.features.fps_display.FpsConfig;
+import exp.ftxt.features.gamefps.GameFpsService;
 import exp.ftxt.features.gamefps.poc.GameFpsLog;
-import exp.ftxt.features.gamefps.poc.GameFpsPoC;
 import exp.ftxt.features.gamefps.poc.ShizukuHelper;
 import exp.ftxt.shared.color.ColorPickerDialog;
 import exp.ftxt.shared.ui.SliderLabelEditor;
@@ -79,20 +79,38 @@ public class FpsPanelController {
     private View fpsSubDisplay, fpsSubGame;
     private Button btnFpsGameRefreshApps, btnFpsGameApplyManual;
     private Button btnFpsGameViewLog, btnFpsGameSaveLog;
-    private EditText edtFpsGamePkg;
+    private AutoCompleteTextView edtFpsGamePkg;
     private TextView txtFpsGameShizuku, txtFpsGameTarget, txtFpsGameValue, txtFpsGameStatus;
     private RecyclerView rvFpsGameApps;
+    private CheckBox chkFpsGameEnable;
     private GameAppListAdapter gameAppAdapter;
+    private GameSearchAdapter gameSearchAdapter;
     private ExecutorService gameExec = Executors.newSingleThreadExecutor();
     private Handler gameHandler = new Handler(Looper.getMainLooper());
-    private GameFpsPoC gameFpsPoc;
+    private boolean syncingGameEnable = false;
+    private static final String PREF_GAME_OVERLAY_ON = "game_fps_overlay_on";
     private static final int GAME_FPS_SHIZUKU_REQ = 10001;
+    private final GameFpsService.Listener gameFpsServiceListener = new GameFpsService.Listener() {
+        @Override
+        public void onFps(float fps) {
+            if (txtFpsGameValue != null) {
+                txtFpsGameValue.setText(String.format(java.util.Locale.US, "FPS: %.1f", fps));
+            }
+        }
+
+        @Override
+        public void onStatus(String status) {
+            if (txtFpsGameStatus != null) {
+                txtFpsGameStatus.setText(status);
+            }
+        }
+    };
     private final rikka.shizuku.Shizuku.OnRequestPermissionResultListener gameFpsPermListener =
             (requestCode, grantResult) -> {
                 if (requestCode == GAME_FPS_SHIZUKU_REQ) {
                     boolean granted = grantResult == PackageManager.PERMISSION_GRANTED;
                     GameFpsLog.add("IZIN Shizuku " + (granted ? "GRANTED" : "DITOLAK"));
-                    if (granted) ensureGameFpsPoc();
+                    if (granted) ensureGameFpsService();
                 }
             };
 
@@ -110,7 +128,9 @@ public class FpsPanelController {
             fpsPositionController.refresh();
         }
         refreshGameFpsStatus();
-        ensureGameFpsPoc();
+        syncGameEnable();
+        GameFpsService.setListener(gameFpsServiceListener);
+        ensureGameFpsService();
     }
 
     public void showLoadPresetDialog() {
@@ -125,10 +145,7 @@ public class FpsPanelController {
             fpsPositionController = null;
         }
         try {
-            if (gameFpsPoc != null) {
-                gameFpsPoc.setListener(null);
-                gameFpsPoc.stop();
-            }
+            GameFpsService.setListener(null);
         } catch (Throwable ignored) {}
         try {
             if (gameExec != null && !gameExec.isShutdown()) {
@@ -205,27 +222,36 @@ public class FpsPanelController {
         txtFpsGameStatus = rootView.findViewById(R.id.txtFpsGameStatus);
         rvFpsGameApps = rootView.findViewById(R.id.rvFpsGameApps);
 
-        try {
-            gameFpsPoc = new GameFpsPoC(activity);
-            gameFpsPoc.setListener(new GameFpsPoC.Listener() {
-                @Override
-                public void onFps(float fps, String source) {
-                    if (txtFpsGameValue != null) {
-                        txtFpsGameValue.setText(String.format(java.util.Locale.US, "FPS: %.1f", fps));
+        chkFpsGameEnable = rootView.findViewById(R.id.chkFpsGameEnable);
+        if (chkFpsGameEnable != null) {
+            chkFpsGameEnable.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (syncingGameEnable) return;
+                activity.applyCheckboxTint(chkFpsGameEnable, isChecked);
+                activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE)
+                        .edit().putBoolean(PREF_GAME_OVERLAY_ON, isChecked).apply();
+                if (isChecked) {
+                    if (!PermissionHelper.hasOverlayPermission(activity)) {
+                        activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE)
+                                .edit().putBoolean(PREF_GAME_OVERLAY_ON, false).apply();
+                        setGameEnabled(false);
+                        if (txtFpsGameStatus != null) {
+                            txtFpsGameStatus.setText("Izin overlay belum diberikan");
+                        }
+                        return;
                     }
+                    GameFpsService.start(activity);
                     if (txtFpsGameStatus != null) {
-                        txtFpsGameStatus.setText("source: " + source);
+                        txtFpsGameStatus.setText("Menyiapkan pemantauan...");
                     }
-                }
-
-                @Override
-                public void onStatus(String message) {
+                } else {
+                    GameFpsService.stop(activity);
+                    if (txtFpsGameValue != null) txtFpsGameValue.setText("FPS: --");
                     if (txtFpsGameStatus != null) {
-                        txtFpsGameStatus.setText(message);
+                        txtFpsGameStatus.setText("FPS Game dimatikan");
                     }
                 }
             });
-        } catch (Throwable ignored) {}
+        }
         try {
             rikka.shizuku.Shizuku.addRequestPermissionResultListener(gameFpsPermListener);
         } catch (Throwable ignored) {}
@@ -236,7 +262,9 @@ public class FpsPanelController {
                     selectFpsTab(1);
                     refreshGameFpsStatus();
                     refreshGameFpsApps();
-                    ensureGameFpsPoc();
+                    syncGameEnable();
+                    GameFpsService.setListener(gameFpsServiceListener);
+                    ensureGameFpsService();
                 } else {
                     selectFpsTab(0);
                 }
@@ -251,30 +279,43 @@ public class FpsPanelController {
             gameAppAdapter = new GameAppListAdapter(activity.getPackageManager(), appInfo -> {
                 String pkg = appInfo.packageName;
                 String name = String.valueOf(activity.getPackageManager().getApplicationLabel(appInfo));
-                saveGameFpsTarget(pkg);
-                GameFpsLog.add("PILIH " + name + " (" + pkg + ")");
-                if (gameFpsPoc != null) {
-                    gameFpsPoc.setTargetPackage(pkg);
-                    gameFpsPoc.start();
-                }
-                if (txtFpsGameTarget != null) {
-                    txtFpsGameTarget.setText("Target: " + name + " (" + pkg + ")");
-                }
+                selectGameApp(pkg, name);
             });
             rvFpsGameApps.setAdapter(gameAppAdapter);
         }
 
+        if (edtFpsGamePkg != null) {
+            gameSearchAdapter = new GameSearchAdapter(activity);
+            edtFpsGamePkg.setAdapter(gameSearchAdapter);
+            edtFpsGamePkg.setThreshold(1);
+            edtFpsGamePkg.setOnItemClickListener((parent, view, position, id) -> {
+                Object item = parent.getItemAtPosition(position);
+                if (item instanceof GameSearchAdapter.Entry) {
+                    GameSearchAdapter.Entry entry = (GameSearchAdapter.Entry) item;
+                    selectGameApp(entry.pkg, entry.label);
+                }
+            });
+        }
+
         if (btnFpsGameRefreshApps != null) btnFpsGameRefreshApps.setOnClickListener(v -> refreshGameFpsApps());
         if (btnFpsGameApplyManual != null) btnFpsGameApplyManual.setOnClickListener(v -> {
-            String pkg = edtFpsGamePkg != null ? edtFpsGamePkg.getText().toString().trim() : "";
-            if (pkg.isEmpty()) return;
-            saveGameFpsTarget(pkg);
-            GameFpsLog.add("PILIH manual " + pkg);
-            if (gameFpsPoc != null) {
-                gameFpsPoc.setTargetPackage(pkg);
-                gameFpsPoc.start();
+            String input = edtFpsGamePkg != null ? edtFpsGamePkg.getText().toString().trim() : "";
+            if (input.isEmpty()) return;
+            GameSearchAdapter.Entry found = gameSearchAdapter != null
+                    ? gameSearchAdapter.findSelected(input) : null;
+            if (found != null) {
+                selectGameApp(found.pkg, found.label);
+                return;
             }
-            if (txtFpsGameTarget != null) txtFpsGameTarget.setText("Target: " + pkg);
+            String pkg = input;
+            int open = input.lastIndexOf('(');
+            int close = input.lastIndexOf(')');
+            if (open >= 0 && close > open) {
+                String inside = input.substring(open + 1, close).trim();
+                if (!inside.isEmpty() && !inside.contains(" ")) pkg = inside;
+            }
+            String name = exp.ftxt.features.gamefps.poc.GameFpsPoC.getAppName(activity, pkg);
+            selectGameApp(pkg, name);
         });
 
         if (btnFpsGameViewLog != null) btnFpsGameViewLog.setOnClickListener(v -> showGameFpsLogDialog());
@@ -317,9 +358,11 @@ public class FpsPanelController {
         if (txtFpsGameShizuku == null) return;
         StringBuilder sb = new StringBuilder();
         try {
+            boolean enabled = activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE)
+                    .getBoolean(PREF_GAME_OVERLAY_ON, false);
             sb.append("Shizuku binder: ").append(ShizukuHelper.isBinderAlive() ? "OK" : "TIDAK AKTIF").append('\n');
             sb.append("Izin Shizuku: ").append(ShizukuHelper.hasPermission() ? "GRANTED" : "BELUM/DITOLAK").append('\n');
-            if (ShizukuHelper.isBinderAlive() && !ShizukuHelper.hasPermission()) {
+            if (enabled && ShizukuHelper.isBinderAlive() && !ShizukuHelper.hasPermission()) {
                 GameFpsLog.add("MINTA izin Shizuku");
                 try { ShizukuHelper.requestPermission(GAME_FPS_SHIZUKU_REQ); } catch (Throwable ignored) {}
             }
@@ -327,22 +370,90 @@ public class FpsPanelController {
             sb.append("Error: ").append(t.getMessage());
         }
         txtFpsGameShizuku.setText(sb.toString());
+        String saved = null;
         try {
             android.content.SharedPreferences sp = activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE);
-            String saved = sp.getString("game_fps_poc_target", null);
+            saved = sp.getString("game_fps_poc_target", null);
             if (saved != null && !saved.isEmpty() && txtFpsGameTarget != null) {
-                txtFpsGameTarget.setText("Target: " + saved);
-                if (gameFpsPoc != null) gameFpsPoc.setTargetPackage(saved);
+                String name = exp.ftxt.features.gamefps.poc.GameFpsPoC.getAppName(activity, saved);
+                txtFpsGameTarget.setText("Target: " + name + " (" + saved + ")");
+            }
+        } catch (Throwable ignored) {}
+        String status = GameFpsService.getLastStatus();
+        if (status == null || status.isEmpty()) {
+            if (saved == null || saved.isEmpty()) {
+                status = "Pilih game dari daftar di bawah";
+            } else if (GameFpsService.isRunning()) {
+                status = "Menyiapkan pemantauan...";
+            } else {
+                status = "FPS Game nonaktif";
+            }
+        }
+        if (txtFpsGameStatus != null) {
+            txtFpsGameStatus.setText(status);
+        }
+        float fps = GameFpsService.getLastFps();
+        if (fps >= 0 && txtFpsGameValue != null) {
+            txtFpsGameValue.setText(String.format(java.util.Locale.US, "FPS: %.1f", fps));
+        }
+    }
+
+    private void ensureGameFpsService() {
+        try {
+            boolean armed = activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE)
+                    .getBoolean(PREF_GAME_OVERLAY_ON, false);
+            if (armed && !GameFpsService.isRunning()) {
+                GameFpsService.start(activity);
+            } else if (!armed && GameFpsService.isRunning()) {
+                GameFpsService.stop(activity);
             }
         } catch (Throwable ignored) {}
     }
 
-    private void ensureGameFpsPoc() {
-        try {
-            if (gameFpsPoc != null && ShizukuHelper.isBinderAlive() && ShizukuHelper.hasPermission()) {
-                gameFpsPoc.start();
-            }
-        } catch (Throwable ignored) {}
+    private void selectGameApp(String pkg, String name) {
+        saveGameFpsTarget(pkg);
+        GameFpsLog.add("PILIH " + name + " (" + pkg + ")");
+        if (txtFpsGameTarget != null) {
+            txtFpsGameTarget.setText("Target: " + name + " (" + pkg + ")");
+        }
+        if (edtFpsGamePkg != null) {
+            edtFpsGamePkg.setText(name + " (" + pkg + ")");
+            edtFpsGamePkg.setSelection(edtFpsGamePkg.getText().length());
+            edtFpsGamePkg.clearFocus();
+            edtFpsGamePkg.dismissDropDown();
+        }
+        armGameFps(name);
+    }
+
+    private void armGameFps(String name) {
+        if (txtFpsGameValue != null) txtFpsGameValue.setText("FPS: --");
+        if (txtFpsGameStatus != null) {
+            txtFpsGameStatus.setText("Target disimpan. Menunggu " + name + " dibuka...");
+        }
+        if (chkFpsGameEnable != null && !chkFpsGameEnable.isChecked()) {
+            chkFpsGameEnable.setChecked(true);
+        } else {
+            GameFpsService.start(activity);
+        }
+    }
+
+    private void syncGameEnable() {
+        if (chkFpsGameEnable == null) return;
+        boolean armed = activity.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE)
+                .getBoolean(PREF_GAME_OVERLAY_ON, false);
+        if (chkFpsGameEnable.isChecked() != armed) {
+            setGameEnabled(armed);
+        } else {
+            activity.applyCheckboxTint(chkFpsGameEnable, armed);
+        }
+    }
+
+    private void setGameEnabled(boolean checked) {
+        if (chkFpsGameEnable == null) return;
+        syncingGameEnable = true;
+        chkFpsGameEnable.setChecked(checked);
+        syncingGameEnable = false;
+        activity.applyCheckboxTint(chkFpsGameEnable, checked);
     }
 
     private void saveGameFpsTarget(String pkg) {
@@ -364,8 +475,10 @@ public class FpsPanelController {
                 }
             }
             if (res.isEmpty()) res.addAll(list);
+            List<ApplicationInfo> all = new ArrayList<>(list);
             gameHandler.post(() -> {
                 if (gameAppAdapter != null) gameAppAdapter.setApps(res);
+                if (gameSearchAdapter != null) gameSearchAdapter.setApps(all);
             });
         });
     }

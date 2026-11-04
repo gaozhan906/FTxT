@@ -21,7 +21,7 @@ android {
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
 
-        versionCode 337
+        versionCode 341
         versionName "4.96.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
