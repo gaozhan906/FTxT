@@ -1,206 +1,90 @@
-# Implementasi Shizuku FPS Reader
+# Implementasi Shizuku FPS Reader (PoC-First)
 
 ## Gambaran
-Membaca FPS dari aplikasi/game yang sedang aktif di layar menggunakan Shizuku dan dumpsys gfxinfo.
+Membaca FPS dari aplikasi/game yang sedang aktif di layar menggunakan Shizuku dan `dumpsys gfxinfo`. Target saat ini: **buktikan dulu fondasi bisa jalan (PoC), baru bangun overlay/UI**.
+
+**Branch kerja:** `feature/shizuku-fps-overlay`  
+**Status:** PoC
+
+---
+
+## Tujuan PoC
+- Validasi: bisa dapatkan FPS dari game via `Shizuku.newProcess()` + `dumpsys gfxinfo <package>`
+- Validasi: parsing hasil `dumpsys gfxinfo` cukup stabil di device yang dipakai untuk tes
+- Validasi: performa polling masih bisa ditoleransi (tidak bikin berat)
+- **Hasil PoC:** cukup log ke Logcat dengan nilai FPS yang masuk akal. Tidak wajib ada UI/panel.
+
+---
+
+## Fase 0: Analisis & Persiapan (Wajib)
+- [ ] Cek pola modul overlay yang ada di proyek (Config/Module/PanelController/PositionController) buat acuan nanti
+- [ ] Cek `FloatingService` cara registrasi modul
+- [ ] Cek pola integrasi menu/drawer (opsional, buat perencanaan fase berikutnya)
+- [ ] Kumpulkan sample output `dumpsys gfxinfo` dari minimal 1 game yang bakal dipakai buat tes PoC
 
 ---
 
 ## Fase 1: Persiapan & Integrasi Shizuku
-
-### 1.1 Setup Shizuku SDK
-- Download Shizuku SDK dari GitHub: `dev.rikka.shizuku`
-- Tambahkan dependency ke `app/build.gradle`:
-  - `shizuku-api`
-  - `shizuku-processor` (annotation processor)
-- Update `gradle.properties` jika perlu
-
-### 1.2 Daftarkan Shizuku Provider
-- Tambah `<provider>` di `AndroidManifest.xml` untuk Shizuku
-- Konfigurasi authority dengan package name
-
-### 1.3 Minta Izin Shizuku di Aplikasi
-- Cek apakah Shizuku sedang berjalan: `Shizuku.pingBinder()`
-- Minta izin: `Shizuku.requestPermission(REQUEST_CODE)`
-- Handle hasil: granted / denied / not running
-- Tampilkan ke user jika Shizuku belum aktif
+- [ ] **1.1 Dependency** — Tambah ke `app/build.gradle`: `dev.rikka.shizuku:api:13.1.0` (atau versi stabil yang kompatibel). Tambah `dev.rikka.shizuku:provider:13.1.0` jika dibutuhkan. Cek kompatibilitas dulu.
+- [ ] **1.2 Manifest** — Tambah `ShizukuProvider` dengan authority `packageName.shizuku` (ikuti pola Shizuku SDK). Jangan lupa permission yang relevan kalau ada.
+- [ ] **1.3 Izin Shizuku** — Implementasi helper: cek `Shizuku.pingBinder()`, `Shizuku.checkSelfPermission()`, `Shizuku.requestPermission()`. Handle listener `Shizuku.OnBinderReceivedListener` / `OnBinderDeadListener`. Handle kasus `Shizuku not running` / `permission denied`.
+- [ ] **1.4 Koneksi dasar** — Buat class util `ShizukuHelper` (sederhana) buat cek status & minta izin.
 
 ---
 
-## Fase 2: Deteksi Aplikasi Foreground
+## Fase 2: Baca & Parse FPS via dumpsys (CORE PoC)
+- [ ] **2.1 Eksekusi via Shizuku** — Buat `ShizukuShell`/`GameFpsReader` util. Gunakan `Shizuku.newProcess(new String[]{"sh", "-c", "dumpsys gfxinfo <package>"}, null, null)` atau cara yang aman. Tangkap stdout+stderr.
+- [ ] **2.2 Ambil package target** — Untuk PoC, bisa hardcode package game yang dipakai tes dulu (lebih cepat). Otomatisasi via `UsageStatsManager` bisa ditambah nanti.
+- [ ] **2.3 Parsing toleran** — Cari data dari `dumpsys gfxinfo` dengan pendekatan regex toleran:
+  - Coba ambil dari `Profile data` / `Frame stats` jika ada
+  - Fallback ke `Total frames rendered`, `Janky frames`, `Number Missed Vsync`
+  - Hitung FPS dari interval waktu / jumlah frame (prioritaskan cara paling stabil dari sample)
+- [ ] **2.4 Validasi angka** — Normalisasi nilai (integer/float), clamp wajar (mis. 1-240), tangani `NaN/0`. Jika gagal parsing -> kembalikan `null`/`-1` + log alasan.
+- [ ] **2.5 Looping ringan** — Polling interval bisa dikonfigurasi (mulai 1000ms, bisa turun/naik). Hentikan kalau Shizuku mati/izin dicabut. Tambah timeout baca output.
 
-### 2.1 Minta Izin UsageStats
-- Minta izin `PACKAGE_USAGE_STATS` ke user
-- Arahkan ke Settings jika belum aktif
-
-### 2.2 Deteksi Aplikasi Aktif
-- Gunakan `UsageStatsManager` untuk ambil aplikasi foreground
-- Ambil package name dari aplikasi yang sedang aktif
-- Filter: hanya aplikasi dengan kategori `GAME` atau semua aplikasi
-
-### 2.3 Looping Deteksi
-- Polling setiap 1 detik untuk cek aplikasi aktif
-- Simpan package name terakhir yang terdeteksi
-- Jika berubah, update FPS reader ke package baru
+**Kriteria lulus PoC:** dapat angka FPS konsisten & masuk akal saat game berjalan, minimal 3-5 menit tanpa crash/ANR.
 
 ---
 
-## Fase 3: Baca FPS via dumpsys
+## Fase 3: Overlay/UI (SETELAH PoC LULUS)
+Hanya dikerjakan **jika Fase 1-2 terbukti berhasil**.
 
-### 3.1 Jalankan Perintah via Shizuku
-- Format perintah: `dumpsys gfxinfo <package_name>`
-- Kirim via `Shizuku.newProcess()` atau `Runtime.exec()`
-- Tangkap output (stdout)
-
-### 3.2 Parse Output gfxinfo
-- Cari section "Total frames rendered"
-- Cari section "Janky frames"
-- Cari section "Number Missed Vsync"
-- Hitung FPS dari data frame timing
-
-### 3.3 Hitung FPS
-- Cara 1: Total frames / waktu rendering
-- Cara 2: Gunakan "Frame stats" untuk data lebih detail
-- Cara 3: Hitung dari selisih timestamp frame
+- [ ] **3.1 Config/Module** — `GameFpsConfig.java`, `GameFpsModule.java` (ikuti pola existing)
+- [ ] **3.2 Controller** — `GameFpsPositionController.java` (bisa reuse), `GameFpsPanelController.java`
+- [ ] **3.3 Layout** — `panel_game_fps.xml` sesuai kebutuhan panel
+- [ ] **3.4 Integrasi** — Tambah item menu ke drawer/MainActivity + register di `FloatingService`
+- [ ] **3.5 Auto-detect foreground** — Tambah deteksi via `UsageStatsManager` + izin `PACKAGE_USAGE_STATS` (jika masih dibutuhkan)
 
 ---
 
-## Fase 4: Modul Overlay FPS Game
-
-### 4.1 Buat Config Baru
-- `GameFpsConfig.java` — Konfigurasi untuk FPS game
-- Fields: package name, interval, show label, colors, size, position
-
-### 4.2 Buat Module Baru
-- `GameFpsModule.java` — Modul overlay untuk FPS game
-- Method: start(), stop(), update()
-- Panggil Shizuku untuk baca FPS
-- Update overlay text dengan nilai FPS
-
-### 4.3 Buat Position Controller
-- `GameFpsPositionController.java` — Kontrol posisi FPS game
-- Reuse dari FPS Position Controller yang sudah ada
-
-### 4.4 Buat Panel Controller
-- `GameFpsPanelController.java` — UI panel untuk FPS game
-- Tampilkan package name yang terdeteksi
-- Kontrol: interval, ukuran warna, shadow, background
-- Tombol toggle FPS game on/off
+## Error Handling & Edge Case
+- **Shizuku tidak aktif**: Log + bisa arahkan buka app Shizuku
+- **Izin ditolak**: Nonaktifkan fitur, log jelas
+- **dumpsys gagal/kosong/timeout**: Jangan crash, kembalikan null, coba lagi next interval
+- **Ganti game/app**: Siapkan mekanisme update target package
+- **Perbedaan OEM**: Parser harus toleran, minimal ada fallback
+- **Beban performa**: Batasi polling, stop saat tidak relevan
 
 ---
 
-## Fase 5: Integrasi ke MainActivity
-
-### 5.1 Tambah Menu di Navigation Drawer
-- Tambah item "Game FPS" di drawer menu
-- Tambah icon dan string resource
-
-### 5.2 Tambah Panel di Activity Main
-- Include layout panel_game_fps.xml
-- Tambah field dan binding di MainActivity
-- Init controller di onCreate
-
-### 5.3 Tambah di FloatingService
-- Register GameFpsModule di FloatingService
-- Tambah method start/stop/update Game FPS
-- Handle lifecycle service
+## Testing
+- **PoC test:** Jalankan game (PUBG/Mobile Legends/yang gampang), cek logcat FPS. Bandingin kasar sama yang terlihat/harapan.
+- **Stabilitas:** Lari 5-10 menit, perhatikan lag/overheat
+- **Izin flow:** Tes Shizuku mati -> nyala, izin dicabut
 
 ---
 
-## Fase 6: Layout XML
-
-### 6.1 panel_game_fps.xml
-- Checkbox: Aktifkan FPS Game
-- Toggle: Auto-detect aplikasi aktif
-- Input: Package name manual (jika auto off)
-- Section Tampilan: Ukuran, warna value, warna label, show label
-- Section Posisi: Slider, D-Pad, preset, safe area
-- Section Shadow: Toggle, warna, blur, offset
-- Section Background: Toggle, warna, padding, offset, margin, radius
+## Catatan Eksekusi
+- **Prioritas mutlak:** Fase 0-2 dulu. **Jangan** buat XML/panel/Menu sebelum PoC lulus.
+- **Scope minimal:** Buat class util di tempat yang wajar (bisa di package baru terpisah) biar gampang dihapus kalo gagal.
+- **Aman di branch:** Kerja di `feature/shizuku-fps-overlay`, bisa balik ke `main` kapan aja.
+- **Parsing first:** Kumpulin sample output dulu baru coding parser.
 
 ---
 
-## Fase 7: Error Handling & Edge Cases
-
-### 7.1 Shizuku Tidak Aktif
-- Tampilkan pesan: "Shizuku tidak aktif"
-- Berikan tombol untuk buka Shizuku
-
-### 7.2 Izin Shizuku Ditolak
-- Tampilkan pesan: "Izin Shizuku ditolak"
-- Nonaktifkan fitur FPS Game
-
-### 7.3 dumpsys Gagal
-- Handle timeout
-- Handle output kosong
-- Handle error dari Shizuku
-
-### 7.4 Tidak Ada Aplikasi Foreground
-- Jika tidak ada aplikasi game yang aktif
-- Tampilkan "---" atau "N/A"
-
-### 7.5 Kompatibilitas
-- Test di Android 8, 10, 12, 14
-- Handle perbedaan output dumpsys per merk HP
-- Fallback jika fitur tidak tersedia
-
----
-
-## Fase 8: Testing & Debug
-
-### 8.1 Unit Test
-- Test parsing output dumpsys
-- Test hitung FPS dari frame data
-
-### 8.2 Instrumented Test
-- Test integrasi Shizuku
-- Test deteksi aplikasi foreground
-
-### 8.3 Manual Test
-- Test dengan game berbeda (PUBG, Mobile Legends, dll)
-- Test perubahan orientasi
-- Test aplikasi berpindah dari foreground ke background
-- Test performa (tidak bikin HP panas/lambat)
-
----
-
-## Estimasi Komponen Baru
-
-| File | Keterangan |
-|------|------------|
-| `GameFpsConfig.java` | Konfigurasi FPS game |
-| `GameFpsModule.java` | Modul overlay FPS game |
-| `GameFpsPanelController.java` | UI panel FPS game |
-| `GameFpsPositionController.java` | Kontrol posisi FPS game |
-| `panel_game_fps.xml` | Layout panel FPS game |
-
----
-
-## Urutan Pengerjaan
-
-1. Fase 1 (Shizuku setup) — Wajib duluan
-2. Fase 3 (dumpsys reader) — Core logic
-3. Fase 2 (auto-detect) — Membantu user
-4. Fase 4 (modul overlay) — Tampilan
-5. Fase 6 (layout) — UI
-6. Fase 5 (integrasi) — Konek ke app
-7. Fase 7 (error handling) — Stabilitas
-8. Fase 8 (testing) — Kualitas
-
----
-
-## Risiko & Tantangan
-
-- **Output dumpsys berbeda tiap HP** — Perlu penyesuaian parsing
-- **Shizuku tidak selalu aktif** — User harus aktifkan manual
-- **Izin UsageStats sulit didapat** — Harus ke Settings
-- **Performa** — Polling dumpsys terus-menerus bisa bikin HP panas
-- **Kompatibilitas** — Belum tentu jalan di semua versi Android
-
----
-
-## Alternatif Jika Shizuku Tidak Memungkinkan
-
-1. **Game Mode API (Android 12+)** — API resmi tapi terbatas
-2. **AccessibilityService** — Bisa tapi banyak keterbatasan
-3. **Root + dumpsys langsung** — Paling mudah tapi butuh root
-4. **Tanpa FPS game** — Fokus ke fitur lain yang lebih realistis
+## Risiko
+- Output `dumpsys gfxinfo` beda tiap OEM/Android version
+- Butuh Shizuku aktif + izin user
+- Pola parsing bisa berubah
+- Polling bisa bikin beban, perlu disesuaikan
+- Tidak semua game kompatibel (jarang, tapi mungkin)
