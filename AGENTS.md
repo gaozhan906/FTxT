@@ -52,9 +52,9 @@ Entry dicatat di **versi berjalan** (bukan entry baru per file) — CHANGELOG ha
 **format `yyyy/MM/dd HH:mm WITA` di judul:** empat digit tahun (yyyy), bulan (MM), tanggal (dd), jam (HH), menit (mm) — 24 jam, memakai WITA (Asia/Makassar), dengan label zona `WITA`. Dapatkan via `date +"%Y/%m/%d %H:%M WITA"` (pastikan TZ=Asia/Makassar).
 
 **STATUS** (salah satu):
-- `***ONGOING***` — entry versi berjalan sedang dikerjakan.
-- `***PUSH***` — saat commit + push (tanpa tag).
-- `***RELEASE***` — saat commit + tag (bisa berawal dari PUSH lalu di-upgrade).
+- `***ONGOING***` — entry versi berjalan sedang dikerjakan. Status ini **tetap dipakai** meskipun entry sudah di-push, selama iterasi berikutnya masih dicatat di entry yang sama.
+- `***PUSH***` — dipakai saat entry berjalan **ditutup** untuk memulai entry baru atas perintah eksplisit, melalui commit + push tanpa tag.
+- `***RELEASE***` — saat commit + tag; satu-satunya status yang **dipastikan langsung menutup** entry berjalan dan memulai entry baru.
 
 ### 2.1b Kriteria section
 
@@ -83,6 +83,7 @@ Waktu yang dicatat di setiap entry adalah **waktu di judul entry**, yaitu waktu 
 
 - **versionCode naik +1** setiap kali entry `***ONGOING***` diperbarui (ada perubahan pada iterasi tersebut).
 - **versionCode naik +1 lagi** setiap kali status judul berubah menjadi `***PUSH***` / `***RELEASE***`.
+- Push yang tidak menutup entry **tidak** mengubah status judul; versionCode hanya naik jika entry memang diperbarui pada iterasi tersebut.
 - Yang dinaikkan **hanya versionCode**; versionName diatur aturannya sendiri (lihat § 4).
 
 ### 2.4 Isi entry (untuk pembaca user, bukan riwayat kerja)
@@ -144,18 +145,25 @@ Perubahan pada dokumen **hanya dilakukan di file root** (`README.md`, `CHANGELOG
 
 ### Commit (hanya jika diperintah)
 1. `git add -A && git commit -m "vX.X.X deskripsi"`.
-2. Status judul **tetap** `***ONGOING***` — kecuali perintah mencakup push/tag (lihat di bawah).
+2. Status judul **tetap** `***ONGOING***` — kecuali perintah mencakup penutupan entry atau tag (lihat di bawah).
 3. **JANGAN push / tag** jika tidak diperintah.
 
 ### Push (commit + push)
-1. Sebelum commit: ubah status judul → `***PUSH***`, **naikkan versionCode +1** (§ 2.3b), perbarui tanggal & jam WITA.
-2. `git commit` mencakup perubahan status, lalu `git push`.
+1. Sebelum commit: status judul **tetap `***ONGOING***`** karena entry masih berjalan untuk iterasi berikutnya; **naikkan versionCode +1** bila entry diperbarui pada iterasi ini (§ 2.3b).
+2. `git commit` lalu `git push`.
+3. Entry **tetap** menjadi entry berjalan — iterasi berikutnya tetap dicatat di entry ini.
 
 ### Tag (commit + tag)
 1. Sebelum commit: ubah status judul → `***RELEASE***`, **naikkan versionCode +1** (§ 2.3b), perbarui tanggal & jam WITA.
-2. `git commit` mencakup perubahan status, lalu `git tag vX.X.X`.
-3. `***RELEASE***` bisa berawal dari `***PUSH***` lalu di-upgrade saat tag ditambahkan.
+2. `git commit` mencakup perubahan status, lalu `git tag vX.X.X` (dan push bila diperintah).
+3. Entry berjalan **langsung ditutup**; segera buat entry baru (`***ONGOING***`) di posisinya.
 
-### Setelah status PUSH/RELEASE
-1. **Segera** buat entry CHANGELOG baru (teratas, `***ONGOING***`) setelah selesai push/tag. Ikuti format judul entry yang ada di `CHANGELOG.md` (`# [major.minor.patch] yyyy/MM/dd HH:mm WITA versionCode ***ONGOING***`). Untuk **versionName** cukup isi `[x.xx.x]` saat entry baru dibuat; versionName akan disesuaikan saat sudah ada perubahan yang dilakukan.
+### Tutup entry (hanya jika diperintah)
+1. Sebelum commit: ubah status judul entry berjalan → `***PUSH***`, **naikkan versionCode +1** (§ 2.3b), perbarui tanggal & jam WITA.
+2. `git commit` mencakup perubahan status, lalu `git push`.
+3. **Segera** buat entry CHANGELOG baru (teratas, `***ONGOING***`). Ikuti format judul entry yang ada di `CHANGELOG.md` (`# [major.minor.patch] yyyy/MM/dd HH:mm WITA versionCode ***ONGOING***`); versionName cukup isi `[x.xx.x]` saat entry baru dibuat dan disesuaikan ketika sudah ada perubahan.
+4. Kembali ke Edit Biasa.
+
+### Setelah status RELEASE
+1. Entry `***RELEASE***` sudah ditutup otomatis; **segera** buat entry CHANGELOG baru (teratas, `***ONGOING***`) dengan format judul yang sama seperti di atas.
 2. Kembali ke Edit Biasa.
