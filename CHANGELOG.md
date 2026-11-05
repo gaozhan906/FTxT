@@ -1,4 +1,4 @@
-# [4.96.0] 2026/11/06 06:40 WITA 346 ***ONGOING***
+# [4.96.0] 2026/11/06 07:36 WITA 347 ***ONGOING***
 ### 🔖 Deskripsi
 > Rilis ini memusatkan tab Monitor Network pada satu layar Pemakaian data yang lebih lengkap, disertai kontrol kecepatan overlay yang lebih kaya, animasi dan peringatan pada Battery Strip, serta pemantau FPS game berbasis Shizuku.
 
