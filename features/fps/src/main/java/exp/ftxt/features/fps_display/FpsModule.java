@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
 import android.util.DisplayMetrics;
@@ -27,6 +28,11 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
     private Context context;
     private SharedPreferences prefs;
     private boolean running = false;
+    private boolean gameMode = false;
+    private boolean gameActive = false;
+    private float gameFps = 0;
+    private String gamePackage = null;
+    private final java.util.HashMap<String, Drawable> iconCache = new java.util.HashMap<>();
     private Choreographer choreographer;
     private long lastDisplayTime = 0;
     private float fpsValue = 0;
@@ -66,6 +72,7 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
         if (running) return;
         wm = windowManager;
         context = ctx;
+        gameMode = prefs != null && prefs.getBoolean("game_fps_overlay_on", false);
 
         DisplayMetrics metrics = new DisplayMetrics();
         wm.getDefaultDisplay().getRealMetrics(metrics);
@@ -116,6 +123,7 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
     @Override
     public void stop() {
         running = false;
+        gameMode = false;
         if (choreographer != null) {
             choreographer.removeFrameCallback(frameCallback);
             choreographer = null;
@@ -136,6 +144,7 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
     public void updateSize(float size) {
         FpsConfig.size = size;
         if (view != null) view.setTextSize(size);
+        applyGameIcon();
     }
 
     @Override
@@ -148,6 +157,56 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
     public void updateLabelColor(int color) {
         FpsConfig.labelColor = color;
         updateDisplay();
+    }
+
+    public void setGameFps(float fps, String pkg) {
+        if (fps <= 0) return;
+        if (pkg != null) gamePackage = pkg;
+        gameFps = fps;
+        gameActive = true;
+        gameMode = true;
+        updateDisplay();
+    }
+
+    public void setGameActive(boolean active, String pkg) {
+        if (active) {
+            if (pkg != null) gamePackage = pkg;
+            gameActive = true;
+            gameMode = true;
+        } else {
+            gameActive = false;
+            gamePackage = null;
+        }
+        updateDisplay();
+    }
+
+    private Drawable gameIcon(String pkg) {
+        if (pkg == null) return null;
+        Drawable cached = iconCache.get(pkg);
+        if (cached != null) return cached;
+        if (context == null) return null;
+        try {
+            Drawable icon = context.getPackageManager().getApplicationIcon(pkg);
+            iconCache.put(pkg, icon);
+            return icon;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private void applyGameIcon() {
+        if (view == null) return;
+        Drawable icon = gameActive ? gameIcon(gamePackage) : null;
+        if (icon == null) {
+            view.setCompoundDrawables(null, null, null, null);
+            view.setCompoundDrawablePadding(0);
+            return;
+        }
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        int px = Math.max(1, (int) (FpsConfig.size * dm.scaledDensity * 1.2f));
+        icon.setBounds(0, 0, px, px);
+        view.setCompoundDrawables(icon, null, null, null);
+        view.setCompoundDrawablePadding((int) (4 * dm.density));
     }
 
     @Override
@@ -187,12 +246,15 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
 
     public void updateDisplay() {
         if (view != null) {
+            float value = gameActive ? gameFps : fpsValue;
+            int valueColor = gameActive ? FpsConfig.gameColor : FpsConfig.color;
+            applyGameIcon();
             if (FpsConfig.showOnlyValue) {
-                view.setTextColor(FpsConfig.color);
-                view.setText(String.format("%.1f", fpsValue));
+                view.setTextColor(valueColor);
+                view.setText(String.format("%.1f", value));
             } else {
-                view.setTextColor(FpsConfig.color);
-                String text = String.format("%.1f FPS", fpsValue);
+                view.setTextColor(valueColor);
+                String text = String.format("%.1f FPS", value);
                 SpannableString spannable = new SpannableString(text);
                 int labelStart = text.indexOf(" FPS");
                 if (labelStart > 0) {
@@ -423,7 +485,7 @@ public class FpsModule implements OverlayModule, SmartPanelTarget {
                 lastDisplayTime = now;
                 updateDisplay();
             }
-            if (running && FpsConfig.enabled) {
+            if (running && (FpsConfig.enabled || gameMode || gameActive)) {
                 choreographer.postFrameCallback(frameCallback);
             }
         }

@@ -1,4 +1,4 @@
-package exp.ftxt.features.gamefps.poc;
+package exp.ftxt.features.gamefps.reader;
 
 import android.content.pm.PackageManager;
 import android.util.Log;
@@ -6,7 +6,7 @@ import android.util.Log;
 import rikka.shizuku.Shizuku;
 
 public class ShizukuHelper {
-    private static final String TAG = "GameFpsPoC";
+    private static final String TAG = "GameFpsReader";
 
     public static boolean isBinderAlive() {
         try {

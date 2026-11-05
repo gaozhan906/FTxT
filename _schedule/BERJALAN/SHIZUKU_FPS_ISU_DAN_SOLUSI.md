@@ -1,8 +1,8 @@
 # Shizuku FPS — Daftar Isu & Diskusi Solusi
 
-**Status:** Diskusi solusi (belum ada perubahan kode)
+**Status:** Seluruh isu sudah diimplementasikan (menunggu verifikasi build)
 **Konteks kode:** `main` di `f5a3b60` (`v4.96.0 Shizuku FPS`)
-**Dokumen terkait:** `_schedule/RENCANA/SHIZUKU_FPS_READER.md`
+**Dokumen terkait:** `_schedule/SELESAI/SHIZUKU_FPS_READER.md`
 
 Dokumen ini mencatat temuan yang perlu dibahas sebelum fitur Game FPS dianggap final. Solusi dibahas satu per satu; bagian **Keputusan** diisi setelah tiap isu disepakati. Nomor baris dapat bergeser setelah kode diubah.
 
@@ -21,7 +21,7 @@ Urutan pembahasan mengikuti prioritas: P0 (keamanan/kestabilan), P1 (perilaku fi
 ## I-01 — Input package manual masuk mentah ke perintah shell
 
 **Prioritas:** P0
-**Status:** Belum dibahas
+**Status:** Disepakati
 **Lokasi:**
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:301-319` (input manual)
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:414` dan `:459-465` (target disimpan)
@@ -43,14 +43,20 @@ Teks berbahaya atau salah ketik dapat menjadi bagian perintah yang dijalankan de
 **Yang perlu diputuskan:**
 Apakah validasi package cukup, atau jalur `exec(String)` juga ditutup total. Opsi 1 + 2 + 4 menutup masalah tanpa mengubah banyak kode.
 
-**Keputusan:** _(diisi setelah diskusi)_
+**Keputusan:** Diimplementasikan:
+- Validasi package sebelum disimpan: cek keberadaan lewat `PackageManager.getPackageInfo` dan tolak karakter di luar `[A-Za-z0-9._]`; tampilkan pesan kesalahan.
+- Perintah `gfxinfo` wajib memakai `ShizukuShell.execArgs(new String[]{"dumpsys", "gfxinfo", pkg}, timeout)`; jalur string yang memuat data user dihapus.
+- `ShizukuShell.exec(String)` dipertahankan hanya untuk perintah internal tetap (string konstanta), bukan untuk data dari user.
+- Target tersimpan dibersihkan jika package sudah tidak terpasang.
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-02 — Deteksi foreground fail-open dan jendela waktu 60 detik
 
 **Prioritas:** P0
-**Status:** Sebagian disepakati (lihat I-08)
+**Status:** Disepakati
 **Lokasi:** `app/src/main/java/exp/ftxt/features/gamefps/poc/GameFpsPoC.java:302-344`
 
 **Temuan:**
@@ -68,14 +74,22 @@ Pemantauan dan overlay tetap aktif saat game tidak di depan: boros baterai, angk
 **Yang perlu diputuskan:**
 Perilaku `isTargetForeground()` saat deteksi gagal: fail-closed, tetap memakai target terakhir dengan batas waktu, atau fallback ke detektor Shizuku.
 
-**Keputusan:** Izin usage access bukan syarat mutlak; jalur utama tetap `UsageStatsManager`, dengan fallback deteksi lewat Shizuku (lihat I-08). Fungsi `isTargetForeground()` tetap harus diperbaiki agar tidak menganggap semua package berada di depan saat deteksi gagal.
+**Keputusan:** Disepakati:
+- Izin usage access bukan syarat mutlak; jalur utama tetap `UsageStatsManager`, dengan fallback deteksi lewat Shizuku (lihat I-08).
+- Urutan deteksi: `UsageStatsManager` dengan cache singkat (~1 detik) → fallback Shizuku `dumpsys activity top`/`dumpsys window` via `execArgs` → jika keduanya gagal, `isTargetForeground()` mengembalikan `false` (fail-closed).
+- Event foreground dicari pada jendela lebih panjang (mis. 10 menit) atau dibandingkan dengan `queryUsageStats`; event terakhir tidak ditemukan berarti tidak terdeteksi, bukan dianggap foreground.
+- `null`, exception, timeout, atau izin yang belum ada tidak pernah dianggap foreground.
+- Saat target tidak terdeteksi: reset cache frame, gunakan interval idle, dan tampilkan status jelas; overlay kembali ke FPS aplikasi normal.
+- Detektor yang sama menjadi dasar mode Otomatis (I-08).
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-03 — Service bisa hidup lagi meski toggle fitur dimatikan
 
 **Prioritas:** P1
-**Status:** Belum dibahas
+**Status:** Disepakati
 **Lokasi:**
 - `app/src/main/java/exp/ftxt/features/gamefps/GameFpsService.java:117` (retry dimulai di `onCreate`)
 - `app/src/main/java/exp/ftxt/features/gamefps/GameFpsService.java:122-133` (`onStartCommand`)
@@ -95,14 +109,20 @@ Overlay dan polling bisa muncul kembali tanpa sepengetahuan user, sehingga membi
 **Yang perlu diputuskan:**
 Apakah fitur memang ingin tetap hidup setelah proses mati (mis. demi pengalaman game), atau cukup berhenti dan menunggu user menyalakan lagi.
 
-**Keputusan:** _(diisi setelah diskusi)_
+**Keputusan:** Disepakati:
+- Tambah `shouldRun()` yang mengecek pref `game_fps_overlay_on` aktif dan target tersedia; cakupan mode Otomatis mengikuti I-08. Status Shizuku tidak dicek di sini karena ditangani `retryRunnable`.
+- Panggil `shouldRun()` di `onCreate` sebelum retry dipasang, di `onStartCommand`, dan di awal `retryRunnable`. Jika `false`, panggil `stopSelf()`; `onDestroy` membersihkan sesi shell dan overlay.
+- `START_STICKY` dipertahankan agar service pulih saat proses dibunuh selama toggle aktif, tetapi recreate langsung berhenti bila toggle mati.
+- Saat toggle dimatikan, `stop()` tetap dipanggil dan retry tidak boleh menyalakan ulang PoC.
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-04 — Overlay Game FPS masih terpisah dan hardcoded
 
 **Prioritas:** P1
-**Status:** Rencana disepakati, belum dikerjakan
+**Status:** Disepakati
 **Lokasi:** `app/src/main/java/exp/ftxt/features/gamefps/GameFpsService.java:200-260`
 
 **Temuan:**
@@ -157,7 +177,7 @@ Pengaturan tidak bertahan setelah service dibuat ulang, posisi bisa keluar layar
 ## I-05 — Arsitektur ganda dan penamaan masih PoC
 
 **Prioritas:** P2
-**Status:** Belum dibahas
+**Status:** Disepakati
 **Lokasi:**
 - `features/fps/src/main/java/exp/ftxt/features/fps_display/FpsModule.java` (FPS aplikasi sendiri)
 - `app/src/main/java/exp/ftxt/features/gamefps/poc/` (FPS game via Shizuku)
@@ -177,14 +197,21 @@ Perawatan menjadi lebih berat, istilah "FPS" bisa membingungkan, dan kualitas ko
 **Yang perlu diputuskan:**
 Apakah fitur ini akan dianggap fitur stabil pada rilis berikutnya, atau tetap eksperimental untuk sementara.
 
-**Keputusan:** _(diisi setelah diskusi)_
+**Keputusan:** Disepakati:
+- Fitur dianggap fitur stabil, bukan eksperimental; tidak ada toggle eksperimental tersembunyi.
+- Tanggung jawab dipisah: mesin pembaca Shizuku/parser tetap package sendiri; overlay, config, dan panel menyatu di `FpsModule` mengikuti I-04.
+- Rename `features/gamefps/poc` menjadi `features/gamefps/reader` dan `GameFpsPoC` menjadi `GameFpsReader`; `ShizukuShell`, `GfxInfoParser`, dan `SurfaceFlingerFps` tetap. Tanpa perubahan perilaku.
+- `GameFpsService` tetap di module `app` karena butuh foreground service, manifest, dan `ShizukuProvider`.
+- Batasan kompatibilitas perangkat didokumentasikan lewat I-06.
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-06 — Beban main thread dan kompatibilitas perangkat
 
 **Prioritas:** P2
-**Status:** Belum dibahas
+**Status:** Disepakati
 **Lokasi:**
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:467-483`
 - `app/src/main/java/exp/ftxt/ui/GameAppListAdapter.java:38-46`
@@ -207,18 +234,25 @@ Panel bisa tersendat saat membuka daftar aplikasi di perangkat dengan banyak apl
 **Yang perlu diputuskan:**
 Sejauh mana dukungan perangkat yang ingin diklaim, dan apakah optimasi daftar aplikasi masuk sebelum rilis atau setelah fitur stabil.
 
-**Keputusan:** _(diisi setelah diskusi)_
+**Keputusan:** Disepakati:
+- Resolusi label dan sorting daftar aplikasi dipindahkan ke executor background; adapter hanya menerima data siap. Label/ikon di-cache per package.
+- Hasil `SurfaceFlinger --list` di-cache dan tidak dipanggil ulang selama layer masih valid; polling memakai interval aktif/idle yang ada, dengan backoff saat gagal berulang.
+- Parser memakai fallback berlapis (SurfaceFlinger → `gfxinfo` total frame → `framestats`); setiap kegagalan mencatat potongan output dan versi Android ke `GameFpsLog` untuk diagnosis.
+- Klaim dukungan: teruji di perangkat tes; OEM/versi Android lain bersifat best-effort, bukan jaminan. Status kegagalan ditampilkan agar bisa dilaporkan user.
+- Optimasi daftar aplikasi masuk sebelum rilis; penyesuaian parser per OEM menyusul setelah ada sample perangkat lain.
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-07 — Alur izin dan onboarding Shizuku
 
 **Prioritas:** P2
-**Status:** Belum dibahas
+**Status:** Disepakati
 **Lokasi:**
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:360-368`
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:443-454`
-- `app/src/main/java/exp/ftxt/features/gamefps/poc/ShizukuHelper.java:11-40`
+- `app/src/main/java/exp/ftxt/features/gamefps/reader/ShizukuHelper.java:11-40`
 - `app/src/main/AndroidManifest.xml:16-21` (queries)
 
 **Temuan:**
@@ -235,14 +269,24 @@ User bisa menyalakan toggle tetapi tidak melihat apa pun karena salah satu prasy
 **Yang perlu diputuskan:**
 Apakah izin usage access dijadikan prasyarat wajib (terkait I-02), dan seberapa banyak bantuan yang ditampilkan di panel.
 
-**Keputusan:** _(diisi setelah diskusi)_
+**Keputusan:** Disepakati:
+- Panel Game FPS hanya menampilkan ringkasan status prasyarat: Shizuku terpasang/aktif, izin Shizuku, izin overlay, dan izin usage access (opsional), dengan arahan ke Konfigurasi.
+- Pengaturan izin dipusatkan di Konfigurasi > Akses Izin: switch overlay, notifikasi, baterai, akses penggunaan, dan tombol Atur untuk izin Shizuku.
+- Tidak ada tombol aksi izin di panel Game FPS.
+- Toggle fitur hanya bisa dinyalakan jika izin overlay dan Shizuku aktif/izin terpenuhi. Usage access tidak wajib, konsisten dengan I-02.
+- Jika prasyarat belum lengkap, panel menampilkan langkah berikutnya, bukan sekadar teks status.
+- Mode Otomatis menampilkan status "Deteksi otomatis tidak tersedia" bila usage access dan fallback Shizuku gagal; mode Manual tetap bisa dipakai.
+- Tidak ada dialog onboarding terpisah; pengaturan izin berada di Konfigurasi dan panel Game FPS hanya menampilkan ringkasan.
+
+Implementasi menunggu perintah terpisah.
 
 ---
 
 ## I-08 — Mode otomatis mengikuti aplikasi depan
 
 **Prioritas:** P1
-**Status:** Rencana disepakati, belum dikerjakan
+**Status:** Disepakati
+**Asal:** Menyerap item Fase 3.5 rencana `_schedule/SELESAI/SHIZUKU_FPS_READER.md` (auto-detect foreground).
 **Lokasi terkait:**
 - `app/src/main/java/exp/ftxt/features/gamefps/poc/GameFpsPoC.java`
 - `app/src/main/java/exp/ftxt/features/gamefps/GameFpsService.java`
@@ -262,6 +306,7 @@ Menambahkan mode target **Otomatis** agar FPS mengikuti aplikasi yang sedang ber
 - Jika chat membuka activity penuh, chat menjadi aktivitas teratas. Mode otomatis akan mengikuti chat sebagai aplikasi depan (bukan game) karena mode ini memang mendeteksi aplikasi apa pun. Tidak ada opsi Kunci Target; mode Manual tetap tersedia bagi user yang ingin mengunci target.
 - Warna indikator pada mode otomatis berarti "FPS dari sumber Shizuku sedang tampil", bukan khusus kategori game. Angka memakai `FpsConfig.gameColor`; label tetap `FpsConfig.labelColor`. Ikon aplikasi mengikuti package yang sedang dibaca dan hilang saat fallback ke FPS aplikasi normal. Saat fallback, angka kembali memakai `FpsConfig.color`.
 - Izin usage access tidak dijadikan syarat mutlak: jika tidak ada, coba jalur Shizuku. Jika keduanya gagal, mode otomatis tidak tersedia dan panel menampilkan status; mode manual tetap bisa dipakai.
+- Item Fase 3.5 rencana awal (auto-detect foreground) disatukan ke isu ini; tidak dibuat isu terpisah.
 
 **Perilaku yang diharapkan:**
 - Game di depan, tanpa aplikasi lain: `[icon game] FPS game`, angka warna indikator.
@@ -285,7 +330,7 @@ Menambahkan mode target **Otomatis** agar FPS mengikuti aplikasi yang sedang ber
 ## I-09 — Susunan panel Game FPS terlalu padat
 
 **Prioritas:** P2
-**Status:** Arahan disepakati, belum dikerjakan
+**Status:** Disepakati
 **Lokasi:**
 - `app/src/main/res/layout/panel_fps.xml:658-786` (sub-tab Game FPS)
 - `app/src/main/java/exp/ftxt/ui/FpsPanelController.java:214-222` (binding view)
@@ -315,13 +360,13 @@ Target, mode aktif, dan kontrol utama sebaiknya terlihat sebelum daftar aplikasi
 4. Dialog log — ganti aksi tunggal `Tutup` menjadi `Simpan` + `Tutup`; `Simpan` memakai `GameFpsLog.save(activity)` dan menampilkan hasilnya lewat toast.
 5. Hapus referensi ke `btnFpsGameViewLog`/`btnFpsGameSaveLog`; gunakan satu id tombol `Log` di header.
 
-**Yang belum diputuskan:**
-- Apakah indikator memakai teks saja atau badge/background.
-- Apakah teks bantuan "Pilih game, lalu buka game-nya..." tetap dipertahankan atau diringkas.
-- Susunan final saat mode Otomatis ditambahkan, mis. apakah pencarian dan daftar manual disembunyikan.
-- Penempatan tombol Log jika header terlalu sempit di layar kecil.
+**Keputusan detail:**
+- Indikator memakai teks saja: `● Aktif` (hijau) / `● Nonaktif` (abu-abu), tanpa badge/background.
+- Teks bantuan diringkas menjadi satu baris, mis. "Pilih game lalu buka game-nya."
+- Pemilih mode Otomatis/Manual diletakkan di atas daftar. Saat Otomatis, pencarian dan daftar manual disembunyikan; saat Manual, keduanya tampil dan target tersimpan tetap ditampilkan.
+- Tombol `Log` dan `Refresh` tetap text button di header dengan judul `weight=1`; di layar sempit cukup teks singkat, tanpa overflow.
 
-**Keputusan:** Arahan di atas disepakati untuk direncanakan; implementasi menunggu perintah terpisah.
+**Keputusan:** Arahan dan detail di atas disepakati; implementasi menunggu perintah terpisah.
 
 ---
 

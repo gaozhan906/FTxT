@@ -15,6 +15,7 @@ public class FpsConfig {
     public static boolean safeArea = true;
     public static boolean showOnlyValue = false;
     public static int labelColor = Color.CYAN;
+    public static int gameColor = 0xFFFFB300;
     public static float posX = 0.05f;
     public static float posY = 0.05f;
     public static float updateInterval = 1f;

@@ -1,4 +1,4 @@
-package exp.ftxt.features.gamefps.poc;
+package exp.ftxt.features.gamefps.reader;
 
 import android.util.Log;
 
@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GfxInfoParser {
-    private static final String TAG = "GameFpsPoC";
+    private static final String TAG = "GameFpsReader";
 
     public static class FpsResult {
         public boolean parsed;

@@ -58,6 +58,7 @@ public final class ConfigLoader {
         FpsConfig.touchPassthrough = prefs.getBoolean("fps_lock", true);
         FpsConfig.showOnlyValue = prefs.getBoolean("fps_show_only_value", false);
         FpsConfig.labelColor = prefs.getInt("fps_label_color", Color.CYAN);
+        FpsConfig.gameColor = prefs.getInt("fps_game_color", 0xFFFFB300);
         FpsConfig.updateInterval = readFloatPref(prefs, "fps_update_interval", 1f);
         FpsConfig.bg.enabled = prefs.getBoolean("fps_bg_enabled", false);
         FpsConfig.bg.color = prefs.getInt("fps_bg_color", 0xCC000000);

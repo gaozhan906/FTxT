@@ -1,4 +1,4 @@
-package exp.ftxt.features.gamefps.poc;
+package exp.ftxt.features.gamefps.reader;
 
 import android.util.Log;
 
@@ -16,35 +16,16 @@ import rikka.shizuku.Shizuku;
 import rikka.shizuku.ShizukuRemoteProcess;
 
 public class ShizukuShell {
-    private static final String TAG = "GameFpsPoC";
+    private static final String TAG = "GameFpsReader";
 
     private static final Object SESSION_LOCK = new Object();
     private static ShellSession session;
-
-    private static String[] splitCommand(String cmd) {
-        String[] parts = cmd.trim().split("\\s+");
-        String[] out = new String[parts.length];
-        int n = 0;
-        for (String part : parts) {
-            if (!part.isEmpty()) out[n++] = part;
-        }
-        if (n == parts.length) return out;
-        String[] trimmed = new String[n];
-        System.arraycopy(out, 0, trimmed, 0, n);
-        return trimmed;
-    }
 
     public static class Result {
         public boolean ok;
         public String output;
         public String error;
         public int exitCode = -1;
-    }
-
-    public static Result exec(String cmd, long timeoutMs) {
-        Result viaSession = execViaSession(cmd, timeoutMs);
-        if (viaSession != null) return viaSession;
-        return execOnce(splitCommand(cmd), cmd, timeoutMs);
     }
 
     public static Result execArgs(String[] argv, long timeoutMs) {

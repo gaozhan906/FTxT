@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import exp.ftxt.R;
@@ -38,11 +37,6 @@ public class GameAppListAdapter extends RecyclerView.Adapter<GameAppListAdapter.
         apps.clear();
         if (list != null) {
             apps.addAll(list);
-            Collections.sort(apps, (a, b) -> {
-                String na = String.valueOf(pm.getApplicationLabel(a));
-                String nb = String.valueOf(pm.getApplicationLabel(b));
-                return na.compareToIgnoreCase(nb);
-            });
         }
         notifyDataSetChanged();
     }

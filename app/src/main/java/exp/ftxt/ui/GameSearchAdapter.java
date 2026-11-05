@@ -27,7 +27,7 @@ public class GameSearchAdapter extends BaseAdapter implements Filterable {
         public final String label;
         public final String pkg;
 
-        Entry(ApplicationInfo info, String label) {
+        public Entry(ApplicationInfo info, String label) {
             this.info = info;
             this.label = label;
             this.pkg = info.packageName;
@@ -65,6 +65,12 @@ public class GameSearchAdapter extends BaseAdapter implements Filterable {
             }
             Collections.sort(all, (a, b) -> a.label.compareToIgnoreCase(b.label));
         }
+        filtered = new ArrayList<>();
+        notifyDataSetChanged();
+    }
+
+    public void setEntries(List<Entry> entries) {
+        all = entries == null ? new ArrayList<>() : new ArrayList<>(entries);
         filtered = new ArrayList<>();
         notifyDataSetChanged();
     }

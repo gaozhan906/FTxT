@@ -7,19 +7,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.provider.Settings;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.TextView;
 
 import androidx.core.app.NotificationCompat;
 
@@ -27,12 +20,14 @@ import java.util.Locale;
 
 import exp.ftxt.MainActivity;
 import exp.ftxt.R;
-import exp.ftxt.features.gamefps.poc.GameFpsLog;
-import exp.ftxt.features.gamefps.poc.GameFpsPoC;
-import exp.ftxt.features.gamefps.poc.ShizukuHelper;
+import exp.ftxt.core.FloatingService;
+import exp.ftxt.features.fps_display.FpsConfig;
+import exp.ftxt.features.gamefps.reader.GameFpsLog;
+import exp.ftxt.features.gamefps.reader.GameFpsReader;
+import exp.ftxt.features.gamefps.reader.ShizukuHelper;
 
 public class GameFpsService extends Service {
-    private static final String TAG = "GameFpsPoC";
+    private static final String TAG = "GameFpsService";
     private static final String CHANNEL_ID = "game_fps_channel";
     private static final int NOTIF_ID = 2;
 
@@ -45,13 +40,13 @@ public class GameFpsService extends Service {
     private static volatile Listener listener;
     private static volatile float lastFps = -1f;
     private static volatile String lastStatus = "";
+    private static volatile String lastTargetPackage = null;
 
-    private GameFpsPoC poc;
+    private GameFpsReader poc;
     private Handler handler;
-    private WindowManager windowManager;
-    private TextView overlayView;
-    private WindowManager.LayoutParams overlayParams;
     private String targetName = "";
+    private String lastLabelPackage = null;
+    private boolean gameActive = false;
 
     public static boolean isRunning() {
         return instance != null;
@@ -63,6 +58,10 @@ public class GameFpsService extends Service {
 
     public static String getLastStatus() {
         return lastStatus;
+    }
+
+    public static String getLastTargetPackage() {
+        return lastTargetPackage;
     }
 
     public static void setListener(Listener l) {
@@ -99,32 +98,54 @@ public class GameFpsService extends Service {
             Log.e(TAG, "startForeground failed", t);
         }
 
-        poc = new GameFpsPoC(this);
-        targetName = GameFpsPoC.getAppName(this, currentTarget());
-        poc.setListener(new GameFpsPoC.Listener() {
+        if (!shouldRun()) {
+            GameFpsLog.add("SERVICE skip: fitur nonaktif atau target tidak valid");
+            stopSelf();
+            return;
+        }
+
+        poc = new GameFpsReader(this);
+        targetName = GameFpsReader.getAppName(this, currentTarget());
+        poc.setListener(new GameFpsReader.Listener() {
             @Override
-            public void onFps(float fps, String source) {
-                publishFps(fps);
+            public void onFps(float fps, String source, String packageName) {
+                publishFps(fps, packageName);
             }
 
             @Override
             public void onStatus(String message) {
                 publishStatus(message);
             }
+
+            @Override
+            public void onUnavailable(boolean holdLast) {
+                if (holdLast) {
+                    scheduleFallback();
+                } else {
+                    runFallback();
+                }
+            }
         });
 
-        ensureOverlay();
+        ensureGameModule();
         handler.post(retryRunnable);
-        GameFpsLog.add("SERVICE start target=" + currentTarget());
+        GameFpsLog.add("SERVICE start target=" + currentTarget()
+                + " mode=" + (GameFpsReader.isAutoMode(this) ? "auto" : "manual"));
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String target = currentTarget();
-        if (poc != null && target != null && !target.isEmpty()
-                && !target.equals(poc.getTargetPackage())) {
-            poc.setTargetPackage(target);
-            targetName = GameFpsPoC.getAppName(this, target);
+        if (!shouldRun()) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        if (poc != null && !GameFpsReader.isAutoMode(this)) {
+            String target = currentTarget();
+            if (target != null && !target.isEmpty()
+                    && !target.equals(poc.getTargetPackage())) {
+                poc.setTargetPackage(target);
+                targetName = GameFpsReader.getAppName(this, target);
+            }
         }
         if (poc != null && !poc.isRunning()
                 && ShizukuHelper.isBinderAlive() && ShizukuHelper.hasPermission()) {
@@ -141,12 +162,15 @@ public class GameFpsService extends Service {
             poc.shutdown();
             poc = null;
         }
-        exp.ftxt.features.gamefps.poc.ShizukuShell.closeSession();
-        removeOverlay();
+        exp.ftxt.features.gamefps.reader.ShizukuShell.closeSession();
+        FloatingService.setGameActive(false, null);
+        FloatingService.stopGameFpsModuleIfIdle();
         if (listener != null) listener.onStatus("Dihentikan");
         instance = null;
+        gameActive = false;
         lastFps = -1f;
         lastStatus = "";
+        lastTargetPackage = null;
         try {
             stopForeground(true);
         } catch (Throwable ignored) {}
@@ -161,8 +185,11 @@ public class GameFpsService extends Service {
     private final Runnable retryRunnable = new Runnable() {
         @Override
         public void run() {
-            if (poc == null) return;
-            if (!poc.isRunning()) {
+            if (!shouldRun()) {
+                stopSelf();
+                return;
+            }
+            if (poc != null && !poc.isRunning()) {
                 if (ShizukuHelper.isBinderAlive() && ShizukuHelper.hasPermission()) {
                     poc.start();
                 } else {
@@ -175,110 +202,81 @@ public class GameFpsService extends Service {
         }
     };
 
+    private final Runnable fallbackRunnable = () -> runFallback();
+
+    private boolean shouldRun() {
+        SharedPreferences sp = getSharedPreferences(GameFpsReader.PREFS, MODE_PRIVATE);
+        if (!sp.getBoolean(GameFpsReader.PREF_ENABLED, false)) return false;
+        if (GameFpsReader.isAutoMode(this)) return true;
+        String target = sp.getString(GameFpsReader.PREF_TARGET, "");
+        return GameFpsReader.isValidPackage(this, target);
+    }
+
     private String currentTarget() {
         try {
-            return getSharedPreferences("ftxt_prefs", MODE_PRIVATE)
-                    .getString("game_fps_poc_target", "");
+            return getSharedPreferences(GameFpsReader.PREFS, MODE_PRIVATE)
+                    .getString(GameFpsReader.PREF_TARGET, "");
         } catch (Throwable t) {
             return "";
         }
     }
 
-    private void publishFps(float fps) {
+    private void ensureGameModule() {
+        try {
+            if (FloatingService.instance == null) {
+                Intent intent = new Intent(this, FloatingService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent);
+                } else {
+                    startService(intent);
+                }
+            } else {
+                FloatingService.startModule(FloatingService.fpsModule());
+            }
+        } catch (Throwable t) {
+            GameFpsLog.add("SERVICE gagal menyiapkan overlay: " + t);
+        }
+    }
+
+    private void scheduleFallback() {
+        if (handler == null) return;
+        handler.removeCallbacks(fallbackRunnable);
+        handler.postDelayed(fallbackRunnable, 2000);
+    }
+
+    private void cancelFallback() {
+        if (handler != null) handler.removeCallbacks(fallbackRunnable);
+    }
+
+    private void runFallback() {
+        if (!gameActive) return;
+        gameActive = false;
+        lastFps = -1f;
+        lastTargetPackage = null;
+        FloatingService.setGameActive(false, null);
+        updateNotification(lastStatus == null || lastStatus.isEmpty()
+                ? "Menunggu aplikasi depan..." : lastStatus);
+    }
+
+    private void publishFps(float fps, String pkg) {
+        cancelFallback();
+        gameActive = true;
         lastFps = fps;
-        String text = String.format(Locale.US, "FPS %.1f", fps);
-        updateOverlay(targetName.isEmpty() ? text : text + "\n" + targetName);
+        lastTargetPackage = pkg;
+        if (pkg != null && !pkg.equals(lastLabelPackage)) {
+            lastLabelPackage = pkg;
+            targetName = GameFpsReader.getAppName(this, pkg);
+        }
+        FloatingService.setGameFps(fps, pkg);
+        String label = targetName == null || targetName.isEmpty() ? "" : " • " + targetName;
+        updateNotification(String.format(Locale.US, "FPS %.1f", fps) + label);
         if (listener != null) listener.onFps(fps);
     }
 
     private void publishStatus(String message) {
         lastStatus = message;
-        updateOverlay(message);
         updateNotification(message);
         if (listener != null) listener.onStatus(message);
-    }
-
-    private void ensureOverlay() {
-        if (overlayView != null) return;
-        if (!Settings.canDrawOverlays(this)) {
-            publishStatus("Izin overlay belum diberikan");
-            return;
-        }
-        try {
-            windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-            overlayView = new TextView(this);
-            overlayView.setTextColor(Color.WHITE);
-            overlayView.setTextSize(14f);
-            overlayView.setText("FPS --");
-            overlayView.setBackgroundColor(0xB3000000);
-            int pad = dp(8);
-            overlayView.setPadding(pad, dp(4), pad, dp(4));
-
-            int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                    : WindowManager.LayoutParams.TYPE_PHONE;
-            overlayParams = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    type,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                            | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
-                    PixelFormat.TRANSLUCENT);
-            overlayParams.gravity = Gravity.TOP | Gravity.START;
-            overlayParams.x = dp(16);
-            overlayParams.y = dp(96);
-
-            overlayView.setOnTouchListener(new View.OnTouchListener() {
-                private float downX, downY;
-                private int startX, startY;
-
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            downX = event.getRawX();
-                            downY = event.getRawY();
-                            startX = overlayParams.x;
-                            startY = overlayParams.y;
-                            return true;
-                        case MotionEvent.ACTION_MOVE:
-                            overlayParams.x = startX + (int) (event.getRawX() - downX);
-                            overlayParams.y = startY + (int) (event.getRawY() - downY);
-                            try {
-                                windowManager.updateViewLayout(overlayView, overlayParams);
-                            } catch (Throwable ignored) {}
-                            return true;
-                        default:
-                            return false;
-                    }
-                }
-            });
-
-            windowManager.addView(overlayView, overlayParams);
-        } catch (Throwable t) {
-            Log.e(TAG, "add overlay failed", t);
-            overlayView = null;
-            publishStatus("Gagal menampilkan overlay: " + t.getMessage());
-        }
-    }
-
-    private void updateOverlay(String text) {
-        if (overlayView == null) return;
-        try {
-            overlayView.setText(text);
-        } catch (Throwable ignored) {}
-    }
-
-    private void removeOverlay() {
-        if (overlayView == null || windowManager == null) return;
-        try {
-            windowManager.removeView(overlayView);
-        } catch (Throwable ignored) {}
-        overlayView = null;
-    }
-
-    private int dp(int value) {
-        return (int) (value * getResources().getDisplayMetrics().density);
     }
 
     private void createChannel() {

@@ -24,8 +24,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.Button;
+import android.widget.ImageView;import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RadioGroup;
 import android.widget.ScrollView;
@@ -54,12 +54,21 @@ import exp.ftxt.features.memory_stats.MemoryConfig;
 import exp.ftxt.features.network_stats.NetworkConfig;
 import exp.ftxt.features.memory_stats.MemoryMonitor;
 import exp.ftxt.features.memory_stats.MemoryModule;
+import exp.ftxt.features.gamefps.reader.ShizukuHelper;
+import exp.ftxt.utils.PermissionHelper;
 
 public class SettingsActivity extends AppCompatActivity {
 
     private Switch overlaySwitch;
     private Switch notificationSwitch;
     private Switch batterySwitch;
+    private Switch usageAccessSwitch;
+    private TextView shizukuStatus;
+    private static final int SHIZUKU_PERMISSION_REQ = 20001;
+    private final rikka.shizuku.Shizuku.OnRequestPermissionResultListener shizukuPermListener =
+            (requestCode, grantResult) -> {
+                if (requestCode == SHIZUKU_PERMISSION_REQ) updatePermissionSwitches();
+            };
     private LinearLayout iconSelectorRow;
     private ImageView iconSelectionPreview;
     private TextView iconSelectionLabel;
@@ -146,6 +155,8 @@ public class SettingsActivity extends AppCompatActivity {
         overlaySwitch = findViewById(R.id.overlayPermissionSwitch);
         notificationSwitch = findViewById(R.id.notificationPermissionSwitch);
         batterySwitch = findViewById(R.id.batteryPermissionSwitch);
+        usageAccessSwitch = findViewById(R.id.usageAccessSwitch);
+        shizukuStatus = findViewById(R.id.shizukuStatus);
         iconSelectorRow = findViewById(R.id.iconSelectorRow);
         iconSelectionPreview = findViewById(R.id.iconSelectionPreview);
         iconSelectionLabel = findViewById(R.id.iconSelectionLabel);
@@ -183,6 +194,19 @@ public class SettingsActivity extends AppCompatActivity {
                 }
             }
         });
+
+        usageAccessSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            applySwitchTint(usageAccessSwitch, isChecked);
+            if (isChecked && !PermissionHelper.hasUsageAccess(this)) {
+                PermissionHelper.requestUsageAccess(this);
+            }
+        });
+
+        Button shizukuButton = findViewById(R.id.btnShizukuPermission);
+        shizukuButton.setOnClickListener(v -> requestShizukuPermission());
+        try {
+            rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuPermListener);
+        } catch (Throwable ignored) {}
 
         smartPanelSwitch = findViewById(R.id.smartPanelSwitch);
         smartPanelStatus = findViewById(R.id.smartPanelStatus);
@@ -404,6 +428,14 @@ public class SettingsActivity extends AppCompatActivity {
         if (statusBarPreviewHandler != null) {
             statusBarPreviewHandler.removeCallbacksAndMessages(null);
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuPermListener);
+        } catch (Throwable ignored) {}
     }
 
     private void startStatusBarPreview() {
@@ -746,6 +778,48 @@ public class SettingsActivity extends AppCompatActivity {
         boolean batteryOk = pm.isIgnoringBatteryOptimizations(getPackageName());
         batterySwitch.setChecked(batteryOk);
         applySwitchTint(batterySwitch, batteryOk);
+
+        boolean usageOk = PermissionHelper.hasUsageAccess(this);
+        usageAccessSwitch.setChecked(usageOk);
+        applySwitchTint(usageAccessSwitch, usageOk);
+
+        if (shizukuStatus != null) {
+            boolean binder = ShizukuHelper.isBinderAlive();
+            boolean granted = ShizukuHelper.hasPermission();
+            shizukuStatus.setText("Shizuku " + (binder ? "aktif" : "tidak aktif")
+                    + " • Izin " + (granted ? "sudah diberikan" : "belum diberikan"));
+        }
+    }
+
+    private void requestShizukuPermission() {
+        if (ShizukuHelper.hasPermission()) {
+            Toast.makeText(this, "Izin Shizuku sudah diberikan", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!ShizukuHelper.isBinderAlive()) {
+            Toast.makeText(this, "Shizuku belum aktif", Toast.LENGTH_SHORT).show();
+            openShizukuApp();
+            return;
+        }
+        try {
+            ShizukuHelper.requestPermission(SHIZUKU_PERMISSION_REQ);
+        } catch (Throwable t) {
+            Toast.makeText(this, "Gagal meminta izin Shizuku", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void openShizukuApp() {
+        try {
+            Intent launch = getPackageManager()
+                    .getLaunchIntentForPackage("moe.shizuku.privileged.api");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Toast.makeText(this, "Shizuku tidak terpasang", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Throwable t) {
+            Toast.makeText(this, "Gagal membuka Shizuku", Toast.LENGTH_SHORT).show();
+        }
     }
 
 }

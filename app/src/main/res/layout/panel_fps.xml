@@ -203,6 +203,30 @@
                         android:layout_weight="1">
 
                         <View
+                            android:id="@+id/fpsGameColorPreview"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="#FFB300"
+                            android:clickable="true"
+                            android:focusable="true"/>
+
+                        <TextView
+                            android:text="Game"
+                            android:textSize="10sp"
+                            android:layout_marginTop="2dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <View
                             android:id="@+id/fpsShadowColorPreview"
                             android:layout_width="30dp"
                             android:layout_height="30dp"
@@ -679,8 +703,26 @@
                     android:layout_weight="1" />
 
                 <Button
+                    android:id="@+id/btnFpsGameLog"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:text="Log"
+                    android:textAllCaps="false"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:minWidth="0dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <Button
                     android:id="@+id/btnFpsGameRefreshApps"
+                    style="?android:attr/borderlessButtonStyle"
                     android:text="Refresh"
+                    android:textAllCaps="false"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:minWidth="0dp"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>
@@ -700,88 +742,96 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-            <AutoCompleteTextView
-                android:id="@+id/edtFpsGamePkg"
-                android:hint="Cari nama aplikasi atau package"
-                android:inputType="text"
-                android:singleLine="true"
-                android:completionThreshold="1"
-                android:layout_marginTop="8dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <Button
-                android:id="@+id/btnFpsGameApplyManual"
-                android:text="Gunakan Manual"
-                android:layout_marginTop="6dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:text="Daftar Aplikasi"
-                android:textStyle="bold"
-                android:layout_marginTop="10dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvFpsGameApps"
-                android:layout_marginTop="6dp"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <TextView
-                android:id="@+id/txtFpsGameTarget"
-                android:text="Target: -"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/txtFpsGameValue"
-                android:text="FPS: --"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:layout_marginTop="4dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:id="@+id/txtFpsGameStatus"
-                android:text=""
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <TextView
-                android:text="Pilih game, lalu buka game-nya. FTxT menunggu game terbuka dan otomatis menampilkan FPS. Overlay bisa digeser."
-                android:textSize="12sp"
-                android:layout_marginTop="2dp"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
             <LinearLayout
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/txtFpsGameTarget"
+                    android:text="Target: -"
+                    android:textStyle="bold"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <TextView
+                    android:id="@+id/txtFpsGameModeState"
+                    android:text="● Nonaktif"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <RadioGroup
+                android:id="@+id/rgFpsGameMode"
                 android:orientation="horizontal"
                 android:layout_marginTop="6dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <Button
-                    android:id="@+id/btnFpsGameViewLog"
-                    android:text="Lihat Log"
+                <RadioButton
+                    android:id="@+id/rbFpsGameModeAuto"
+                    android:text="Otomatis"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1" />
 
-                <Button
-                    android:id="@+id/btnFpsGameSaveLog"
-                    android:text="Simpan Log"
-                    android:layout_marginStart="6dp"
+                <RadioButton
+                    android:id="@+id/rbFpsGameModeManual"
+                    android:text="Manual"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+            </RadioGroup>
+
+            <TextView
+                android:text="Otomatis mengikuti aplikasi depan; Manual memakai game yang dipilih. FPS dibaca dari SurfaceFlinger dengan fallback gfxinfo, sehingga hasil bisa berbeda per OEM."
+                android:textSize="11sp"
+                android:layout_marginTop="2dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <LinearLayout
+                android:id="@+id/grpFpsGameManual"
+                android:orientation="vertical"
+                android:layout_marginTop="6dp"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <AutoCompleteTextView
+                    android:id="@+id/edtFpsGamePkg"
+                    android:hint="Cari nama aplikasi atau package"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:completionThreshold="1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btnFpsGameApplyManual"
+                    android:text="Gunakan Package"
+                    android:layout_marginTop="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/txtFpsGameAppsHeader"
+                    android:text="Daftar Aplikasi"
+                    android:textStyle="bold"
+                    android:layout_marginTop="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvFpsGameApps"
+                    android:layout_marginTop="6dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
                     android:layout_weight="1" />
             </LinearLayout>
         </LinearLayout>

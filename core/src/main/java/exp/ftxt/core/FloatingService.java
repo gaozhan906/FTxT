@@ -198,7 +198,7 @@ public class FloatingService extends Service {
                 "fps", "FPS Display",
                 () -> { ensureFpsModule(); return (SmartPanelTarget) fpsModule; },
                 () -> { FpsConfig.enabled = true; ensureFpsModule(); startModule(fpsModule); },
-                () -> { FpsConfig.enabled = false; stopModule(fpsModule); if (fpsModule != null) fpsModule.stop(); }
+                () -> { FpsConfig.enabled = false; if (!isGameModeActive()) { stopModule(fpsModule); if (fpsModule != null) fpsModule.stop(); } }
         ));
     }
 
@@ -298,6 +298,10 @@ public class FloatingService extends Service {
         }
     }
 
+    private boolean isGameModeActive() {
+        return prefs != null && prefs.getBoolean("game_fps_overlay_on", false);
+    }
+
     private void stopSelfIfEmpty() {
         if (!isAnyModuleActive() && !BatteryMonitor.isRunning()) {
             stopSelf();
@@ -334,7 +338,7 @@ public class FloatingService extends Service {
             if (ClockConfig.enabled) { ensureClockModule(); clockModule.start(windowManager, this); }
             if (BatteryStatsConfig.enabled) { ensureBatteryStatsModule(); batteryStatsModule.start(windowManager, this); }
             if (NetworkConfig.enabled) { ensureNetworkModule(); networkModule.start(windowManager, this); }
-            if (FpsConfig.enabled) { ensureFpsModule(); fpsModule.start(windowManager, this); }
+            if (FpsConfig.enabled || isGameModeActive()) { ensureFpsModule(); fpsModule.start(windowManager, this); }
             if (BatteryBarConfig.enabled) { ensureBatteryBarModule(); batteryBarModule.start(windowManager, this); }
             if (MemoryConfig.enabled) { ensureMemoryModule(); memoryModule.start(windowManager, this); }
             if (CrosshairConfig.enabled) { ensureCrosshairModule(); crosshairModule.start(windowManager, this); }
@@ -397,6 +401,32 @@ public class FloatingService extends Service {
             instance.releaseWakeLockIfEmpty();
             instance.unregisterConfigReceiver();
             instance.stopSelfIfEmpty();
+        }
+    }
+
+    public static void setGameFps(float fps, String pkg) {
+        if (instance == null) return;
+        FpsModule module = fpsModule();
+        if (module == null) return;
+        if (!module.isRunning()) startModule(module);
+        if (module.isRunning()) module.setGameFps(fps, pkg);
+    }
+
+    public static void setGameActive(boolean active, String pkg) {
+        if (instance != null && instance.fpsModule != null) {
+            instance.fpsModule.setGameActive(active, pkg);
+        }
+    }
+
+    public static void refreshFpsDisplay() {
+        if (instance != null && instance.fpsModule != null && instance.fpsModule.isRunning()) {
+            instance.fpsModule.updateDisplay();
+        }
+    }
+
+    public static void stopGameFpsModuleIfIdle() {
+        if (instance != null && instance.fpsModule != null && !FpsConfig.enabled) {
+            stopModule(instance.fpsModule);
         }
     }
 

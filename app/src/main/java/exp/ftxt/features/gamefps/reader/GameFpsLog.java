@@ -1,4 +1,4 @@
-package exp.ftxt.features.gamefps.poc;
+package exp.ftxt.features.gamefps.reader;
 
 import android.content.ContentValues;
 import android.content.Context;

@@ -1,4 +1,4 @@
-package exp.ftxt.features.gamefps.poc;
+package exp.ftxt.features.gamefps.reader;
 
 import android.util.Log;
 
@@ -6,12 +6,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public final class SurfaceFlingerFps {
-    private static final String TAG = "GameFpsPoC";
+    private static final String TAG = "GameFpsReader";
     private static final long STALE_NS = 2_000_000_000L;
+    private static final long LIST_CACHE_MS = 2500L;
+
+    private static String cachedPkg;
+    private static long cachedAt;
+    private static ArrayList<String> cachedLayers;
 
     private SurfaceFlingerFps() {}
 
-    public static ArrayList<String> findLayers(String pkg, long timeoutMs) {
+    public static synchronized ArrayList<String> findLayers(String pkg, long timeoutMs) {
+        long now = System.currentTimeMillis();
+        if (cachedLayers != null && pkg != null && pkg.equals(cachedPkg)
+                && now - cachedAt < LIST_CACHE_MS) {
+            return new ArrayList<>(cachedLayers);
+        }
         ArrayList<String> layers = new ArrayList<>();
         ShizukuShell.Result res = ShizukuShell.execArgs(
                 new String[]{"dumpsys", "SurfaceFlinger", "--list"}, timeoutMs);
@@ -25,6 +35,9 @@ public final class SurfaceFlingerFps {
             if (!layers.contains(line)) layers.add(line);
         }
         Collections.sort(layers, (a, b) -> layerScore(b) - layerScore(a));
+        cachedPkg = pkg;
+        cachedAt = now;
+        cachedLayers = new ArrayList<>(layers);
         return layers;
     }
 
