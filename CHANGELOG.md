@@ -1,4 +1,4 @@
-# [4.96.0] 2026/11/06 08:31 WITA 348 ***ONGOING***
+# [4.96.0] 2026/11/06 08:31 WITA 348 ***RELEASE***
 ### 🔖 Deskripsi
 > Memusatkan pemantauan penggunaan data Network dalam satu layar, sekaligus menambah pemantauan FPS game dan memperkaya pengaturan serta efek Battery Strip.
 
