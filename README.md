@@ -1,21 +1,24 @@
 # FTxT (FunText) — Floating Text Overlay
 
->**Current Release:** `4.95.0` **Beta**
-**Last Updated:** `2026-11-01`
+>**Current Release:** `4.96.0` **Beta**
+**Last Updated:** `2026-11-06`
 
 >>FTxT (FunText) adalah aplikasi Android overlay yang memungkinkan Anda menampilkan teks floating di atas aplikasi lain dengan fitur kustomisasi lengkap untuk ukuran, warna, transparansi, posisi, dan kontrol sentuhan.
+
+> [!IMPORTANT]
+> Repository resmi FTxT telah dipindahkan keluar dari organisasi ke akun pribadi: **[gaozhan906/FTxT](https://github.com/gaozhan906/FTxT)**. Alamat repository lama tidak lagi digunakan.
 
 ---
 
 ## ✨ Fitur Utama
 
 - **Floating Text Overlay** — Teks custom di atas semua aplikasi, real-time update, dengan Mode Segel (pola teks diulang diagonal, kontrol spasi H/V, sudut -180° hingga 180°)
-- **FPS Display Overlay** — FPS counter draggable dengan warna nilai & label terpisah
+- **FPS Display Overlay** — FPS counter draggable dengan warna nilai & label terpisah; sub-tab **Game FPS** memantau FPS game lewat Shizuku (mode Otomatis mengikuti aplikasi depan atau Manual memilih game) dengan warna khusus & ikon aplikasi
 - **Jam Digital Overlay** — Waktu real-time 24 jam `HH:mm:ss`, update tiap 1 detik
 - **Battery Info Overlay** — Info baterai (suhu °C, persentase %, voltase V, arus mA, daya W) dengan warna nilai & label terpisah, urutan info via drag-and-drop (OrderZones), interval update bisa diatur
-- **Battery Strip Overlay** — Bar baterai fleksibel di dalam panel Battery Info (tab Battery Strip): Mode Cepat (snap ke sisi atas/bawah/kiri/kanan) atau Mode Manual (panjang & posisi bebas), warna fill + strip kosong, skema warna level (Klasik 3-warna / Hue Gradien), animasi fade + wave (kedutan gelombang) saat low & shine saat charging (kecepatan, lebar band, intensitas bisa diatur)
+- **Battery Strip Overlay** — Bar baterai fleksibel di dalam panel Battery Info (tab Battery Strip): Mode Cepat (snap ke sisi atas/bawah/kiri/kanan) atau Mode Manual (panjang & posisi bebas), warna fill + strip kosong, skema warna level (Klasik 3-warna / Hue Gradien), animasi fade + wave (kedutan gelombang) saat low & shine saat charging (kecepatan, lebar band, intensitas bisa diatur), ditambah **Edge Glow** saat charging, **Startup Fill Sweep** saat overlay muncul, **Drain Tick** tiap persen turun, serta **Beep & Getar** peringatan pengosongan (tiap 1% atau persen kustom)
 - **Battery Monitor** — Pemantauan baterai perangkat di tab Monitor panel Battery Info: ring gauge level bergradien hue + grid metrik real-time, grafik riwayat Suhu/Daya/Tegangan/Arus/Persentase rentang 5 menit–24 jam dari database SQLite lokal, estimasi kapasitas & skor kesehatan ala AccuBattery; pencatatan otomatis full-aktif via foreground service ringan (nyala saat aplikasi dibuka & saat boot, sampling dinamis hemat baterai)
-- **Network Speed Meter Overlay** — Dua badge unduh/unggah terpisah dengan color bar proporsional dengan arah isian yang bisa dibalik, panjang badge, susunan Horizontal/Vertikal, warna bar, serta gaya teks Bold/Italic yang bisa diatur; tab Monitor menyediakan rekap pemakaian per periode (hari ini/7/30 hari) dengan filter WiFi/seluler, grafik, riwayat harian, donut komposisi, dan daftar aplikasi
+- **Network Speed Meter Overlay** — Dua badge unduh/unggah terpisah dengan color bar proporsional dengan arah isian yang bisa dibalik, panjang badge, susunan Horizontal/Vertikal, warna bar, serta gaya teks Bold/Italic yang bisa diatur; overlay mendukung angka desimal, satuan KB/s atau bps dengan konversi otomatis, pemangkasan label, dan perataan teks; tab Monitor menyediakan rekap pemakaian per periode (hari ini/7/30 hari) dengan filter WiFi/seluler, grafik, riwayat harian, donut komposisi, dan daftar aplikasi
 - **Memory Stats Overlay** — Monitoring memori real-time 14 nilai (Java Heap, Native Heap, Graphics, Total, Gagal, Execution Time, Free RAM, Total RAM, jumlah proses, dll) dengan urutan item via OrderZones, background monitor yang tetap berjalan meski service tidak aktif, export/copy snapshot
 - **Crash Logger** — Saat force close, stack trace otomatis ditulis ke Documents/FTxT/Log_Crash (plus cadangan prefs) agar bug mudah dilaporkan tanpa logcat/adb
 - **Log ANR** — Saat main thread macet ≥5 detik (ANR), trace seluruh thread otomatis ditulis ke Documents/FTxT/Log_ANR (plus cadangan prefs) agar peristiwa ANR mudah dilaporkan tanpa logcat/adb

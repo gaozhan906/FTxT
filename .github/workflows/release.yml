@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag yang akan dirilis (mis. v4.94.0)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -15,6 +21,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - name: Setup Java 17
         uses: actions/setup-java@v5
@@ -83,15 +91,16 @@ jobs:
       - name: Extract Release Notes
         id: changelog
         env:
-          VERSION: ${{ github.ref_name }}
+          REF: ${{ inputs.tag || github.ref_name }}
         run: |
-          # Strip "v" prefix from tag name (github.ref_name = v1.x.x.x.x)
-          VERSION="${VERSION#v}"
+          # Strip "v" and optional leading dot prefix from tag name
+          VERSION="${REF#v}"
+          VERSION="${VERSION#.}"
 
           NOTES=$(awk -v ver="$VERSION" '
-            $0 ~ "^# \\[" ver "\\]" { found=1; skip=0; next }
-            found && /^# \[/ { exit }
-            found && /^### / {
+            $0 ~ "^\"? *#+ *\\[" ver "\\]" { found=1; skip=0; next }
+            found && /^"? *#+ *\[/ { exit }
+            found && /^#+ / {
               if ($0 ~ /🗒️ File Added|✏️ File Changed|🔥 File Removed/) {
                 skip=1; next
               }
@@ -100,6 +109,24 @@ jobs:
             found && !skip { print }
           ' CHANGELOG.md)
 
+          if [ -z "$NOTES" ]; then
+            for f in old-CHANGELOG.md app/src/main/assets/old-CHANGELOG.md; do
+              [ -f "$f" ] || continue
+              NOTES=$(awk -v ver="$VERSION" '
+                $0 ~ "^\"? *#+ *\\[" ver "\\]" { found=1; skip=0; next }
+                found && /^"? *#+ *\[/ { exit }
+                found && /^#+ / {
+                  if ($0 ~ /🗒️ File Added|✏️ File Changed|🔥 File Removed/) {
+                    skip=1; next
+                  }
+                  skip=0
+                }
+                found && !skip { print }
+              ' "$f")
+              [ -n "$NOTES" ] && break
+            done
+          fi
+
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$NOTES" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
@@ -107,6 +134,7 @@ jobs:
       - name: Upload APK to GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
             **/build/outputs/apk/release/*.apk
           body: ${{ steps.changelog.outputs.notes }}

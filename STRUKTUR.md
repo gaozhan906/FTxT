@@ -82,8 +82,8 @@ FTxT/
 │   ├── fps/                      — Fitur FPS Display
 │   │   ├── build.gradle          — Library: namespace exp.ftxt.features.fps, depend :shared:config, :shared:ui
 │   │   └── src/main/java/exp/ftxt/features/fps_display/
-│   │       ├── FpsConfig.java    — Konfigurasi statis FPS overlay
-│   │       └── FpsModule.java    — FPS counter via Choreographer frame callback
+│   │       ├── FpsConfig.java    — Konfigurasi statis FPS overlay (warna game, label, posisi)
+│   │       └── FpsModule.java    — FPS counter via Choreographer + tampilan FPS game (ikon & warna khusus)
 │   │
 │   ├── network/                  — Fitur Network Speed
 │   │   ├── build.gradle          — Library: namespace exp.ftxt.features.network, depend :shared:config, :shared:ui
@@ -133,14 +133,19 @@ FTxT/
 │           │   ├── SessionSegmentBuilder.java— Segmentasi sampel menjadi sesi pengisian & pengosongan
 │           │   └── SessionRebuild.java       — Rekonstruksi sesi tak tersimpan di thread latar
 │           └── battery_bar/
-│               ├── BatteryBarConfig.java     — Konfigurasi Battery Bar overlay
-│               ├── BatteryBarView.java       — Custom View bar baterai H/V (empty strip, fade, shine, wave)
-│               └── BatteryBarModule.java     — Bar baterai: mode cepat (snap sisi) & manual, update interval
+│               ├── BatteryBarConfig.java     — Konfigurasi Battery Bar overlay (animasi, beep & getar)
+│               ├── BatteryBarView.java       — Custom View bar baterai H/V (empty strip, fade, shine, wave, edge glow, startup sweep, drain tick)
+│               ├── BatteryBarModule.java     — Bar baterai: mode cepat (snap sisi) & manual, update interval, pemicu peringatan
+│               └── DischargeAlertPlayer.java — Pemutar bunyi & getar peringatan pengosongan baterai
 │
 ├── core/                         — Library inti layanan (include ':core')
 │   ├── build.gradle              — Library: namespace exp.ftxt.core; depend 7 :features:* + :shared:config + :shared:ui + androidx.core:core
 │   ├── src/main/java/exp/ftxt/core/
 │   │   ├── FloatingService.java     — Foreground service: kelola semua overlay via WindowManager
+│   │   ├── ConfigLoader.java        — Muat konfigurasi overlay dari SharedPreferences ke static config sebelum service berjalan
+│   │   ├── SmartPanelConfig.java    — Konfigurasi Smart Panel (toggle, posisi ikon)
+│   │   ├── SmartPanelModule.java    — Modul overlay Smart Panel: ikon mengambang + panel kontrol modul
+│   │   ├── SmartPanelRegistry.java  — Registry modul overlay & kontrol spesifik untuk Smart Panel
 │   │   ├── NotificationHelper.java  — Notifikasi foreground service (custom RemoteViews + ikon dinamis Bitmap suhu, caching)
 │   │   ├── NotificationActionReceiver.java — Handle aksi notifikasi (toggle, kill, open)
 │   │   ├── WakeLockManager.java     — Partial wake lock biar CPU tetap aktif
@@ -173,13 +178,26 @@ FTxT/
     │   │   ├── AboutActivity.java        — Halaman "Tentang Aplikasi" fullscreen: info versi, cek pembaruan, pengembang & tautan
     │   │   ├── PresetExampleActivity.java— Contoh integrasi sistem preset (referensi dev)
     │   │   │
+    │   │   ├── features/gamefps/         — Fitur FPS Game via Shizuku
+    │   │   │   ├── GameFpsService.java               — Foreground service pemantau FPS game + notifikasi
+    │   │   │   └── reader/
+    │   │   │       ├── GameFpsReader.java            — Orkestrasi pembacaan FPS game (mode otomatis/manual, pilihan reader)
+    │   │   │       ├── SurfaceFlingerFps.java        — Baca FPS dari SurfaceFlinger via shell Shizuku
+    │   │   │       ├── GfxInfoParser.java            — Parser output dumpsys gfxinfo (fallback)
+    │   │   │       ├── ShizukuHelper.java            — Cek status binder & izin Shizuku
+    │   │   │       ├── ShizukuShell.java             — Eksekusi perintah shell lewat Shizuku
+    │   │   │       ├── ForegroundDetector.java       — Deteksi aplikasi depan via Akses Penggunaan
+    │   │   │       └── GameFpsLog.java               — Log diagnostik FPS game
+    │   │   │
     │   │   ├── ui/
     │   │   │   ├── BasePanelFragment.java              — Abstract base Fragment untuk semua panel
     │   │   │   ├── PanelManager.java                   — Kelola show/hide Fragment panel + onPanelHidden callback
     │   │   │   ├── TextPanelController.java            — UI panel Text: input, size, color, shadow, bg, toggle
     │   │   │   ├── TextPositionController.java         — Kontrol posisi Text: D-Pad, slider, preset, koordinat
-    │   │   │   ├── FpsPanelController.java             — UI panel FPS: switch, size, color, shadow, bg, value-only
+    │   │   │   ├── FpsPanelController.java             — UI panel FPS (sub-tab Game FPS/Overlay): switch, size, color, shadow, bg, value-only, target game
     │   │   │   ├── FpsPositionController.java          — Kontrol posisi FPS dengan preset
+    │   │   │   ├── GameAppListAdapter.java             — Adapter daftar aplikasi game (mode Manual)
+    │   │   │   ├── GameSearchAdapter.java              — Adapter pencarian paket game
     │   │   │   ├── ClockPanelController.java           — UI panel Clock: switch, size, color, shadow, bg, ukuran tanggal
     │   │   │   ├── ClockPositionController.java        — Kontrol posisi Clock dengan preset
     │   │   │   ├── BatteryPanelController.java         — UI panel Battery Info (tabbed: Monitor/Overlay/Battery Strip)
@@ -241,8 +259,11 @@ FTxT/
     │       ├── color/
     │       │   ├── sidebar_nav_text.xml     — Color selector teks item navigasi sidebar
     │       │   ├── bat_nav_item_color.xml   — Color selector navigasi bawah Battery Info
-    │       │   └── mem_nav_item_color.xml   — Color selector navigasi bawah Memory Stats
+    │       │   ├── mem_nav_item_color.xml   — Color selector navigasi bawah Memory Stats
+    │       │   └── net_nav_item_color.xml   — Color selector navigasi bawah Network Speed
     │       ├── drawable/
+    │       │   ├── ic_apps.xml              — Ikon tab Game FPS
+    │       │   ├── ic_chevron_down.xml      — Ikon chevron bawah (dropdown/filter)
     │       │   ├── ic_arrow_down.xml        — Ikon panah bawah untuk D-Pad
     │       │   ├── ic_arrow_left.xml        — Ikon panah kiri untuk D-Pad
     │       │   ├── ic_arrow_right.xml       — Ikon panah kanan untuk D-Pad
@@ -316,6 +337,14 @@ FTxT/
     │       │   ├── activity_session_list.xml    — Layout halaman daftar sesi periode
     │       │   ├── activity_session_detail.xml  — Layout halaman detail satu sesi
     │       │   ├── item_session_row.xml         — Item baris padat daftar sesi
+    │       │   ├── item_game_app.xml            — Item daftar aplikasi game (mode Manual)
+    │       │   ├── item_game_search.xml         — Item hasil pencarian paket game
+    │       │   ├── item_usage_app.xml           — Item daftar aplikasi pemakaian data
+    │       │   ├── item_usage_day.xml           — Item riwayat harian pemakaian data
+    │       │   ├── item_usage_legend.xml        — Item legenda donut pemakaian data
+    │       │   ├── sheet_usage_day.xml          — Bottom sheet detail satu hari pemakaian
+    │       │   ├── sheet_usage_history.xml      — Bottom sheet daftar riwayat harian
+    │       │   ├── view_usage_donut.xml         — View donut komposisi aplikasi
     │       │   ├── drawer_content.xml           — Konten navigation drawer: RecyclerView item list
     │       │   ├── nav_header.xml               — Header navigation drawer: logo + versi
     │       │   ├── panel_text.xml               — Panel konfigurasi Floating Text
@@ -327,6 +356,9 @@ FTxT/
     │       │   ├── panel_bat_sub_health.xml     — Sub-tab Kondisi & Riwayat Monitor
     │       │   ├── panel_memory.xml             — Panel konfigurasi Memory Stats (tabbed: Monitor/Overlay)
     │       │   ├── panel_network.xml            — Panel konfigurasi Network Speed
+    │       │   ├── panel_network_overlay.xml    — Sub-layout tab Overlay Network (teks, badge, color bar)
+    │       │   ├── panel_network_tools.xml      — Sub-layout tab Alat Network (placeholder)
+    │       │   ├── panel_network_usage.xml      — Sub-layout tab Pemakaian Network (filter, ringkasan, grafik, daftar)
     │       │   ├── panel_crosshair.xml          — Panel konfigurasi Crosshair (gaya bidikan, ukuran, opasitas, posisi)
     │       │   ├── panel_logo.xml               — Placeholder Logo Display (coming soon)
     │       │   ├── panel_debuging.xml           — Panel konfigurasi Debugging (preview ikon rotasi)
@@ -337,7 +369,9 @@ FTxT/
     │       │   ├── drawer_menu.xml           — Menu navigation drawer: daftar panel
     │       │   ├── main_menu.xml             — Menu toolbar: settings, theme, exit
     │       │   ├── menu_battery_bottom_nav.xml — Navigasi bawah panel Battery Info (Monitor/Overlay/Battery Strip)
-    │       │   └── menu_memory_bottom_nav.xml  — Navigasi bawah panel Memory Stats (Monitor/Overlay)
+    │       │   ├── menu_memory_bottom_nav.xml  — Navigasi bawah panel Memory Stats (Monitor/Overlay)
+    │       │   ├── menu_network_bottom_nav.xml — Navigasi bawah panel Network Speed (Monitor/Overlay)
+    │       │   └── menu_fps_bottom_nav.xml     — Navigasi bawah panel FPS Display (Game FPS/Overlay)
     │       ├── mipmap-anydpi-v26/
     │       │   ├── ic_launcher.xml           — Adaptive icon launcher (default)
     │       │   ├── ic_launcher_alt.xml       — Adaptive icon launcher (alternatif)
@@ -372,26 +406,26 @@ Skala `:app` + 13 module (4 `shared`, 7 `features`, `core`).
 
 | Kategori | Jumlah |
 |----------|-------:|
-| Java source (seluruh module) | 104 |
-| Layout XML | 28 |
-| Drawable XML | 63 |
+| Java source (seluruh module) | 142 |
+| Layout XML | 40 |
+| Drawable XML | 67 |
 | Drawable PNG | 3 |
 | Crosshair PNG (nodpi) | 44 |
 | Drawable-night XML | 5 |
-| Color XML | 3 |
-| Values XML | 8 |
-| Mipmap XML | 5 |
-| Menu XML | 4 |
+| Color XML | 4 |
+| Values XML | 9 |
+| Mipmap XML | 6 |
+| Menu XML | 6 |
 | Anim XML | 4 |
 | XML lainnya (Manifest `:app`) | 1 |
 | Assets (md) | 5 |
 | Test Java | 4 |
 | Root dokumen | 6 |
-| Root konfigurasi | 6 |
+| Root konfigurasi | 7 |
 | Module build script | 13 |
 | Gradle & wrapper | 4 |
 | CI/CD | 1 |
-| **Total file** | **~311** |
-| **Total direktori** | **~150** |
+| **Total file** | **~373** |
+| **Total direktori** | **~174** |
 
 > Catatan: manifest module library digenerate otomatis oleh AGP saat build (tidak ada file `AndroidManifest.xml` per module selain `:app`). Layout `dialog_color_picker`, `dialog_preset_browser`, `preset_browser_item` & icon terkait berpindah ke module `shared` sesuai pemiliknya; `notification_custom` + ikon notifikasi ke `:core`.

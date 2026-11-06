@@ -43,7 +43,7 @@ Drawer terdiri dari menu berikut (urutan default; item panel bisa di-reorder den
 | Menu | Fungsi |
 |------|--------|
 | Floating Text | Teks overlay kustom |
-| FPS Display | Counter FPS real-time |
+| FPS Display | Counter FPS real-time + FPS game (Shizuku) |
 | Network Stats | Kecepatan internet real-time |
 | Battery Info | Info baterai (suhu, persentase, voltase, arus, daya) + Battery Strip |
 | Clock Module | Waktu real-time 24 jam (Jam Digital) |
@@ -93,11 +93,21 @@ Klik header section untuk membuka/tutup grup. Semua section terbuka secara defau
 - **Mode Segel** — Aktifkan pola teks berulang diagonal. Atur **Spasi Horizontal** (50–500px), **Spasi Vertikal** (50–500px), dan **Sudut** (-180° hingga 180°). Kontrol posisi disembunyikan dan Kunci Posisi dinonaktifkan saat mode segel aktif.
 
 ### FPS Display
-- Menampilkan frame rate real-time
+Panel FPS memiliki **2 sub-tab**: **Game FPS** (kiri) dan **Overlay** (kanan).
+
+**Sub-tab Overlay** — Menampilkan frame rate real-time:
 - Opsi "Hanya Nilai" untuk menyembunyikan label FPS
 - **Warna Label Terpisah** — Tombol "Warna Label" untuk warna teks "FPS", sementara "Pilih Warna" untuk nilai angka
 - Ukuran 5–140sp, dengan shadow, background, dan kontrol posisi
-- Interval update bisa diatur 0.2–10 detik (default 1d)
+- Interval update bisa diatur 0.2–10 detik (default 1 detik)
+
+**Sub-tab Game FPS** — Memantau FPS game lewat overlay FPS Display:
+- Aktifkan sakelar lalu pilih mode **Otomatis** (mengikuti aplikasi depan) atau **Manual** (memilih game dari daftar/pencarian; kolom paket bisa diisi langsung). Daftar dan pencarian hanya tampil di mode Manual
+- Deteksi memakai Akses Penggunaan dengan fallback Shizuku, mengecualikan aplikasi sistem dan FTxT, dan hanya memantau saat game di depan
+- FPS game memakai warna khusus (default amber) dan ikon aplikasi, lalu kembali ke FPS aplikasi setelah game ditinggalkan
+- Pembacaan memakai SurfaceFlinger dengan fallback `dumpsys gfxinfo` (dukungan OEM best-effort)
+- Status prasyarat Shizuku/izin dan target game tampil di panel; tombol **Log** menyimpan diagnostik
+- Prasyarat Shizuku diatur di **Konfigurasi > Akses Izin > Izin Shizuku**
 
 ### Jam Digital
 - Format 24 jam `HH:mm:ss`, update tiap 1 detik
@@ -134,13 +144,15 @@ Panel Battery Info memiliki **3 tab** di bagian bawah: **Monitor**, **Overlay**,
 - Konfigurasi ukuran, warna, shadow, background, kontrol posisi
 - Interval update bisa diatur 0.2–10 detik (default 5d)
 
-**Tab Battery Strip** — Konfigurasi bar baterai (sebelumnya panel Battery Bar terpisah):
+**Tab Battery Strip** — Konfigurasi bar baterai (sebelumnya panel Battery Bar terpisah), dikelompokkan dalam sub-tab **Tampilan**, **Animasi**, dan **Suara** (header dan Kunci Posisi tetap di atas):
 - Menampilkan bar baterai sebagai strip di layar (level mengikuti persentase baterai)
 - **Mode Cepat** — Bar menempel penuh di salah satu sisi layar (Atas/Bawah/Kiri/Kanan). Posisi & panjang otomatis mengikuti sisi yang dipilih. Kontrol posisi manual nonaktif dalam mode ini. Bar menempel penuh di tepi tanpa jarak — **margin 8dp dihilangkan** sehingga tidak ada gap antara bar dan sisi layar, namun **Area Aman tetap terkunci aktif** (checkbox tercentang, disabled).
 - **Mode Manual** — Matikan "Mode Cepat" untuk mengatur panjang bar (0–100%) dan posisi bebas (slider X/Y, D-Pad) per orientasi layar. **Area Aman otomatis terkunci aktif** dalam mode ini — bar tidak bisa masuk area notch/cutout dan posisi selalu di-clamp dalam batas layar. Checkbox Area Aman **selalu terkunci aktif** (tercentang, disabled) di kedua mode.
 - **Warna Level** — Pemilih skema warna otomatis berdasarkan level baterai: **Tanpa Skema** (warna tetap pilihan user), **Klasik 3-warna** (hijau >20%, kuning ≤20%, merah ≤10%), **Hue Gradien** (warna bergradasi per segmen: 0–20% hue `1°` S70%, 21–50% hue `2°→100°` S70%, 51–100% hue `102°→260°` dengan saturasi naik `71%→100%`). Saat skema dipilih, langsung aktif.
 - **Animasi Pengisian Daya** — Efek saat charging: **Animasi Shine** (on/off, default nonaktif), **Kecepatan Shine** (0,2–5,0 detik per sapuan, step 0,1 detik, default 1,8 detik), **Lebar Band** (2–98% dari panjang bar, default 25%), dan **Animasi Wave saat charging** (gelombang mengalir sepanjang bar): on/off, kecepatan (0,2–5,0 detik), intensitas (10–100%, default 60%).
 - **Animasi Baterai Rendah** — Saat level di bawah ambang low, bar menampilkan **animasi Wave** (kedutan gelombang) yang berjalan bersamaan dengan animasi fade: on/off, kecepatan (0,2–5,0 detik), intensitas (10–100%, default 60%). Section ini juga berisi Warna Low, Ambang Low, **Animasi Fade** (on/off, default nonaktif), dan Kecepatan Fade.
+- **Animasi Tambahan** — **Edge Glow** berdenyut di ujung fill saat charging, **Startup Fill Sweep** menggerakkan fill dari 0 ke level baterai saat overlay muncul, dan **Drain Tick** memberi kilau di ujung fill setiap persentase turun saat discharge; kecepatan dan intensitas masing-masing bisa diatur.
+- **Beep & Getar Pengosongan** (sub-tab Suara) — Bunyi dan/atau getar saat baterai turun, dengan mode **Tiap 1%** atau **Manual** (daftar persen kustom). Pitch, durasi, jumlah ulangan, volume, dan durasi getar bisa diatur, lengkap dengan tombol **Cek Suara**. Default nonaktif dan hanya aktif saat discharge.
 - **Warna Low hanya berfungsi saat skema Tanpa Skema** — jika skema Klasik 3-warna atau Hue Gradien aktif, pemilih Warna Low diburamkan & nonaktif karena skema sudah memetakan warna di level rendah.
 - Pengaturan lain: ketebalan, radius sudut, strip kosong, shadow, kunci posisi, area aman.
 
@@ -167,6 +179,8 @@ Sub-tab **Alat** masih berupa placeholder.
 - **Warna Bar Unduh/Unggah** dapat diatur terpisah dengan color picker (termasuk alpha)
 - **Gaya teks** dapat dibuat Bold, Italic, atau keduanya sekaligus
 - Opsi **Sembunyikan Label** membuang panah dan satuan; warna nilai dan label tetap terpisah
+- **Desimal & satuan** — Opsi **Desimal** (jumlah angka 1–3, diatur di Developer), satuan **KB/s** atau **bps** dengan kenaikan otomatis (MB/s atau Kbps/Mbps/Gbps), serta checkbox **Pangkas** untuk label pendek
+- **Perataan teks** — Kiri/Tengah/Kanan, ditata ringkas bersama kontrol Bold, Italic, Vertikal, Color Bar, Invert, dan Panjang Badge
 - Polling via `TrafficStats`, interval update bisa diatur 0.2–10 detik (default 1 detik)
 
 ### Memory Stats
@@ -230,7 +244,7 @@ Metadata: tags, favorite, timestamp, thumbnail warna. Version history hingga 10 
 
 ## Pengaturan
 
-- **Izin Aplikasi** — Kelola izin overlay, notifikasi, dan optimasi baterai
+- **Akses Izin** — Kelola izin overlay, notifikasi, optimasi baterai, Akses Penggunaan, serta izin Shizuku (untuk FPS game)
 - **Konfigurasi** — Pengaturan tampilan aplikasi:
   - **Ikon Aplikasi** — Pemilih ikon launcher di halaman Konfigurasi terkunci Fitur Developer: baris ikon di-disable dan hanya bisa dibuka setelah Fitur Developer dibuka lewat password.
   - **Tampilkan panel Info Memori** — Toggle untuk menampilkan/menyembunyikan panel Info Memori dari Navigation Drawer (default OFF)
@@ -277,8 +291,10 @@ Saat terdeteksi versi baru, dialog **"Pembaruan tersedia"** menampilkan tiga pil
 | `FOREGROUND_SERVICE_SPECIAL_USE` | Service overlay khusus |
 | `WAKE_LOCK` | Mencegah CPU tidur saat overlay aktif |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Mencegah overlay dihentikan sistem |
+| `PACKAGE_USAGE_STATS` (Akses Penggunaan) | Deteksi aplikasi depan untuk FPS game mode Otomatis |
+| Izin Shizuku | Akses shell untuk membaca FPS game via SurfaceFlinger (diatur dari aplikasi Shizuku) |
 
-Izin diminta otomatis saat pertama aplikasi dibuka. Kelola izin bisa dilakukan di **Pengaturan > Izin Aplikasi**.
+Izin diminta otomatis saat pertama aplikasi dibuka. Kelola izin bisa dilakukan di **Pengaturan > Akses Izin**.
 
 ---
 

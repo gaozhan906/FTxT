@@ -32,9 +32,9 @@ public class UpdateChecker {
     public static final String PREF_LATEST_DOWNLOAD = "update_latest_download";
 
     /** Endpoint rilis terbaru dari GitHub. */
-    public static final String RELEASE_URL = "https://api.github.com/repos/GaoExp/FTxT/releases/latest";
+    public static final String RELEASE_URL = "https://api.github.com/repos/gaozhan906/FTxT/releases/latest";
     /** Halaman rilis fallback (jika html_url tidak tersedia). */
-    public static final String RELEASES_PAGE = "https://github.com/GaoExp/FTxT/releases";
+    public static final String RELEASES_PAGE = "https://github.com/gaozhan906/FTxT/releases";
 
     /** Frekuensi pemeriksaan otomatis (ms) sesuai urutan pilihan di UI. */
     public static final long[] INTERVALS_MS = {

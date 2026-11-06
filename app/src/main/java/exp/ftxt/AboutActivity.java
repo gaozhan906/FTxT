@@ -97,9 +97,9 @@ public class AboutActivity extends AppCompatActivity {
         findViewById(R.id.aboutPanduanBtn).setOnClickListener(v -> openDoc("PANDUAN"));
         findViewById(R.id.aboutChangelogBtn).setOnClickListener(v -> openDoc("CHANGELOG"));
         findViewById(R.id.aboutGithubBtn).setOnClickListener(v ->
-                openBrowser("https://github.com/GaoExp/FTxT"));
+                openBrowser("https://github.com/gaozhan906/FTxT"));
         findViewById(R.id.aboutIssueBtn).setOnClickListener(v ->
-                openBrowser("https://github.com/GaoExp/FTxT/issues"));
+                openBrowser("https://github.com/gaozhan906/FTxT/issues"));
     }
 
     private int clampIndex(int idx) {
