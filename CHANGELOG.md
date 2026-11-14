@@ -1,4 +1,4 @@
-# [4.97.1] 2026/11/14 20:13 WITA 360 ***ONGOING***
+# [4.97.1] 2026/11/14 20:50 WITA 361 ***RELEASE***
 ### 🔖 Deskripsi
 > Memperbarui modul Network Usage agar riwayat penggunaan data dari aplikasi yang telah di-uninstall tetap tersimpan dengan label tambahan `(Uninstalled)`.
 
