@@ -14,6 +14,7 @@ import android.view.ViewConfiguration;
 import androidx.core.graphics.ColorUtils;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -47,6 +48,8 @@ public class BatteryChartView extends View {
     public static final int SERIES_CURRENT = 4;
 
     private BatteryReading.Snapshot[] samples = new BatteryReading.Snapshot[0];
+    /** Ambang gap adaptif: saat data di-downsample, jarak antar titik wajar membesar. */
+    private long gapThresholdMs = BatteryHistoryDb.GAP_THRESHOLD_MS;
     private long windowMs = WINDOW_5M;
     private int seriesType = SERIES_TEMP;
 
@@ -338,7 +341,35 @@ public class BatteryChartView extends View {
 
     public void setData(BatteryReading.Snapshot[] samples) {
         this.samples = samples != null ? samples : new BatteryReading.Snapshot[0];
+        this.gapThresholdMs = adaptiveGapThreshold(this.samples);
         invalidate();
+    }
+
+    /**
+     * Gap hanya diputus bila jelas lebih besar dari jarak antar titik normal.
+     * Data yang di-downsample per bucket bisa berjarak puluhan menit, jadi ambang
+     * tetap 60 detik akan salah menggambar hampir semua segmen sebagai "tanpa data".
+     */
+    private static long adaptiveGapThreshold(BatteryReading.Snapshot[] data) {
+        int n = data != null ? data.length : 0;
+        if (n < 3) return BatteryHistoryDb.GAP_THRESHOLD_MS;
+        long[] gaps = new long[n - 1];
+        int count = 0;
+        for (int i = 1; i < n; i++) {
+            long dt = data[i].time - data[i - 1].time;
+            if (dt > 0L) gaps[count++] = dt;
+        }
+        if (count == 0) return BatteryHistoryDb.GAP_THRESHOLD_MS;
+        Arrays.sort(gaps, 0, count);
+        // Persentil ke-99 mewakili jarak antar titik hasil downsampling, tetapi
+        // tidak ikut terangkat oleh outage panjang yang justru ingin diputus.
+        // Batas atas relatif terhadap median mencegah dataset kecil yang punya
+        // satu jeda panjang menaikkan ambang dan menyembunyikan jeda itu.
+        long median = gaps[count / 2];
+        long p99 = gaps[Math.min(count - 1, (int) (count * 0.99))];
+        long adaptive = p99 + p99 / 2L;
+        long cap = Math.max(BatteryHistoryDb.GAP_THRESHOLD_MS, median * 20L);
+        return Math.max(BatteryHistoryDb.GAP_THRESHOLD_MS, Math.min(adaptive, cap));
     }
 
     public void setWindowMs(long windowMs) {
@@ -616,7 +647,7 @@ public class BatteryChartView extends View {
         if (seriesType == SERIES_TEMP) {
             // Garis Suhu: warna tiap segmen mengikuti nilai suhu titik datanya
             // (putih dingin ekstrem → ice blue → hijau → oranye → merah panas).
-            // Putuskan garis saat gap waktu > BatteryHistoryDb.GAP_THRESHOLD_MS (ponsel mati/lama tidak aktif).
+            // Putuskan garis saat gap waktu melebihi ambang adaptif (ponsel mati/lama tidak aktif).
             path.rewind();
             float prevX = padLeft + plotW * ((samples[first].time - baseT) / spanMs);
             float prevY = pointY(first, min, vRange, padTop, plotH);
@@ -626,7 +657,7 @@ public class BatteryChartView extends View {
                 float y = pointY(idx, min, vRange, padTop, plotH);
                 // Cek gap waktu antara titik sekarang dan sebelumnya
                 long gapMs = samples[idx].time - samples[idx - 1].time;
-                if (gapMs > BatteryHistoryDb.GAP_THRESHOLD_MS) {
+                if (gapMs > gapThresholdMs) {
                     drawGapMarker(canvas, prevX, x, padTop, plotH);
                     // Putus garis: mulai path baru dari titik ini
                     prevX = x;
@@ -644,7 +675,7 @@ public class BatteryChartView extends View {
         } else if (isStatusColored()) {
             // Garis Persentase/Tegangan/Arus diwarnai per segmen sesuai status baterai
             // titik data: hijau saat mengisi, merah saat tidak. Segmen transisi ikut run sebelumnya.
-            // Putuskan garis saat gap waktu > BatteryHistoryDb.GAP_THRESHOLD_MS (ponsel mati/lama tidak aktif).
+            // Putuskan garis saat gap waktu melebihi ambang adaptif (ponsel mati/lama tidak aktif).
             boolean charging = samples[first].isCharging();
             linePaint.setColor(lineColor(charging));
             path.rewind();
@@ -656,7 +687,7 @@ public class BatteryChartView extends View {
                 float y = pointY(idx, min, vRange, padTop, plotH);
                 // Cek gap waktu antara titik sekarang dan sebelumnya
                 long gapMs = samples[idx].time - samples[idx - 1].time;
-                if (gapMs > BatteryHistoryDb.GAP_THRESHOLD_MS) {
+                if (gapMs > gapThresholdMs) {
                     // Putus garis: gambar path saat ini lalu mulai baru
                     canvas.drawPath(path, linePaint);
                     drawGapMarker(canvas, prevX, x, padTop, plotH);
@@ -683,7 +714,7 @@ public class BatteryChartView extends View {
                 }
             }
         } else {
-            // Garis default (Daya): putuskan saat gap waktu > BatteryHistoryDb.GAP_THRESHOLD_MS
+            // Garis default (Daya): putuskan saat gap waktu melebihi ambang adaptif
             path.rewind();
             boolean started = false;
             for (int k = 0; k < count; k++) {
@@ -693,7 +724,7 @@ public class BatteryChartView extends View {
                 // Cek gap waktu antara titik sekarang dan sebelumnya
                 if (k > 0) {
                     long gapMs = samples[idx].time - samples[idx - 1].time;
-                    if (gapMs > BatteryHistoryDb.GAP_THRESHOLD_MS) {
+                    if (gapMs > gapThresholdMs) {
                         float prevX = padLeft + plotW
                                 * ((samples[idx - 1].time - baseT) / spanMs);
                         drawGapMarker(canvas, prevX, x, padTop, plotH);

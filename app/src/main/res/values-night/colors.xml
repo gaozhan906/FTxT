@@ -44,6 +44,9 @@
     <color name="bat_chart_current">#4DB6AC</color>
     <color name="bat_chart_grid">#26FFFFFF</color>
     <color name="bat_chart_gap">#14FFFFFF</color>
+    <color name="bat_condition_charging">#30D158</color>
+    <color name="bat_condition_discharging">#FF453A</color>
+    <color name="bat_condition_idle">#64D2FF</color>
 
     <!-- Slider zoom halaman detail grafik -->
     <color name="bat_slider_thumb">#FFFFFF</color>

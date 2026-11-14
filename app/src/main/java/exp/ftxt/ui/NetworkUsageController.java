@@ -748,6 +748,7 @@ public class NetworkUsageController {
         PackageManager pm = activity.getPackageManager();
         String label = null;
         Drawable icon = null;
+        boolean uninstalled = false;
 
         if (app.packageName != null && !app.packageName.isEmpty()) {
             try {
@@ -755,12 +756,19 @@ public class NetworkUsageController {
                 CharSequence appLabel = pm.getApplicationLabel(info);
                 if (appLabel != null) label = appLabel.toString();
                 icon = pm.getApplicationIcon(info);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                uninstalled = true;
             }
         }
 
         if (label == null || label.isEmpty()) {
             label = fallbackLabel(app);
+            if (app.packageName != null && !app.packageName.isEmpty()) {
+                uninstalled = true;
+            }
+        }
+        if (uninstalled && !label.endsWith("(Uninstalled)")) {
+            label = label + " (Uninstalled)";
         }
         if (icon == null) {
             try {

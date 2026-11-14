@@ -31,6 +31,7 @@ public class OverlayPreset {
     public String textContent;
 
     public Integer labelColor;
+    public Float labelSize;
     public Integer separatorColor;
 
     public Boolean showOnlyValue;

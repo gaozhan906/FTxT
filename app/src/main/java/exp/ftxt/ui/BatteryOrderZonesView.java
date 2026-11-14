@@ -21,7 +21,8 @@ import exp.ftxt.features.battery_stats.BatteryStatsConfig;
 public class BatteryOrderZonesView extends LinearLayout {
 
     public interface OnOrderChangedListener {
-        void onOrderChanged(String order, boolean temp, boolean pct, boolean volt, boolean cur, boolean power);
+        void onOrderChanged(String order, boolean temp, boolean pct, boolean volt, boolean cur,
+                            boolean power, boolean charge);
     }
 
     private static final int ZONE_ACTIVE = 0;
@@ -120,7 +121,7 @@ public class BatteryOrderZonesView extends LinearLayout {
         activeLabels.clear();
         inactiveLabels.clear();
         if (order == null || order.isEmpty()) {
-            order = "temp,pct,volt,cur,power";
+            order = "charge,temp,pct,volt,cur,power";
         }
         for (String id : order.split(",")) {
             id = id.trim();
@@ -297,6 +298,7 @@ public class BatteryOrderZonesView extends LinearLayout {
         BatteryStatsConfig.showVoltage = activeIds.contains("volt");
         BatteryStatsConfig.showCurrent = activeIds.contains("cur");
         BatteryStatsConfig.showPower = activeIds.contains("power");
+        BatteryStatsConfig.showCharge = activeIds.contains("charge");
         BatteryStatsConfig.itemOrder = buildOrder();
 
         if (listener != null) {
@@ -305,7 +307,8 @@ public class BatteryOrderZonesView extends LinearLayout {
                     BatteryStatsConfig.showPercentage,
                     BatteryStatsConfig.showVoltage,
                     BatteryStatsConfig.showCurrent,
-                    BatteryStatsConfig.showPower);
+                    BatteryStatsConfig.showPower,
+                    BatteryStatsConfig.showCharge);
         }
     }
 
@@ -424,6 +427,8 @@ public class BatteryOrderZonesView extends LinearLayout {
 
     private boolean isActive(String id) {
         switch (id) {
+            case "charge":
+                return BatteryStatsConfig.showCharge;
             case "temp":
                 return BatteryStatsConfig.showTemperature;
             case "pct":
@@ -442,6 +447,8 @@ public class BatteryOrderZonesView extends LinearLayout {
     private String labelFor(String id) {
         if (id == null) return "";
         switch (id) {
+            case "charge":
+                return "Cas";
             case "temp":
                 return "°C";
             case "pct":

@@ -1,3 +1,42 @@
+# [4.97.1] 2026/11/14 20:13 WITA 360 ***ONGOING***
+### 🔖 Deskripsi
+> Memperbarui modul Network Usage agar riwayat penggunaan data dari aplikasi yang telah di-uninstall tetap tersimpan dengan label tambahan `(Uninstalled)`.
+
+### 🔧 Optimasi & Penyesuaian
+- **Riwayat aplikasi uninstalled** — Catatan penggunaan data untuk aplikasi yang sudah dihapus dari perangkat tetap dipertahankan dan diberi label nama aplikasi/paket disertai keterangan `(Uninstalled)`.
+
+---
+
+# [4.97.0] 2026/11/14 12:26 WITA 359 ***RELEASE***
+> Pembaruan utama rilis ini berpusat pada pemantauan kestabilan tegangan, deteksi bypass charging, dan penyempurnaan overlay baterai, disertai perbaikan kualitas data serta grafik riwayat.
+
+### ✨ Fitur Baru
+- **Voltage Stability Monitor** — Kartu di Monitor > Info & Grafik yang menampilkan kondisi, voltage drop, recovery, variasi, jumlah sampel, dan estimasi resistansi efektif dengan pembaruan live ±1 detik.
+- **Grafik tegangan berkondisi** — Riwayat tegangan diwarnai per kondisi (charging/discharging/idle) dengan rentang 5m/30m/1j/6j/24j.
+- **Deteksi Bypass Charging** — Status bypass, indikasi sementara, dan batas cas tampil di overlay serta ring Monitor; akurasi penuh memakai node sistem dan Shizuku.
+- **Ikon Status Pengisian** — Ikon dinamis untuk charging, fast charging, USB, wireless, penuh, bypass, batas cas, jeda, dan discharge, mengikuti warna label dan ukuran teks.
+- **Ukuran label overlay** — Ukuran satuan dan label dapat diatur terpisah dari ukuran nilai, serta ikut tersimpan di preset.
+
+### ♻️ Perubahan Fitur
+- **Deteksi Bypass Charging** — Status mengikuti Smart Panel bila tersedia; heuristik sensor, node sistem, dan Shizuku menjadi cadangan.
+- **Urutan item baterai** — Item status pengisian (`Cas`) dapat diurutkan dan diaktifkan/nonaktifkan; urutan lama dimigrasikan dengan `Cas` di depan.
+
+### 🐞 Bug Fixes
+- **Validasi data baterai** — Sampel rusak tidak disimpan; jeda, lonjakan, dan counter tidak wajar dicatat sebagai anomali.
+- **Estimasi dan riwayat sesi** — Sesi dengan jeda ≥60 detik, data tidak lengkap, counter reset, atau estimasi tidak wajar tidak lagi dipakai.
+- **Grafik riwayat** — Lonjakan singkat tetap terlihat dan jeda data ditandai dengan benar pada data hasil downsampling.
+- **Sumber data** — Pembacaan hanya memakai sensor baterai yang sesuai, bukan adaptor; nilai di luar rentang wajar dianggap tidak tersedia.
+- **Nilai arus dan daya overlay** — Item mA/W tetap tampil dengan placeholder `--` tanpa menggeser susunan; nilai valid terakhir ditahan ±15 detik dan daya dapat dihitung dari tegangan × arus.
+- **Penyimpanan pengaturan baterai** — Urutan, visibilitas, ukuran teks, ukuran label, dan toggle bypass tetap tersimpan setelah aplikasi dibuka ulang.
+
+### 💡 Memo
+- Deteksi bypass bersifat heuristik; konfirmasi dapat memerlukan ±45 detik dan akurasi penuh membutuhkan Shizuku.
+- Estimasi resistansi efektif berasal dari perubahan arus dan tegangan yang memenuhi syarat; nilainya bukan resistansi internal baterai yang sesungguhnya.
+- Batas cas memakai ambang 80%; kebijakan vendor dapat berbeda.
+- Catatan anomali sampel disimpan untuk validasi dan belum memiliki tampilan atau pemangkasan otomatis.
+
+---
+
 # [4.96.0] 2026/11/06 08:31 WITA 349 ***RELEASE***
 ### 🔖 Deskripsi
 > Memusatkan pemantauan penggunaan data Network dalam satu layar, sekaligus menambah pemantauan FPS game dan memperkaya pengaturan serta efek Battery Strip.

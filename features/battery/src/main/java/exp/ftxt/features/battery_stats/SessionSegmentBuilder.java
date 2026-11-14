@@ -21,8 +21,8 @@ public final class SessionSegmentBuilder {
     public static final long WINDOW_MS = 600_000L;
     /** Pergeseran persen minimal untuk menyatakan arah berubah. */
     public static final int MIN_MOVE_PCT = 1;
-    /** Jeda antar sampel yang memisahkan dua sesi berbeda. */
-    public static final long SESSION_GAP_MS = 900_000L;
+    /** Jeda maksimum yang masih boleh diintegrasikan sebagai satu segmen. */
+    public static final long INTEGRATION_GAP_MS = 60_000L;
 
     public enum Direction { CHARGE, DISCHARGE, FLAT }
 
@@ -45,11 +45,18 @@ public final class SessionSegmentBuilder {
         public final float tempMin;
         public final float tempMax;
         public final float tempAvg;
+        public final long maxGapMs;
+        public final int gapCount;
+        public final float voltageMin;
+        public final float voltageMax;
+        public final boolean counterAvailable;
 
         Segment(Direction direction, long startTime, long endTime,
                 int startPercent, int endPercent, double mAhIntegral,
                 double deltaChargeMah, long screenOnMs, int sampleCount,
-                float tempMin, float tempMax, float tempAvg) {
+                float tempMin, float tempMax, float tempAvg,
+                long maxGapMs, int gapCount, float voltageMin, float voltageMax,
+                boolean counterAvailable) {
             this.direction = direction;
             this.startTime = startTime;
             this.endTime = endTime;
@@ -62,6 +69,11 @@ public final class SessionSegmentBuilder {
             this.tempMin = tempMin;
             this.tempMax = tempMax;
             this.tempAvg = tempAvg;
+            this.maxGapMs = maxGapMs;
+            this.gapCount = gapCount;
+            this.voltageMin = voltageMin;
+            this.voltageMax = voltageMax;
+            this.counterAvailable = counterAvailable;
         }
 
         public long durationMs() {
@@ -135,13 +147,13 @@ public final class SessionSegmentBuilder {
 
     /**
      * Mencari titik mulai sesi yang sedang berjalan (berisi sampel terbaru).
-     * Sesi berjalan berakhir mundur ketika: ada gap antar sampel >
-     * {@link #SESSION_GAP_MS} (perangkat mati lama / sesi usang), arah jendela
+     * Sesi berjalan berakhir mundur ketika: ada gap antar sampel >=
+     * {@link #INTEGRATION_GAP_MS} (data tidak lagi kontinu), arah jendela
      * berbalik stabil, atau status Android berubah (colok/cabut) — titik status
      * berubah tersebut diambil sebagai batas mulai sesi.
      */
     public static LivingSession livingSession(BatteryReading.Snapshot[] desc) {
-        return livingSession(desc, WINDOW_MS, SESSION_GAP_MS);
+        return livingSession(desc, WINDOW_MS, INTEGRATION_GAP_MS);
     }
 
     public static LivingSession livingSession(BatteryReading.Snapshot[] desc,
@@ -157,7 +169,7 @@ public final class SessionSegmentBuilder {
         int statusStart = -1;
         int k = 0;
         while (k + 1 < desc.length) {
-            if (desc[k].time - desc[k + 1].time > gapMs) break;
+            if (desc[k].time - desc[k + 1].time >= gapMs) break;
             if (desc[k + 1].isCharging() != nowCharging) {
                 statusStart = k + 1;
                 break;
@@ -167,7 +179,7 @@ public final class SessionSegmentBuilder {
 
         int i = 0;
         while (i + 1 < desc.length) {
-            if (desc[i].time - desc[i + 1].time > gapMs) break;
+            if (desc[i].time - desc[i + 1].time >= gapMs) break;
             Direction d = directionAt(h, i + 1, low);
             if (d != Direction.FLAT && d != dir) break;
             i++;
@@ -183,10 +195,10 @@ public final class SessionSegmentBuilder {
      * Membangun daftar segmen sesi dari sampel mentah terurut menurun.
      * Hasil dikembalikan urut waktu naik (kronologis). Jeda palsu dalam
      * pengisian (persen diam / status berubah sesaat) TIDAK memecah segmen —
-     * hanya gap > {@link #SESSION_GAP_MS} atau arah jendela yang berbalik stabil.
+     * hanya gap >= {@link #INTEGRATION_GAP_MS} atau arah jendela yang berbalik stabil.
      */
     public static ArrayList<Segment> buildSegments(BatteryReading.Snapshot[] desc) {
-        return buildSegments(desc, WINDOW_MS, SESSION_GAP_MS, null);
+        return buildSegments(desc, WINDOW_MS, INTEGRATION_GAP_MS, null);
     }
 
     public static ArrayList<Segment> buildSegments(BatteryReading.Snapshot[] desc,
@@ -207,7 +219,7 @@ public final class SessionSegmentBuilder {
             }
             int j = i;
             while (j + 1 < desc.length) {
-                if (desc[j].time - desc[j + 1].time > gapMs) break;
+                if (desc[j].time - desc[j + 1].time >= gapMs) break;
                 Direction d = directionAt(h, j + 1, low);
                 if (d == Direction.FLAT || d == dir) j++;
                 else break;
@@ -222,11 +234,15 @@ public final class SessionSegmentBuilder {
 
     private static Segment materialize(BatteryReading.Snapshot[] desc, int newest, int oldest,
                                        Direction dir, ScreenOnOracle oracle) {
-        // desc: indeks lebih kecil = lebih baru; segmen terbentang [newest..oldest].
         float tMin = Float.MAX_VALUE;
         float tMax = Float.MIN_VALUE;
+        float vMin = Float.MAX_VALUE;
+        float vMax = Float.MIN_VALUE;
         double tSum = 0;
         int tCount = 0;
+        long maxGap = 0;
+        int gapCount = 0;
+        boolean counterAvailable = true;
         for (int k = oldest; k >= newest; k--) {
             BatteryReading.Snapshot s = desc[k];
             if (s.tempC > 0f) {
@@ -235,12 +251,22 @@ public final class SessionSegmentBuilder {
                 if (s.tempC < tMin) tMin = s.tempC;
                 if (s.tempC > tMax) tMax = s.tempC;
             }
+            if (s.voltageV > 0f) {
+                if (s.voltageV < vMin) vMin = s.voltageV;
+                if (s.voltageV > vMax) vMax = s.voltageV;
+            }
+            if (s.chargeMah < 0L) counterAvailable = false;
+            if (k > newest) {
+                long dt = desc[k - 1].time - desc[k].time;
+                if (dt > maxGap) maxGap = dt;
+                if (dt >= INTEGRATION_GAP_MS) gapCount++;
+            }
         }
         double integral = 0.0;
         long screenOn = 0;
         for (int k = oldest; k > newest; k--) {
             long dt = desc[k - 1].time - desc[k].time;
-            if (dt > 0 && dt < 60000) {
+            if (dt > 0 && dt < INTEGRATION_GAP_MS) {
                 double mah = Math.abs(desc[k - 1].currentMa) * (dt / 3600000.0);
                 integral += mah;
                 if (oracle != null && oracle.isScreenOn(desc[k - 1].time)) screenOn += dt;
@@ -257,7 +283,11 @@ public final class SessionSegmentBuilder {
                 integral, deltaChargeMah, screenOn, oldest - newest + 1,
                 tMin == Float.MAX_VALUE ? 0f : tMin,
                 tMax == Float.MIN_VALUE ? 0f : tMax,
-                tCount > 0 ? (float) (tSum / tCount) : 0f);
+                tCount > 0 ? (float) (tSum / tCount) : 0f,
+                maxGap, gapCount,
+                vMin == Float.MAX_VALUE ? 0f : vMin,
+                vMax == Float.MIN_VALUE ? 0f : vMax,
+                counterAvailable);
     }
 
     // ---------- bantuan ----------

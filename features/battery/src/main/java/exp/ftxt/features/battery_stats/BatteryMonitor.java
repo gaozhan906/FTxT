@@ -30,6 +30,11 @@ public class BatteryMonitor {
     private static volatile boolean busy;
     private static int lastActivityStatus = -1;
     private static long lastDbWriteTime = 0L;
+    /** Sampel terakhir yang benar-benar tersimpan, untuk validasi & deteksi gap. */
+    private static BatteryReading.Snapshot lastStoredSnapshot;
+    /** Sampel valid terakhir untuk gate perhitungan real-time tiap detik. */
+    private static BatteryReading.Snapshot lastQualitySnapshot;
+    private static int lastQualityStatus = BatteryDataQuality.UNKNOWN;
 
     private static final Runnable tick = new Runnable() {
         @Override
@@ -39,10 +44,22 @@ public class BatteryMonitor {
                 busy = true;
                 bgHandler.post(() -> {
                     final BatteryReading.Snapshot s = BatteryReading.read(appContext);
+                    // Deteksi bypass memakai sampel mentah (status/level/arus) dan
+                    // probe dumpsys via Shizuku yang dibatasi frekuensinya.
+                    try {
+                        BypassChargingDetector.onSample(appContext, s);
+                    } catch (Exception ignored) {}
                     // Perhitungan (kapasitas & discharge) selalu tiap sampel (1 detik)
-                    // agar estimasi tetap real-time & presisi.
-                    BatteryCapacityEstimator.onSample(s);
-                    DischargeTracker.onSample(s);
+                    // agar estimasi tetap real-time & presisi. Sampel invalid tidak
+                    // diumpankan agar nilai 0/rusak tidak membuka sesi palsu.
+                    BatteryDataQuality.Quality liveQuality =
+                            BatteryDataQuality.evaluate(lastQualitySnapshot, s);
+                    if (liveQuality.status != BatteryDataQuality.INVALID) {
+                        BatteryCapacityEstimator.onSample(s);
+                        DischargeTracker.onSample(s);
+                        VoltageStabilityAnalyzer.onSample(s);
+                        lastQualitySnapshot = s;
+                    }
 
                     int activityStatus;
                     if (s.isCharging()) {
@@ -61,7 +78,27 @@ public class BatteryMonitor {
                     // lebih ringan (mengurangi risiko ANR jangka panjang).
                     if (s.time - lastDbWriteTime >= DB_WRITE_INTERVAL_MS) {
                         try {
-                            BatteryHistoryDb.get(appContext).insertSample(s);
+                            BatteryHistoryDb db = BatteryHistoryDb.get(appContext);
+                            BatteryDataQuality.Quality quality =
+                                    BatteryDataQuality.evaluate(lastStoredSnapshot, s);
+                            if (quality.status == BatteryDataQuality.INVALID) {
+                                // Sampel rusak tidak disimpan agar grafik/estimasi bersih;
+                                // event dicatat sekali saat transisi ke status invalid.
+                                if (lastQualityStatus != BatteryDataQuality.INVALID) {
+                                    for (BatteryAnomaly a : BatteryAnomalyDetector.detect(
+                                            lastStoredSnapshot, s, quality)) {
+                                        db.insertAnomaly(a);
+                                    }
+                                }
+                            } else {
+                                for (BatteryAnomaly a : BatteryAnomalyDetector.detect(
+                                        lastStoredSnapshot, s, quality)) {
+                                    db.insertAnomaly(a);
+                                }
+                                db.insertSample(s);
+                                lastStoredSnapshot = s;
+                            }
+                            lastQualityStatus = quality.status;
                         } catch (Exception ignored) {}
                         lastDbWriteTime = s.time;
                     }
@@ -93,6 +130,7 @@ public class BatteryMonitor {
         if (appContext == null) return;
         BatteryCapacityEstimator.init(appContext);
         DischargeTracker.init(appContext);
+        VoltageStabilityAnalyzer.reset();
         // Rekonstruksi sesi yang belum tersimpan & pruning data lama dipindah ke
         // thread latar agar query berat (querySamples 24 jam + segmentasi) tidak
         // memblokir main thread saat service start (penyebab ANR saat membuka aplikasi).
@@ -109,6 +147,16 @@ public class BatteryMonitor {
         running = true;
         lastSnapshot = BatteryReading.Snapshot.empty();
         lastActivityStatus = -1;
+        lastDbWriteTime = 0L;
+        lastQualityStatus = BatteryDataQuality.UNKNOWN;
+        lastQualitySnapshot = null;
+        try {
+            BatteryReading.Snapshot[] tail =
+                    BatteryHistoryDb.get(appContext).queryLastSamples(1);
+            lastStoredSnapshot = tail != null && tail.length > 0 ? tail[0] : null;
+        } catch (Exception ignored) {
+            lastStoredSnapshot = null;
+        }
         bgThread = new HandlerThread("batmon-read");
         bgThread.start();
         bgHandler = new Handler(bgThread.getLooper());
@@ -135,6 +183,10 @@ public class BatteryMonitor {
         }
         busy = false;
         lastSnapshot = BatteryReading.Snapshot.empty();
+        lastStoredSnapshot = null;
+        lastQualitySnapshot = null;
+        lastQualityStatus = BatteryDataQuality.UNKNOWN;
+        BypassChargingDetector.reset();
     }
 
     public static synchronized boolean isRunning() {

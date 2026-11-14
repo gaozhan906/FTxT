@@ -10,6 +10,8 @@ public class DischargeTracker {
 
     private static final float MIN_DELTA_PERCENT = 1f;
     private static final long MIN_SEGMENT_MS = 60_000L;
+    /** Efisiensi pengosongan di atas ini menandakan data arus/counter tidak wajar. */
+    private static final float MAX_EFFICIENCY_PERCENT = 150f;
     /** Ambang minimal durasi sesi invalid agar layak direkam (≈1 sampel DB). */
     private static final long INVALID_MIN_MS = 5_000L;
 
@@ -53,27 +55,20 @@ public class DischargeTracker {
             return;
         }
         if (!active) {
-            active = true;
-            segStartMs = s.time;
-            segStartChargeMah = s.chargeMah;
-            segStartPercent = s.percent;
-            screenOnMs = 0;
-            totalMs = 0;
-            samples = 0;
-            useIntegral = 0.0;
-            tempMin = s.tempC;
-            tempMax = s.tempC;
-            tempSum = 0;
-            tempCount = 0;
-            segAnyUnplugged = s.pluggedInt == 0;
+            startSegment(s);
+        } else if (deltaMs >= BatteryDataQuality.MAX_CONTINUOUS_GAP_MS) {
+            finishSegment();
+            startSegment(s);
         } else {
             if (s.pluggedInt == 0) segAnyUnplugged = true;
-            totalMs += deltaMs;
-            if (deltaMs > 0 && isScreenOn()) screenOnMs += deltaMs;
-            samples++;
-            if (deltaMs > 0 && Math.abs(s.currentMa) > 0) {
-                useIntegral += Math.abs(s.currentMa) * (deltaMs / 3600000.0);
+            if (deltaMs > 0) {
+                totalMs += deltaMs;
+                if (isScreenOn()) screenOnMs += deltaMs;
+                if (Math.abs(s.currentMa) > 0) {
+                    useIntegral += Math.abs(s.currentMa) * (deltaMs / 3600000.0);
+                }
             }
+            samples++;
             if (s.tempC > 0f) {
                 tempSum += s.tempC;
                 tempCount++;
@@ -83,6 +78,28 @@ public class DischargeTracker {
         }
         lastChargeMah = s.chargeMah;
         lastPercent = s.percent;
+    }
+
+    private static void startSegment(BatteryReading.Snapshot s) {
+        active = true;
+        segStartMs = s.time;
+        segStartChargeMah = s.chargeMah;
+        segStartPercent = s.percent;
+        screenOnMs = 0;
+        totalMs = 0;
+        samples = 1;
+        useIntegral = 0.0;
+        tempMin = Float.MAX_VALUE;
+        tempMax = Float.MIN_VALUE;
+        tempSum = 0;
+        tempCount = 0;
+        segAnyUnplugged = s.pluggedInt == 0;
+        if (s.tempC > 0f) {
+            tempMin = s.tempC;
+            tempMax = s.tempC;
+            tempSum = s.tempC;
+            tempCount = 1;
+        }
     }
 
     public static synchronized void onMonitoringStopped() {
@@ -99,7 +116,8 @@ public class DischargeTracker {
             long dur = totalMs;
             boolean shortSess = dur < MIN_SEGMENT_MS;
             boolean smallDelta = dPercent < MIN_DELTA_PERCENT;
-            boolean valid = !shortSess && !smallDelta;
+            boolean counterReset = segStartChargeMah > 0 && lastChargeMah > 0
+                    && lastChargeMah > segStartChargeMah;
 
             double usedCounter = 0d;
             if (segStartChargeMah > 0 && lastChargeMah > 0) {
@@ -107,8 +125,11 @@ public class DischargeTracker {
             }
             boolean screenOffDominant = screenOnMs * 2 < dur;
             int sampleCount = Math.max(samples, 1);
-            float cap = valid ? capacityForEfficiency() : 0f;
-            float efficiency = cap > 0f && valid ? (float) (usedCounter * 100.0 / cap) : -1f;
+            float cap = capacityForEfficiency();
+            float efficiency = cap > 0f ? (float) (usedCounter * 100.0 / cap) : -1f;
+            boolean highEfficiency = cap > 0f && usedCounter > 0d
+                    && efficiency > MAX_EFFICIENCY_PERCENT;
+            boolean valid = !shortSess && !smallDelta && !counterReset && !highEfficiency;
             float tMin = tempMin == Float.MAX_VALUE ? 0f : tempMin;
             float tMax = tempMax == Float.MIN_VALUE ? 0f : tempMax;
             float tAvg = tempCount > 0 ? (float) (tempSum / tempCount) : 0f;
@@ -133,7 +154,8 @@ public class DischargeTracker {
                             segStartMs, endMs, segStartPercent, lastPercent,
                             usedCounter, useIntegral, 0f, -1f,
                             screenOffDominant, tMin, tMax, tAvg, sampleCount,
-                            false, invalidReasonFor(smallDelta, shortSess)));
+                            false, invalidReasonFor(smallDelta, shortSess,
+                                    counterReset, highEfficiency)));
         } finally {
             segStartChargeMah = -1L;
             segStartPercent = -1;
@@ -150,12 +172,22 @@ public class DischargeTracker {
         }
     }
 
-    private static String invalidReasonFor(boolean smallDelta, boolean shortSess) {
+    private static String invalidReasonFor(boolean smallDelta, boolean shortSess,
+                                           boolean counterReset, boolean highEfficiency) {
         StringBuilder sb = new StringBuilder();
         if (shortSess) sb.append("durasi < 1 menit");
         if (smallDelta) {
             if (sb.length() > 0) sb.append(", ");
             sb.append("Δ% < ").append((int) MIN_DELTA_PERCENT).append("%");
+        }
+        if (counterReset) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("counter pengosongan tidak wajar");
+        }
+        if (highEfficiency) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("efisiensi di atas ")
+                    .append((int) MAX_EFFICIENCY_PERCENT).append("%");
         }
         return sb.toString();
     }
@@ -189,15 +221,23 @@ public class DischargeTracker {
                 if (seg.endTime <= lastEnd) continue;
                 float dPercent = seg.startPercent - seg.endPercent;
                 long dur = seg.durationMs();
+                boolean smallDelta = dPercent < MIN_DELTA_PERCENT;
+                boolean shortSess = dur < MIN_SEGMENT_MS;
+                boolean counterReset = seg.counterAvailable && seg.deltaChargeMah > 1d;
+                double usedCounter = Math.max(0d, seg.deltaChargeMah);
+                float cap = capacityForEfficiency();
+                float efficiency = cap > 0f ? (float) (usedCounter * 100.0 / cap) : -1f;
+                boolean highEfficiency = cap > 0f && usedCounter > 0d
+                        && efficiency > MAX_EFFICIENCY_PERCENT;
                 boolean valid = dPercent >= MIN_DELTA_PERCENT
-                        && dur >= MIN_SEGMENT_MS && seg.mAhIntegral > 0;
+                        && dur >= MIN_SEGMENT_MS && seg.mAhIntegral > 0
+                        && seg.gapCount == 0 && !counterReset && !highEfficiency;
                 if (valid) {
                     db.insertDischargeSession(toDischargeRow(seg, true, null));
                 } else if (dur >= INVALID_MIN_MS) {
-                    boolean smallDelta = dPercent < MIN_DELTA_PERCENT;
-                    boolean shortSess = dur < MIN_SEGMENT_MS;
                     db.insertDischargeSession(
-                            toDischargeRow(seg, false, invalidReasonFor(smallDelta, shortSess)));
+                            toDischargeRow(seg, false, invalidReasonFor(smallDelta, shortSess,
+                                    counterReset, highEfficiency)));
                 }
             }
         }

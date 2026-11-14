@@ -120,6 +120,8 @@ public final class ConfigLoader {
 
         BatteryStatsConfig.enabled = prefs.getBoolean("battery_enabled", false);
         BatteryStatsConfig.size = prefs.getFloat("battery_size", 12f);
+        BatteryStatsConfig.labelSize = Math.max(5f, Math.min(140f,
+                prefs.getFloat("battery_label_size", 9f)));
         BatteryStatsConfig.color = prefs.getInt("battery_color", Color.GREEN);
         BatteryStatsConfig.labelColor = prefs.getInt("battery_label_color", Color.CYAN);
         BatteryStatsConfig.separatorColor = prefs.getInt("battery_separator_color", Color.GRAY);
@@ -131,8 +133,26 @@ public final class ConfigLoader {
         BatteryStatsConfig.safeArea = prefs.getBoolean("battery_safe_area", true);
         BatteryStatsConfig.touchPassthrough = prefs.getBoolean("battery_lock", true);
         BatteryStatsConfig.showOnlyValue = prefs.getBoolean("battery_show_only_value", false);
+        BatteryStatsConfig.bypassDetection = prefs.getBoolean("battery_bypass_detection", true);
         BatteryStatsConfig.showTemperature = prefs.getBoolean("battery_show_temperature", true);
         BatteryStatsConfig.showPercentage = prefs.getBoolean("battery_show_percentage", false);
+        BatteryStatsConfig.showVoltage = prefs.getBoolean("battery_show_voltage", true);
+        BatteryStatsConfig.showCurrent = prefs.getBoolean("battery_show_current", true);
+        BatteryStatsConfig.showPower = prefs.getBoolean("battery_show_power", true);
+        BatteryStatsConfig.showCharge = prefs.getBoolean("battery_show_charge", true);
+        String batteryOrder = prefs.getString("battery_item_order", BatteryStatsConfig.itemOrder);
+        if (!prefs.getBoolean("battery_order_charge_migrated", false)) {
+            if (batteryOrder == null || batteryOrder.trim().isEmpty()) {
+                batteryOrder = BatteryStatsConfig.itemOrder;
+            } else if (!batteryOrder.contains("charge")) {
+                batteryOrder = "charge," + batteryOrder;
+            }
+            prefs.edit()
+                    .putString("battery_item_order", batteryOrder)
+                    .putBoolean("battery_order_charge_migrated", true)
+                    .apply();
+        }
+        BatteryStatsConfig.itemOrder = batteryOrder;
         BatteryStatsConfig.bg.enabled = prefs.getBoolean("battery_bg_enabled", false);
         BatteryStatsConfig.bg.color = prefs.getInt("battery_bg_color", 0xCC000000);
         BatteryStatsConfig.bg.padding = prefs.getInt("battery_bg_padding", 8);

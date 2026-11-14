@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.BatteryManager;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -24,13 +23,14 @@ import java.util.Map;
 public class BatteryHistoryDb extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "battery_history.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
 
     private static final String T_SAMPLES = "samples";
     private static final String T_SESSIONS = "sessions";
     private static final String T_DISCHARGE = "discharge_sessions";
     private static final String T_ACTIVITY = "activity_log";
     private static final String T_META = "meta";
+    private static final String T_ANOMALIES = "anomalies";
 
     private static volatile BatteryHistoryDb instance;
 
@@ -69,6 +69,10 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_samples_time ON samples(time)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_activity_time ON activity_log(time)");
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_discharge_time ON discharge_sessions(start_time)");
+        } catch (Exception ignored) {}
+        try {
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_anomaly_time ON anomalies(time)");
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_anomaly_unique ON anomalies(time,type)");
         } catch (Exception ignored) {}
     }
 
@@ -136,6 +140,8 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE " + T_META + " (" +
                 "key TEXT PRIMARY KEY," +
                 "value TEXT)");
+
+        createAnomalyTable(db);
     }
 
     @Override
@@ -187,6 +193,35 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
                         + " ADD COLUMN invalid_reason TEXT");
             } catch (Exception ignored) {}
         }
+        if (oldVersion < 5) {
+            try {
+                createAnomalyTable(db);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    private static void createAnomalyTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + T_ANOMALIES + " (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "time INTEGER NOT NULL," +
+                "type TEXT NOT NULL," +
+                "severity INTEGER NOT NULL," +
+                "percent_before INTEGER," +
+                "percent_after INTEGER," +
+                "voltage_before REAL," +
+                "voltage_after REAL," +
+                "current_before INTEGER," +
+                "current_after INTEGER," +
+                "status_before INTEGER," +
+                "status_after INTEGER," +
+                "prev_value REAL," +
+                "new_value REAL," +
+                "reason TEXT," +
+                "created_at INTEGER NOT NULL)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_anomaly_time ON "
+                + T_ANOMALIES + "(time)");
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_anomaly_unique ON "
+                + T_ANOMALIES + "(time,type)");
     }
 
     /** Baris sesi pengisian daya hasil estimasi (metadata lengkap). */
@@ -413,14 +448,12 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
 
     /**
      * Sampel untuk grafik pada rentang [fromMs, toMs]. Bila jumlah baris melebihi
-     * targetPoints, baris dirata-rata per bucket waktu agar hasil ringan digambar.
-     * Hasil akhirnya di-resample ke grid waktu SERAGAM (step tetap) sehingga
-     * kepadatan titik grafik konsisten — pola garis tidak berubah mengikuti
-     * interval sampling yang sedang aktif saat data direkam (charging 1 dtk vs idle).
+     * targetPoints, tiap bucket waktu menyumbang baris nyata yang menjadi nilai
+     * minimum/maksimum persen, tegangan, dan arus — bukan rata-rata. Dengan begitu
+     * lonjakan singkat dan area jeda tidak hilang saat grafik diperkecil.
      */
     public BatteryReading.Snapshot[] queryChart(long fromMs, long toMs, int targetPoints) {
-        BatteryReading.Snapshot[] raw = queryChartRaw(fromMs, toMs, targetPoints);
-        return resampleUniform(raw, fromMs, toMs, targetPoints);
+        return queryChartRaw(fromMs, toMs, targetPoints);
     }
 
     private BatteryReading.Snapshot[] queryChartRaw(long fromMs, long toMs, int targetPoints) {
@@ -435,29 +468,60 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
 
         long span = Math.max(1L, toMs - fromMs);
         long bucketMs = Math.max(1000L, span / targetPoints);
+        String sql = "SELECT DISTINCT s.id, s.time, s.temp_c, s.percent, s.voltage_v,"
+                + " s.current_ma, s.power_w, s.charge_mah, s.cycle_count,"
+                + " s.status, s.plugged, s.technology"
+                + " FROM " + T_SAMPLES + " s"
+                + " JOIN (SELECT (time - ?) / ? AS bucket,"
+                + " MIN(time) AS tmin, MAX(time) AS tmax,"
+                + " MIN(percent) AS pmin, MAX(percent) AS pmax,"
+                + " MIN(voltage_v) AS vmin, MAX(voltage_v) AS vmax,"
+                + " MIN(current_ma) AS cmin, MAX(current_ma) AS cmax"
+                + " FROM " + T_SAMPLES + " WHERE time >= ? AND time <= ?"
+                + " GROUP BY bucket) g ON ((time - ?) / ?) = g.bucket"
+                + " WHERE s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time = g.tmin LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time = g.tmax LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.percent = g.pmin LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.percent = g.pmax LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.voltage_v = g.vmin LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.voltage_v = g.vmax LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.current_ma = g.cmin LIMIT 1)"
+                + " OR s.id = (SELECT s2.id FROM " + T_SAMPLES
+                + " s2 WHERE s2.time >= g.tmin AND s2.time <= g.tmax"
+                + " AND s2.current_ma = g.cmax LIMIT 1)"
+                + " ORDER BY s.time ASC";
+        String from = String.valueOf(fromMs);
+        String bucket = String.valueOf(bucketMs);
+        String[] args = new String[]{from, bucket, from, String.valueOf(toMs),
+                from, bucket};
         ArrayList<BatteryReading.Snapshot> out = new ArrayList<>();
-        Cursor cur = db.rawQuery("SELECT MIN(time), AVG(temp_c), AVG(percent), AVG(voltage_v),"
-                        + " AVG(current_ma), AVG(power_w), AVG(charge_mah),"
-                        + " AVG(status IN (" + BatteryManager.BATTERY_STATUS_CHARGING
-                        + "," + BatteryManager.BATTERY_STATUS_FULL + "))"
-                        + " FROM " + T_SAMPLES + " WHERE time >= ? AND time <= ?"
-                        + " GROUP BY (time - ?) / ? ORDER BY MIN(time) ASC",
-                new String[]{String.valueOf(fromMs), String.valueOf(toMs),
-                        String.valueOf(fromMs), String.valueOf(bucketMs)});
+        Cursor cur = db.rawQuery(sql, args);
         try {
             while (cur.moveToNext()) {
-                int status = cur.getFloat(7) >= 0.5f
-                        ? BatteryManager.BATTERY_STATUS_CHARGING
-                        : BatteryManager.BATTERY_STATUS_DISCHARGING;
                 out.add(new BatteryReading.Snapshot(
-                        cur.getLong(0),
-                        cur.getFloat(1),
-                        Math.round(cur.getFloat(2)),
-                        cur.getFloat(3),
-                        (int) cur.getFloat(4),
-                        cur.getDouble(5),
-                        Math.round(cur.getFloat(6)),
-                        -1, status, 0, null));
+                        cur.getLong(1),
+                        cur.getFloat(2),
+                        cur.getInt(3),
+                        cur.getFloat(4),
+                        cur.getInt(5),
+                        cur.getDouble(6),
+                        cur.getLong(7),
+                        cur.getInt(8),
+                        cur.getInt(9),
+                        cur.getInt(10),
+                        cur.isNull(11) ? null : cur.getString(11)));
             }
         } finally {
             cur.close();
@@ -466,54 +530,7 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
     }
 
     /** Ambang gap waktu antar sampel; jeda lebih panjang dianggap periode tanpa data. */
-    public static final long GAP_THRESHOLD_MS = 5L * 60_000L;
-
-    /** Interpolasi linear ke titik-titik berjarak waktu sama (maks. targetPoints). */
-    private static BatteryReading.Snapshot[] resampleUniform(
-            BatteryReading.Snapshot[] raw, long fromMs, long toMs, int targetPoints) {
-        int n = raw.length;
-        if (n < 2) return raw;
-        long start = Math.max(fromMs, raw[0].time);
-        long end = Math.min(toMs, raw[n - 1].time);
-        long step = Math.max(1000L, (end - start) / targetPoints);
-        ArrayList<BatteryReading.Snapshot> out = new ArrayList<>();
-        int j = 0;
-        for (long t = start; t <= end && out.size() < targetPoints; t += step) {
-            while (j + 1 < n && raw[j + 1].time <= t) j++;
-            BatteryReading.Snapshot a = raw[j];
-            int k = Math.min(j + 1, n - 1);
-            BatteryReading.Snapshot b = raw[k];
-            if (b.time <= a.time) {
-                out.add(a);
-                continue;
-            }
-            if (b.time - a.time > GAP_THRESHOLD_MS && t > a.time) {
-                // Jangan interpolasi melewati periode tanpa data: potong grid tepat
-                // di sampel terakhir sebelum gap, lalu mulai grid baru di sampel
-                // pertama sesudah gap agar garis grafik terputus.
-                while (!out.isEmpty() && out.get(out.size() - 1).time > a.time) {
-                    out.remove(out.size() - 1);
-                }
-                if ((out.isEmpty() || out.get(out.size() - 1).time < a.time) && a.time >= start) {
-                    out.add(a);
-                }
-                t = b.time - step;
-                continue;
-            }
-            float frac = (t - a.time) / (float) (b.time - a.time);
-            out.add(new BatteryReading.Snapshot(
-                    t,
-                    a.tempC + (b.tempC - a.tempC) * frac,
-                    Math.round(a.percent + (b.percent - a.percent) * frac),
-                    a.voltageV + (b.voltageV - a.voltageV) * frac,
-                    Math.round(a.currentMa + (b.currentMa - a.currentMa) * frac),
-                    a.powerW + (b.powerW - a.powerW) * frac,
-                    Math.round(a.chargeMah + (b.chargeMah - a.chargeMah) * frac),
-                    a.cycleCount, a.statusInt, a.pluggedInt, a.technology));
-        }
-        if (out.isEmpty()) return raw;
-        return out.toArray(new BatteryReading.Snapshot[0]);
-    }
+    public static final long GAP_THRESHOLD_MS = 60_000L;
 
     private BatteryReading.Snapshot[] query(long fromMs, long toMs, int limit) {
         ArrayList<BatteryReading.Snapshot> out = new ArrayList<>();
@@ -980,6 +997,92 @@ public class BatteryHistoryDb extends SQLiteOpenHelper {
         try {
             while (c.moveToNext()) {
                 out.add(new ActivityLog(c.getLong(0), c.getInt(1)));
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    // ---------- anomali ----------
+
+    public static final class AnomalyRow {
+        public final long time;
+        public final String type;
+        public final int severity;
+        public final int percentBefore;
+        public final int percentAfter;
+        public final float voltageBefore;
+        public final float voltageAfter;
+        public final int currentBefore;
+        public final int currentAfter;
+        public final int statusBefore;
+        public final int statusAfter;
+        public final double prevValue;
+        public final double newValue;
+        public final String reason;
+
+        AnomalyRow(long time, String type, int severity,
+                   int percentBefore, int percentAfter,
+                   float voltageBefore, float voltageAfter,
+                   int currentBefore, int currentAfter,
+                   int statusBefore, int statusAfter,
+                   double prevValue, double newValue, String reason) {
+            this.time = time;
+            this.type = type;
+            this.severity = severity;
+            this.percentBefore = percentBefore;
+            this.percentAfter = percentAfter;
+            this.voltageBefore = voltageBefore;
+            this.voltageAfter = voltageAfter;
+            this.currentBefore = currentBefore;
+            this.currentAfter = currentAfter;
+            this.statusBefore = statusBefore;
+            this.statusAfter = statusAfter;
+            this.prevValue = prevValue;
+            this.newValue = newValue;
+            this.reason = reason;
+        }
+    }
+
+    public synchronized void insertAnomaly(BatteryAnomaly a) {
+        if (a == null || a.time <= 0L) return;
+        ContentValues v = new ContentValues();
+        v.put("time", a.time);
+        v.put("type", a.type);
+        v.put("severity", a.severity);
+        v.put("percent_before", a.percentBefore);
+        v.put("percent_after", a.percentAfter);
+        v.put("voltage_before", a.voltageBefore);
+        v.put("voltage_after", a.voltageAfter);
+        v.put("current_before", a.currentBefore);
+        v.put("current_after", a.currentAfter);
+        v.put("status_before", a.statusBefore);
+        v.put("status_after", a.statusAfter);
+        v.put("prev_value", a.prevValue);
+        v.put("new_value", a.newValue);
+        if (a.reason != null) v.put("reason", a.reason);
+        v.put("created_at", System.currentTimeMillis());
+        getWritableDatabase().insertWithOnConflict(T_ANOMALIES, null, v,
+                SQLiteDatabase.CONFLICT_IGNORE);
+    }
+
+    public ArrayList<AnomalyRow> queryAnomalies(long fromMs, long toMs) {
+        ArrayList<AnomalyRow> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT time, type, severity, percent_before, percent_after,"
+                        + " voltage_before, voltage_after, current_before, current_after,"
+                        + " status_before, status_after, prev_value, new_value, reason"
+                        + " FROM " + T_ANOMALIES
+                        + " WHERE time >= ? AND time <= ? ORDER BY time ASC",
+                new String[]{String.valueOf(fromMs), String.valueOf(toMs)});
+        try {
+            while (c.moveToNext()) {
+                out.add(new AnomalyRow(c.getLong(0), c.getString(1), c.getInt(2),
+                        c.getInt(3), c.getInt(4), c.getFloat(5), c.getFloat(6),
+                        c.getInt(7), c.getInt(8), c.getInt(9), c.getInt(10),
+                        c.getDouble(11), c.getDouble(12),
+                        c.isNull(13) ? null : c.getString(13)));
             }
         } finally {
             c.close();

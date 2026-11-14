@@ -74,6 +74,7 @@ public class BatteryPositionController {
             p.safeArea = BatteryStatsConfig.safeArea;
             p.showOnlyValue = BatteryStatsConfig.showOnlyValue;
             p.labelColor = BatteryStatsConfig.labelColor;
+            p.labelSize = BatteryStatsConfig.labelSize;
             p.separatorColor = BatteryStatsConfig.separatorColor;
             p.showTemperature = BatteryStatsConfig.showTemperature;
             p.showPercentage = BatteryStatsConfig.showPercentage;
@@ -115,6 +116,10 @@ public class BatteryPositionController {
                 BatteryStatsConfig.labelColor = p.labelColor;
                 prefs.edit().putInt("battery_label_color", BatteryStatsConfig.labelColor).apply();
             }
+            if (p.labelSize != null) {
+                BatteryStatsConfig.labelSize = Math.max(5f, Math.min(140f, p.labelSize));
+                prefs.edit().putFloat("battery_label_size", BatteryStatsConfig.labelSize).apply();
+            }
             if (p.separatorColor != null) {
                 BatteryStatsConfig.separatorColor = p.separatorColor;
                 prefs.edit().putInt("battery_separator_color", BatteryStatsConfig.separatorColor).apply();
@@ -135,6 +140,7 @@ public class BatteryPositionController {
             FloatingService.updateSizeForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.size);
             FloatingService.updateColorForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.color);
             FloatingService.updateLabelColorForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.labelColor);
+            FloatingService.updateLabelSizeForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.labelSize);
             FloatingService.updateSeparatorColorForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.separatorColor);
             FloatingService.updateShadowForModule(FloatingService.batteryStatsModule());
             FloatingService.updateBackgroundForModule(FloatingService.batteryStatsModule());

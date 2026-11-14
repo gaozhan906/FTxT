@@ -448,6 +448,12 @@ public class FloatingService extends Service {
         }
     }
 
+    public static void updateLabelSizeForModule(OverlayModule module, float size) {
+        if (instance != null && module != null && module.isRunning()) {
+            module.updateLabelSize(size);
+        }
+    }
+
     public static void updateSeparatorColorForModule(OverlayModule module, int color) {
         if (instance != null && module != null && module.isRunning()) {
             module.updateSeparatorColor(color);

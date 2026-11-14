@@ -95,6 +95,8 @@ Waktu yang dicatat di setiap entry adalah **waktu di judul entry**, yaitu waktu 
 - Satu kalimat inti + ajakan singkat agar section di bawah tetap terbaca adalah pola yang baik.
 
 - **Satu perubahan = satu poin, tulis hasil akhir.** Jika dirombak berkali-kali, catat kondisi final saja.
+- **Satu poin maksimal satu baris pendek.** Jika perlu lebih dari itu, biasanya detail internal harus dibuang.
+- **Tulis dari sudut pandang pembaca user:** nama fitur dan perilakunya, bukan nama kelas, method, tabel, parameter, atau angka internal.
 - **Jangan menumpuk poin yang saling menimpa** — perbarui/tulis ulang poin yang sudah ada, jangan tambah poin baru yang berkonflik.
 - **Jangan catat detail internal** (nama helper, cara polling, key prefs, dll) kecuali memengaruhi perilaku user.
 - **Cek konsistensi** sebelum selesai: tidak boleh ada poin yang bertentangan/menduplikasi dalam satu entry.

@@ -28,6 +28,8 @@ import exp.ftxt.features.battery_stats.BatteryCapacityEstimator;
 import exp.ftxt.features.battery_stats.BatteryHistoryDb;
 import exp.ftxt.features.battery_stats.BatteryMonitor;
 import exp.ftxt.features.battery_stats.BatteryReading;
+import exp.ftxt.features.battery_stats.BatteryStatsConfig;
+import exp.ftxt.features.battery_stats.BypassChargingDetector;
 import exp.ftxt.ui.BatteryRingView;
 
 public class BatteryMonitorTabController {
@@ -40,6 +42,7 @@ public class BatteryMonitorTabController {
     TextView batMonitorMetricsText1;
     TextView batMonitorMetricsText2;
     private TextView batMonitorConditionBadge;
+    private View batVoltageStabilityOpen;
     private Button batMonitorExportButton;
     private Button batMonitorCopyButton;
     private int monitorLabelColor;
@@ -187,6 +190,9 @@ public class BatteryMonitorTabController {
         batMonitorMetricsText1 = infoPage.findViewById(R.id.batMonitorMetricsText1);
         batMonitorMetricsText2 = infoPage.findViewById(R.id.batMonitorMetricsText2);
         batMonitorConditionBadge = infoPage.findViewById(R.id.batMonitorConditionBadge);
+        batVoltageStabilityOpen = infoPage.findViewById(R.id.batVoltageStabilityOpen);
+        batVoltageStabilityOpen.setOnClickListener(v ->
+                VoltageStabilityActivity.start(activity));
 
         batMonitorExportButton = healthPage.findViewById(R.id.batMonitorExportButton);
         batMonitorCopyButton = healthPage.findViewById(R.id.batMonitorCopyButton);
@@ -381,6 +387,11 @@ public class BatteryMonitorTabController {
     }
 
     static String shortChargingStatus(BatteryReading.Snapshot s) {
+        if (BatteryStatsConfig.bypassDetection) {
+            BypassChargingDetector.State bs = BypassChargingDetector.getState();
+            if (bs.isBypass()) return "Bypass";
+            if (bs.state == BypassChargingDetector.STATE_CHARGE_LIMIT) return "Batas Cas";
+        }
         if (s.statusInt == BatteryManager.BATTERY_STATUS_FULL) return "Full";
         if (s.statusInt == BatteryManager.BATTERY_STATUS_CHARGING) {
             switch (s.pluggedInt) {

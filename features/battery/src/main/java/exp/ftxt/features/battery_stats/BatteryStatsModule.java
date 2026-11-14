@@ -4,11 +4,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.PixelFormat;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.ImageSpan;
+import android.text.style.RelativeSizeSpan;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.WindowManager;
 
@@ -30,7 +35,14 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
     private HandlerThread bgThread;
     private Handler bgHandler;
     private String lastRenderedText;
+    private int lastRenderedChargeIcon = -1;
+    private int lastCurrentMa;
+    private long lastCurrentAt;
+    private double lastPowerW;
+    private long lastPowerAt;
     private volatile boolean bgBusy;
+
+    private static final long VALUE_HOLD_MS = 15_000L;
 
     public static Runnable onPositionUpdate;
     private String orientationSuffix;
@@ -61,6 +73,9 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
         view.setTextSize(BatteryStatsConfig.size);
         view.setGravity(Gravity.CENTER_HORIZONTAL);
         applyBackground();
+        invalidateRenderCache();
+        lastCurrentAt = 0L;
+        lastPowerAt = 0L;
         updateDisplay();
 
         params = new WindowManager.LayoutParams(
@@ -120,23 +135,35 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
     public void updateSize(float size) {
         BatteryStatsConfig.size = size;
         if (view != null) view.setTextSize(size);
+        invalidateRenderCache();
+        updateDisplay();
     }
 
     @Override
     public void updateColor(int color) {
         BatteryStatsConfig.color = color;
+        invalidateRenderCache();
+        updateDisplay();
+    }
+
+    @Override
+    public void updateLabelSize(float size) {
+        BatteryStatsConfig.labelSize = size;
+        invalidateRenderCache();
         updateDisplay();
     }
 
     @Override
     public void updateLabelColor(int color) {
         BatteryStatsConfig.labelColor = color;
+        invalidateRenderCache();
         updateDisplay();
     }
 
     @Override
     public void updateSeparatorColor(int color) {
         BatteryStatsConfig.separatorColor = color;
+        invalidateRenderCache();
         updateDisplay();
     }
 
@@ -336,9 +363,14 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
 
     public void refreshDisplay() {
         if (view == null) return;
-        lastRenderedText = null;
+        invalidateRenderCache();
         updateDisplay();
         updatePosition();
+    }
+
+    private void invalidateRenderCache() {
+        lastRenderedText = null;
+        lastRenderedChargeIcon = -1;
     }
 
     private void updateDisplay() {
@@ -346,17 +378,61 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
         if (bgHandler != null) {
             bgHandler.post(() -> {
                 BatteryReading.Snapshot snap = BatteryReading.read(context);
-                String text = buildDisplayText(snap);
-                handler.post(() -> applyDisplay(text));
+                int icon = ChargingStatusIcon.resolve(snap);
+                CharSequence text = buildDisplayText(snap, icon);
+                handler.post(() -> applyDisplay(text, icon));
             });
         } else {
             BatteryReading.Snapshot snap = BatteryReading.read(context);
-            String text = buildDisplayText(snap);
-            applyDisplay(text);
+            int icon = ChargingStatusIcon.resolve(snap);
+            CharSequence text = buildDisplayText(snap, icon);
+            applyDisplay(text, icon);
         }
     }
 
-    private String buildItemPart(String id, BatteryReading.Snapshot s) {
+    private int stableCurrent(BatteryReading.Snapshot s) {
+        if (s.time <= 0L) return 0;
+        if (s.currentMa != 0) {
+            lastCurrentMa = s.currentMa;
+            lastCurrentAt = s.time;
+            return s.currentMa;
+        }
+        long age = s.time - lastCurrentAt;
+        if (lastCurrentAt > 0L && age >= 0L && age <= VALUE_HOLD_MS) {
+            return lastCurrentMa;
+        }
+        return 0;
+    }
+
+    private double stablePower(BatteryReading.Snapshot s) {
+        if (s.time <= 0L) return 0d;
+        if (s.powerW > 0d) {
+            lastPowerW = s.powerW;
+            lastPowerAt = s.time;
+            return s.powerW;
+        }
+        int current = stableCurrent(s);
+        if (s.voltageV > 0f && current != 0) {
+            double power = (s.voltageV * Math.abs(current)) / 1000d;
+            lastPowerW = power;
+            lastPowerAt = s.time;
+            return power;
+        }
+        long age = s.time - lastPowerAt;
+        if (lastPowerAt > 0L && age >= 0L && age <= VALUE_HOLD_MS) {
+            return lastPowerW;
+        }
+        return 0d;
+    }
+
+    private CharSequence buildItemPart(String id, BatteryReading.Snapshot s, int chargeIcon) {
+        if ("charge".equals(id) && BatteryStatsConfig.showCharge) {
+            int res = ChargingStatusIcon.iconRes(chargeIcon);
+            if (res == 0) return null;
+            SpannableStringBuilder icon = new SpannableStringBuilder(" ");
+            appendIcon(icon, res, ChargingStatusIcon.iconAlpha(chargeIcon));
+            return icon;
+        }
         if ("temp".equals(id) && BatteryStatsConfig.showTemperature && s.tempC != 0f) {
             String tempText = (s.tempC == Math.floor(s.tempC))
                     ? String.valueOf((int) s.tempC)
@@ -373,8 +449,12 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
                     ? String.format("%.1f", s.voltageV)
                     : String.format("%.1fV", s.voltageV);
         }
-        if ("cur".equals(id) && BatteryStatsConfig.showCurrent && s.currentMa != 0) {
-            int ma = s.currentMa;
+        if ("cur".equals(id) && BatteryStatsConfig.showCurrent) {
+            int current = stableCurrent(s);
+            if (current == 0) {
+                return BatteryStatsConfig.showOnlyValue ? "--" : "--mA";
+            }
+            int ma = current;
             String sign = "";
             if (ma > 0) {
                 sign = "+";
@@ -386,12 +466,32 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
                     ? String.format("%s%d", sign, ma)
                     : String.format("%s%dmA", sign, ma);
         }
-        if ("power".equals(id) && BatteryStatsConfig.showPower && s.powerW > 0) {
+        if ("power".equals(id) && BatteryStatsConfig.showPower) {
+            double power = stablePower(s);
+            if (power <= 0d) {
+                return BatteryStatsConfig.showOnlyValue ? "--" : "--W";
+            }
             return BatteryStatsConfig.showOnlyValue
-                    ? String.format("%.1f", s.powerW)
-                    : String.format("%.1fW", s.powerW);
+                    ? String.format("%.1f", power)
+                    : String.format("%.1fW", power);
         }
         return null;
+    }
+
+    private void appendIcon(SpannableStringBuilder sb, int res, float alpha) {
+        if (context == null) return;
+        Drawable drawable = context.getDrawable(res);
+        if (drawable == null) return;
+        int size = Math.max(1, Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_SP, BatteryStatsConfig.size * 1.15f,
+                context.getResources().getDisplayMetrics())));
+        drawable.setBounds(0, 0, size, size);
+        drawable.setTint(BatteryStatsConfig.labelColor);
+        drawable.setAlpha(Math.round(255f * alpha));
+        int start = sb.length();
+        sb.append(" ");
+        sb.setSpan(new ImageSpan(drawable), start, start + 1,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     private final Runnable tickRunnable = new Runnable() {
@@ -404,11 +504,12 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
                 bgHandler.post(() -> {
                     try {
                         BatteryReading.Snapshot snap = BatteryReading.read(context);
-                        String text = buildDisplayText(snap);
+                        int icon = ChargingStatusIcon.resolve(snap);
+                        CharSequence text = buildDisplayText(snap, icon);
                         handler.post(() -> {
                             bgBusy = false;
                             if (!running) return;
-                            applyDisplay(text);
+                            applyDisplay(text, icon);
                             handler.postDelayed(self, (long) (BatteryStatsConfig.updateInterval * 1000));
                         });
                     } catch (Exception e) {
@@ -422,33 +523,43 @@ public class BatteryStatsModule implements OverlayModule, SmartPanelTarget {
         }
     };
 
-    private String buildDisplayText(BatteryReading.Snapshot snap) {
-        StringBuilder sb = new StringBuilder();
+    private CharSequence buildDisplayText(BatteryReading.Snapshot snap, int chargeIcon) {
+        SpannableStringBuilder sb = new SpannableStringBuilder();
         String[] order = BatteryStatsConfig.itemOrder.split(",");
-        for (String id : order) {
-            String part = buildItemPart(id, snap);
-            if (part == null) continue;
+        for (String rawId : order) {
+            String id = rawId.trim();
+            CharSequence part = buildItemPart(id, snap, chargeIcon);
+            if (part == null || part.length() == 0) continue;
             if (sb.length() > 0) sb.append(" | ");
             sb.append(part);
         }
-        return sb.length() > 0 ? sb.toString() : "N/A";
+        if (sb.length() == 0) return "N/A";
+        return sb;
     }
 
-    private void applyDisplay(String text) {
+    private void applyDisplay(CharSequence content, int chargeIcon) {
         if (view == null) return;
-        if (text.equals(lastRenderedText)) return;
+        String text = content.toString();
+        if (text.equals(lastRenderedText) && chargeIcon == lastRenderedChargeIcon) return;
         lastRenderedText = text;
+        lastRenderedChargeIcon = chargeIcon;
         view.setTextColor(BatteryStatsConfig.color);
         if (BatteryStatsConfig.showOnlyValue) {
-            view.setText(text);
+            view.setText(content);
             return;
         }
-        SpannableString spannable = new SpannableString(text);
+        SpannableStringBuilder spannable = new SpannableStringBuilder(content);
+        float labelScale = BatteryStatsConfig.size > 0f
+                ? Math.max(0.1f, BatteryStatsConfig.labelSize / BatteryStatsConfig.size)
+                : 1f;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
             if (c == '\u00B0' || c == 'C' || c == '%' || c == 'm' || c == 'V' || c == 'A' || c == 'W') {
                 spannable.setSpan(new ForegroundColorSpan(BatteryStatsConfig.labelColor),
                         i, i + 1, 0);
+                if (labelScale != 1f) {
+                    spannable.setSpan(new RelativeSizeSpan(labelScale), i, i + 1, 0);
+                }
             } else if (c == '|') {
                 spannable.setSpan(new ForegroundColorSpan(BatteryStatsConfig.separatorColor),
                         i, i + 1, 0);

@@ -20,6 +20,10 @@ public class BatteryCapacityEstimator {
     private static final float MIN_ESTIMATE_MAH = 500f;
     private static final float MAX_ESTIMATE_MAH = 30000f;
     private static final long MIN_SEGMENT_MS = 60_000L;
+    /** Tegangan rata-rata minimal yang wajar selama pengisian. */
+    private static final float MIN_CHARGING_VOLTAGE_V = 3.3f;
+    /** Batas atas estimasi relatif terhadap kapasitas desain. */
+    private static final float MAX_DESIGN_RATIO = 1.35f;
 
     /** Ambang minimal durasi sesi invalid agar layak direkam (≈1 sampel DB). */
     private static final long INVALID_MIN_MS = 5_000L;
@@ -63,6 +67,8 @@ public class BatteryCapacityEstimator {
     private static float segTempMax = Float.MIN_VALUE;
     private static double segTempSum;
     private static int segTempCount;
+    private static float segVoltageMin = Float.MAX_VALUE;
+    private static float segVoltageMax = Float.MIN_VALUE;
     /** Bukti kabel benar-benar tercolok (plugged != 0) selama segmen berlangsung. */
     private static boolean segmentAnyPlugged;
 
@@ -98,40 +104,63 @@ public class BatteryCapacityEstimator {
             return;
         }
         if (!segmentActive) {
-            segmentActive = true;
-            segmentStartMs = s.time;
-            segmentStartChargeMah = s.chargeMah;
-            segmentStartPercent = s.percent;
-            segmentScreenOnMs = 0;
-            segmentTotalMs = 0;
-            segmentSamples = 0;
-            accumulatedChargeMah = 0.0;
-            segTempMin = s.tempC;
-            segTempMax = s.tempC;
-            segTempSum = 0;
-            segTempCount = 0;
-            segmentAnyPlugged = s.pluggedInt != 0;
+            startSegment(s);
+        } else if (deltaMs >= BatteryDataQuality.MAX_CONTINUOUS_GAP_MS) {
+            finishSegment(lastPercent);
+            startSegment(s);
         } else {
             if (s.pluggedInt != 0) segmentAnyPlugged = true;
-            segmentTotalMs += deltaMs;
-            if (deltaMs > 0 && isScreenOn()) segmentScreenOnMs += deltaMs;
-            segmentSamples++;
             if (deltaMs > 0) {
+                segmentTotalMs += deltaMs;
+                if (isScreenOn()) segmentScreenOnMs += deltaMs;
                 int absMa = Math.abs(s.currentMa);
                 if (absMa > 0) {
                     accumulatedChargeMah += absMa * (deltaMs / 3600000.0);
                 }
             }
+            segmentSamples++;
             if (s.tempC > 0f) {
                 segTempSum += s.tempC;
                 segTempCount++;
                 if (s.tempC < segTempMin) segTempMin = s.tempC;
                 if (s.tempC > segTempMax) segTempMax = s.tempC;
             }
+            if (s.voltageV > 0f) {
+                if (s.voltageV < segVoltageMin) segVoltageMin = s.voltageV;
+                if (s.voltageV > segVoltageMax) segVoltageMax = s.voltageV;
+            }
         }
         lastChargeMah = s.chargeMah;
         lastPercent = s.percent;
         lastCurrentMa = s.currentMa;
+    }
+
+    private static void startSegment(BatteryReading.Snapshot s) {
+        segmentActive = true;
+        segmentStartMs = s.time;
+        segmentStartChargeMah = s.chargeMah;
+        segmentStartPercent = s.percent;
+        segmentScreenOnMs = 0;
+        segmentTotalMs = 0;
+        segmentSamples = 1;
+        accumulatedChargeMah = 0.0;
+        segTempMin = Float.MAX_VALUE;
+        segTempMax = Float.MIN_VALUE;
+        segTempSum = 0;
+        segTempCount = 0;
+        segVoltageMin = Float.MAX_VALUE;
+        segVoltageMax = Float.MIN_VALUE;
+        segmentAnyPlugged = s.pluggedInt != 0;
+        if (s.tempC > 0f) {
+            segTempMin = s.tempC;
+            segTempMax = s.tempC;
+            segTempSum = s.tempC;
+            segTempCount = 1;
+        }
+        if (s.voltageV > 0f) {
+            segVoltageMin = s.voltageV;
+            segVoltageMax = s.voltageV;
+        }
     }
 
     public static synchronized void onMonitoringStopped() {
@@ -238,8 +267,14 @@ public class BatteryCapacityEstimator {
             if (dPercent < MIN_DELTA_PERCENT) continue;
             if (seg.durationMs() < MIN_SEGMENT_MS) continue;
             if (seg.mAhIntegral <= 0) continue;
+            if (seg.gapCount > 0) continue;
+            if (seg.direction == SessionSegmentBuilder.Direction.CHARGE
+                    && (seg.voltageMax <= 0f || seg.voltageMax < MIN_CHARGING_VOLTAGE_V)) {
+                continue;
+            }
             float estimate = (float) (seg.mAhIntegral * 100.0 / dPercent);
             if (estimate < MIN_ESTIMATE_MAH || estimate > MAX_ESTIMATE_MAH) continue;
+            if (design > 0 && estimate > design * MAX_DESIGN_RATIO) continue;
             combinedEstimates.add(estimate);
             if (seg.direction == SessionSegmentBuilder.Direction.CHARGE) {
                 chargeEstimates.add(estimate);
@@ -331,38 +366,19 @@ public class BatteryCapacityEstimator {
             boolean shortSess = dur < MIN_SEGMENT_MS;
             boolean smallDelta = dPercent < MIN_DELTA_PERCENT;
             boolean noCharge = accumulatedChargeMah <= 0;
-            boolean valid = !shortSess && !smallDelta && !noCharge;
+            boolean counterReset = segmentStartChargeMah > 0 && lastChargeMah > 0
+                    && lastChargeMah < segmentStartChargeMah;
+            boolean lowVoltage = segVoltageMax != Float.MIN_VALUE
+                    && segVoltageMax < MIN_CHARGING_VOLTAGE_V;
+            float estimate = dPercent > 0
+                    ? (float) (accumulatedChargeMah * 100.0 / dPercent) : 0f;
+            boolean estimateOutOfRange = estimate < MIN_ESTIMATE_MAH
+                    || estimate > MAX_ESTIMATE_MAH;
+            boolean designOutlier = designMah > 0
+                    && estimate > designMah * MAX_DESIGN_RATIO;
+            boolean valid = !shortSess && !smallDelta && !noCharge && !counterReset
+                    && !lowVoltage && !estimateOutOfRange && !designOutlier;
 
-            if (valid) {
-                float estimate = (float) (accumulatedChargeMah * 100.0 / dPercent);
-                if (estimate < MIN_ESTIMATE_MAH || estimate > MAX_ESTIMATE_MAH) return;
-                boolean screenOffDominant = segmentScreenOnMs * 2 < dur;
-                int samples = Math.max(segmentSamples, 1);
-                long now = System.currentTimeMillis();
-                long endMs = lastSampleTime > 0 ? lastSampleTime : now;
-                double deltaChargeMah = 0d;
-                if (segmentStartChargeMah > 0 && lastChargeMah > 0) {
-                    deltaChargeMah = (double) (lastChargeMah - segmentStartChargeMah);
-                }
-                double mAhCounter = Math.max(0d, deltaChargeMah);
-                float tempMin = segTempMin == Float.MAX_VALUE ? 0f : segTempMin;
-                float tempMax = segTempMax == Float.MIN_VALUE ? 0f : segTempMax;
-                float tempAvg = segTempCount > 0
-                        ? (float) (segTempSum / segTempCount) : 0f;
-                BatteryHistoryDb.SessionRow row = new BatteryHistoryDb.SessionRow(
-                        now, estimate, screenOffDominant, samples,
-                        segmentStartMs, endMs, segmentStartPercent, endPercent,
-                        mAhCounter, accumulatedChargeMah, deltaChargeMah,
-                        tempMin, tempMax, tempAvg,
-                        true, null);
-                BatteryHistoryDb.get(appContext).insertSessionFull(row);
-                sessions.add(row);
-                return;
-            }
-            /* Sesi lahir-invalid (colokan dilepas singkat): rekam bila benar-benar
-             * bukti kabel tercolok (plugged != 0) dan cukup panjang. */
-            if (dur < INVALID_MIN_MS) return;
-            if (!segmentAnyPlugged) return;
             double deltaChargeMah = 0d;
             if (segmentStartChargeMah > 0 && lastChargeMah > 0) {
                 deltaChargeMah = (double) (lastChargeMah - segmentStartChargeMah);
@@ -376,7 +392,24 @@ public class BatteryCapacityEstimator {
             long endMs = lastSampleTime > 0 ? lastSampleTime : now;
             boolean screenOffDominant = segmentScreenOnMs * 2 < dur;
             int samples = Math.max(segmentSamples, 1);
-            String reason = invalidReasonFor(smallDelta, shortSess, noCharge);
+
+            if (valid) {
+                BatteryHistoryDb.SessionRow row = new BatteryHistoryDb.SessionRow(
+                        now, estimate, screenOffDominant, samples,
+                        segmentStartMs, endMs, segmentStartPercent, endPercent,
+                        mAhCounter, accumulatedChargeMah, deltaChargeMah,
+                        tempMin, tempMax, tempAvg,
+                        true, null);
+                BatteryHistoryDb.get(appContext).insertSessionFull(row);
+                sessions.add(row);
+                return;
+            }
+            /* Sesi lahir-invalid (colokan dilepas singkat / data cacat): rekam bila
+             * benar-benar ada bukti kabel tercolok dan cukup panjang. */
+            if (dur < INVALID_MIN_MS) return;
+            if (!segmentAnyPlugged) return;
+            String reason = invalidReasonFor(smallDelta, shortSess, noCharge,
+                    counterReset, lowVoltage, estimateOutOfRange, designOutlier);
             BatteryHistoryDb.SessionRow row = new BatteryHistoryDb.SessionRow(
                     now, 0f, screenOffDominant, samples,
                     segmentStartMs, endMs, segmentStartPercent, endPercent,
@@ -397,11 +430,16 @@ public class BatteryCapacityEstimator {
             segTempMax = Float.MIN_VALUE;
             segTempSum = 0;
             segTempCount = 0;
+            segVoltageMin = Float.MAX_VALUE;
+            segVoltageMax = Float.MIN_VALUE;
             segmentAnyPlugged = false;
         }
     }
 
-    private static String invalidReasonFor(boolean smallDelta, boolean shortSess, boolean noCharge) {
+    private static String invalidReasonFor(boolean smallDelta, boolean shortSess,
+                                           boolean noCharge, boolean counterReset,
+                                           boolean lowVoltage, boolean estimateOutOfRange,
+                                           boolean designOutlier) {
         StringBuilder sb = new StringBuilder();
         if (shortSess) sb.append("durasi < 1 menit");
         if (smallDelta) {
@@ -411,6 +449,22 @@ public class BatteryCapacityEstimator {
         if (noCharge) {
             if (sb.length() > 0) sb.append(", ");
             sb.append("tidak ada arus masuk");
+        }
+        if (counterReset) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("counter pengisian reset");
+        }
+        if (lowVoltage) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("tegangan pengisian tidak wajar");
+        }
+        if (estimateOutOfRange) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("estimasi di luar rentang");
+        }
+        if (designOutlier) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append("estimasi melebihi kapasitas desain");
         }
         return sb.toString();
     }
@@ -477,15 +531,26 @@ public class BatteryCapacityEstimator {
                 boolean shortSess = dur < MIN_SEGMENT_MS;
                 boolean smallDelta = dPercent < MIN_DELTA_PERCENT;
                 boolean noCharge = seg.mAhIntegral <= 0;
-                boolean valid = !shortSess && !smallDelta && !noCharge;
+                boolean counterReset = seg.counterAvailable && seg.deltaChargeMah < -1d;
+                boolean lowVoltage = seg.voltageMax <= 0f
+                        || seg.voltageMax < MIN_CHARGING_VOLTAGE_V;
+                float estimate = dPercent > 0
+                        ? (float) (seg.mAhIntegral * 100.0 / dPercent) : 0f;
+                boolean estimateOutOfRange = estimate < MIN_ESTIMATE_MAH
+                        || estimate > MAX_ESTIMATE_MAH;
+                boolean designOutlier = designMah > 0
+                        && estimate > designMah * MAX_DESIGN_RATIO;
+                boolean valid = !shortSess && !smallDelta && !noCharge && !counterReset
+                        && !lowVoltage && !estimateOutOfRange && !designOutlier
+                        && seg.gapCount == 0;
                 if (valid) {
-                    float estimate = (float) (seg.mAhIntegral * 100.0 / dPercent);
-                    if (estimate < MIN_ESTIMATE_MAH || estimate > MAX_ESTIMATE_MAH) continue;
                     db.insertSessionFull(segmentToRow(seg, estimate, true, null));
                 } else if (dur >= INVALID_MIN_MS) {
                     db.insertSessionFull(
                             segmentToRow(seg, 0f, false,
-                                    invalidReasonFor(smallDelta, shortSess, noCharge)));
+                                    invalidReasonFor(smallDelta, shortSess, noCharge,
+                                            counterReset, lowVoltage,
+                                            estimateOutOfRange, designOutlier)));
                 }
             }
         }
@@ -509,6 +574,8 @@ public class BatteryCapacityEstimator {
         segTempMax = seg.tempMax > 0f ? seg.tempMax : Float.MIN_VALUE;
         segTempSum = seg.tempAvg > 0f ? seg.tempAvg * seg.sampleCount : 0;
         segTempCount = seg.tempAvg > 0f ? seg.sampleCount : 0;
+        segVoltageMin = seg.voltageMin > 0f ? seg.voltageMin : Float.MAX_VALUE;
+        segVoltageMax = seg.voltageMax > 0f ? seg.voltageMax : Float.MIN_VALUE;
         lastChargeMah = -1L;
         lastPercent = seg.endPercent;
         lastSampleTime = -1L;

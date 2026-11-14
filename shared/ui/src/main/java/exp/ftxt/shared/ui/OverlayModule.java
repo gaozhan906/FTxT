@@ -12,6 +12,7 @@ public interface OverlayModule {
     void updateSize(float size);
     void updateColor(int color);
     void updateLabelColor(int color);
+    default void updateLabelSize(float size) {}
     default void updateSeparatorColor(int color) {}
     void updateShadow();
     void updateBackground();

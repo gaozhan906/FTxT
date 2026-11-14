@@ -45,7 +45,7 @@ Drawer terdiri dari menu berikut (urutan default; item panel bisa di-reorder den
 | Floating Text | Teks overlay kustom |
 | FPS Display | Counter FPS real-time + FPS game (Shizuku) |
 | Network Stats | Kecepatan internet real-time |
-| Battery Info | Info baterai (suhu, persentase, voltase, arus, daya) + Battery Strip |
+| Battery Info | Info baterai (suhu, persentase, voltase, arus, daya) + ikon status pengisian + Battery Strip |
 | Clock Module | Waktu real-time 24 jam (Jam Digital) |
 | Crosshair | Overlay bidikan untuk game |
 | Info Memori | Monitoring memori real-time (default tersembunyi) |
@@ -129,16 +129,19 @@ Overlay bidikan untuk game dengan 44 gaya siap pilih:
 ### Battery Info
 Panel Battery Info memiliki **3 tab** di bagian bawah: **Monitor**, **Overlay**, dan **Battery Strip**.
 
-**Tab Monitor** — Pemantauan baterai perangkat real-time dalam 3 kartu:
-- **Metrik Real-Time** — Ring gauge melingkar di kiri: arc berwarna gradien hue mengikuti level baterai (skema warna yang sama dengan Battery Strip), di dalam lingkaran tampil level %, kapasitas tersisa (mAh), dan status pengisian singkat (Charging•AC/USB/Wireless / Full / Discharging). Grafik riwayat Persentase berada di sebelah kanan ring, dan grid metrik monospace berjajar di bawahnya: suhu, voltase, arus, daya, cycle count, teknologi baterai (cycle count hanya tampil jika perangkat melaporkan). Badge kondisi suhu (Normal/Panas/Dingin) tampil di header kartu.
+**Tab Monitor** — Pemantauan baterai perangkat real-time dalam 4 kartu:
+- **Metrik Real-Time** — Ring gauge melingkar di kiri: arc berwarna gradien hue mengikuti level baterai (skema warna yang sama dengan Battery Strip), di dalam lingkaran tampil level %, kapasitas tersisa (mAh), dan status pengisian singkat (Charging•AC/USB/Wireless, Full, Discharging, Bypass, Batas Cas, Menunggu). Grafik riwayat Persentase berada di sebelah kanan ring, dan grid metrik monospace berjajar di bawahnya: suhu, voltase, arus, daya, cycle count, teknologi baterai (cycle count hanya tampil jika perangkat melaporkan). Badge kondisi suhu (Normal/Panas/Dingin) tampil di header kartu.
+- **Voltage Stability Monitor** — Kartu pintasan ke halaman pemantauan tegangan: kondisi Charging/Discharging/Idle/Menunggu, tegangan, arus, voltage drop, recovery, variasi, jumlah sampel, dan estimasi resistansi efektif. Grafik tegangan diwarnai per kondisi dengan rentang 5m/30m/1j/6j/24j; data live diperbarui ±1 detik dan riwayat ±10 detik. Nilai resistansi bersifat estimasi, bukan resistansi internal baterai.
 - **Grafik Riwayat** — Empat chart Suhu, Daya, Tegangan, dan Arus dengan pemilih rentang 5m/10m/30m/1j/3j/6j/12j/24j/36j/48j (berlaku global untuk semua chart). Tiap chart punya sumbu Y sendiri (skala otomatis mengikuti data) dan angka nilai terkini di ujung garis. Chevron di header kartu untuk melipat/membuka seluruh isi grafik. Data bersumber dari database sehingga riwayat lama tetap terlihat walau aplikasi sempat ditutup.
 - **Kesehatan Baterai** — Estimasi kapasitas penuh ala AccuBattery: saat perangkat mengisi daya, segmen pengisian dicatat lalu estimasi diagregasi dengan median lintas sesi (sesi mayoritas waktu layar mati diprioritaskan agar lebih akurat). Tampil: estimasi kapasitas, skor kesehatan (hijau ≥80% / oranye ≥50% / merah <50%), jumlah sesi tercatat, indikator keyakinan, dan status pengumpulan data. Kapasitas desain (mAh) diisi lewat kolom input langsung di kartu ini dan otomatis terisi dari deteksi perangkat saat belum pernah diatur — skor kesehatan baru muncul jika kapasitas desain terisi. Tombol **Salin** & **Simpan Snapshot** ada di dalam kartu ini; hasilnya menyertakan catatan kesehatan baterai. Tombol **Reset** untuk menghapus data estimasi dan memulai dari awal.
-- Pemantauan berjalan **otomatis full-aktif**: tanpa tombol mulai/hentikan — pencatatan tetap jalan meski overlay mati, panel tertutup, atau aplikasi ditutup, lewat foreground service ringan dengan notifikasi minimal prioritas rendah. Nyala otomatis saat aplikasi dibuka dan direstart otomatis saat boot. Sampling dinamis hemat baterai: rapat ±1 detik saat mengisi daya, ±5 detik saat layar nyala idle, ±30 detik saat layar mati.
+- Pemantauan berjalan **otomatis full-aktif**: tanpa tombol mulai/hentikan — pencatatan tetap jalan meski overlay mati, panel tertutup, atau aplikasi ditutup, lewat foreground service ringan dengan notifikasi minimal prioritas rendah. Nyala otomatis saat aplikasi dibuka dan direstart otomatis saat boot. Pembacaan dan perhitungan berjalan ±1 detik, sedangkan penulisan riwayat ke database tiap ±5 detik agar hemat ruang.
 
 **Tab Overlay** — Konfigurasi info baterai:
-- Menampilkan **suhu (°C)**, **persentase (%)**, **voltase (V)**, **arus (mA)**, dan **daya (W)** dalam satu overlay
-- **OrderZones** — Atur urutan dan visibilitas info baterai via drag-and-drop chip. Chip bisa diseret antar zona Aktif/Nonaktif untuk menampilkan/menyembunyikan info, dan diurutkan dalam satu zona
+- Menampilkan ikon status pengisian (**Cas**) serta **suhu (°C)**, **persentase (%)**, **voltase (V)**, **arus (mA)**, dan **daya (W)** dalam satu overlay. Ikon mengikuti status charging, fast charging, USB, wireless, penuh, bypass, batas cas, atau discharge
+- **OrderZones** — Atur urutan dan visibilitas info baterai (termasuk chip **Cas**) via drag-and-drop chip. Chip bisa diseret antar zona Aktif/Nonaktif untuk menampilkan/menyembunyikan info, dan diurutkan dalam satu zona
 - **Warna Label Terpisah** — Tombol "Warna Label" untuk warna satuan terpisah dari nilai angka
+- **Ukuran Label** — Slider terpisah untuk ukuran satuan/label; nilai tetap mengikuti Ukuran Teks
+- **Deteksi Bypass Charging** — Saklar (default aktif) untuk menampilkan status bypass saat adaptor terpasang tetapi baterai tidak diisi; akurasi penuh memerlukan Shizuku
 - **Warna Pemisah** — Komponen dipisahkan tanda `|` (misal `37.4°C | 87% | 4.1V`) yang warnanya bisa diatur sendiri
 - Opsi toggle tampilkan komponen tertentu, atau hanya nilai tanpa label
 - Konfigurasi ukuran, warna, shadow, background, kontrol posisi
@@ -244,7 +247,7 @@ Metadata: tags, favorite, timestamp, thumbnail warna. Version history hingga 10 
 
 ## Pengaturan
 
-- **Akses Izin** — Kelola izin overlay, notifikasi, optimasi baterai, Akses Penggunaan, serta izin Shizuku (untuk FPS game)
+- **Akses Izin** — Kelola izin overlay, notifikasi, optimasi baterai, Akses Penggunaan, serta izin Shizuku (untuk FPS game dan akurasi deteksi bypass charging)
 - **Konfigurasi** — Pengaturan tampilan aplikasi:
   - **Ikon Aplikasi** — Pemilih ikon launcher di halaman Konfigurasi terkunci Fitur Developer: baris ikon di-disable dan hanya bisa dibuka setelah Fitur Developer dibuka lewat password.
   - **Tampilkan panel Info Memori** — Toggle untuk menampilkan/menyembunyikan panel Info Memori dari Navigation Drawer (default OFF)
@@ -292,7 +295,7 @@ Saat terdeteksi versi baru, dialog **"Pembaruan tersedia"** menampilkan tiga pil
 | `WAKE_LOCK` | Mencegah CPU tidur saat overlay aktif |
 | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | Mencegah overlay dihentikan sistem |
 | `PACKAGE_USAGE_STATS` (Akses Penggunaan) | Deteksi aplikasi depan untuk FPS game mode Otomatis |
-| Izin Shizuku | Akses shell untuk membaca FPS game via SurfaceFlinger (diatur dari aplikasi Shizuku) |
+| Izin Shizuku | Akses shell untuk membaca FPS game via SurfaceFlinger dan meningkatkan akurasi deteksi bypass charging (diatur dari aplikasi Shizuku) |
 
 Izin diminta otomatis saat pertama aplikasi dibuka. Kelola izin bisa dilakukan di **Pengaturan > Akses Izin**.
 

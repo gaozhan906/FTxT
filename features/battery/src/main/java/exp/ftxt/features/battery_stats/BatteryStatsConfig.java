@@ -8,6 +8,7 @@ import exp.ftxt.shared.config.ShadowConfig;
 public class BatteryStatsConfig {
     public static boolean enabled = false;
     public static float size = 12f;
+    public static float labelSize = 9f;
     public static int color = Color.GREEN;
     public static int labelColor = Color.CYAN;
     public static int separatorColor = Color.GRAY;
@@ -20,8 +21,10 @@ public class BatteryStatsConfig {
     public static boolean showVoltage = true;
     public static boolean showCurrent = true;
     public static boolean showPower = true;
+    public static boolean showCharge = true;
     public static boolean showOnlyValue = false;
-    public static String itemOrder = "temp,pct,volt,cur,power";
+    public static boolean bypassDetection = true;
+    public static String itemOrder = "charge,temp,pct,volt,cur,power";
     public static float posX = 0.04f;
     public static float posY = 1.0f;
     public static float updateInterval = 5f;

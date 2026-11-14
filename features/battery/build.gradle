@@ -10,4 +10,6 @@ dependencies {
     implementation project(':shared:config')
     implementation project(':shared:ui')
     implementation project(':shared:color')
+
+    implementation 'dev.rikka.shizuku:api:13.1.0'
 }

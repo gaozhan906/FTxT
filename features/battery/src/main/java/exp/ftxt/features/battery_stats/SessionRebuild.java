@@ -41,7 +41,7 @@ final class SessionRebuild {
         SessionSegmentBuilder.ScreenOnOracle oracle = db.screenOnOracle(from, now);
         ArrayList<SessionSegmentBuilder.Segment> segs =
                 SessionSegmentBuilder.buildSegments(desc, SessionSegmentBuilder.WINDOW_MS,
-                        SessionSegmentBuilder.SESSION_GAP_MS, oracle);
+                        SessionSegmentBuilder.INTEGRATION_GAP_MS, oracle);
         if (segs.isEmpty()) return;
 
         BatteryCapacityEstimator.rebuildPendingSessions(db.lastChargeSessionEnd(), segs);

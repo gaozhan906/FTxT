@@ -117,11 +117,14 @@ public final class BatteryReading {
             if (currentMa == 0 && Build.VERSION.SDK_INT >= 23 && bm != null) {
                 try {
                     long c = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW);
-                    if (c != 0) currentMa = (int) (c / 1000);
+                    long ma = c / 1000L;
+                    if (ma >= -20_000L && ma <= 20_000L) currentMa = (int) ma;
                 } catch (Exception ignored) {}
             }
             if (voltageMv == 0) voltageMv = readSysfs("voltage_now", 1000);
             if (currentMa == 0) currentMa = readSysfs("current_now", 1000);
+            if (voltageMv < 2_500 || voltageMv > 5_500) voltageMv = 0;
+            if (currentMa < -20_000 || currentMa > 20_000) currentMa = 0;
 
             long chargeUah = -1;
             if (bm != null) {
@@ -156,10 +159,44 @@ public final class BatteryReading {
         }
     }
 
+    /**
+     * Entri power_supply yang benar-benar bertipe Battery. Kernel sering
+     * mengekspos beberapa node (usb, ac, wireless) dan urutan listFiles tidak
+     * dijamin — tanpa filter ini nilai bisa terbaca dari adaptor, bukan baterai.
+     * Bila tidak ada yang menyebut tipe Battery, kembalikan semua entri agar
+     * perangkat lama tetap terbaca.
+     */
+    private static java.io.File[] batteryEntries(java.io.File dir) {
+        java.io.File[] all = dir.listFiles();
+        if (all == null || all.length == 0) return all;
+        java.io.File[] typed = new java.io.File[all.length];
+        int n = 0;
+        for (java.io.File entry : all) {
+            if (!isBatterySupply(entry)) continue;
+            typed[n++] = entry;
+        }
+        if (n == 0) return all;
+        java.io.File[] out = new java.io.File[n];
+        System.arraycopy(typed, 0, out, 0, n);
+        return out;
+    }
+
+    private static boolean isBatterySupply(java.io.File entry) {
+        java.io.File type = new java.io.File(entry, "type");
+        if (!type.exists()) return false;
+        try (java.io.BufferedReader r =
+                     new java.io.BufferedReader(new java.io.FileReader(type))) {
+            String line = r.readLine();
+            return line != null && "Battery".equalsIgnoreCase(line.trim());
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
     private static int readSysfs(String file, int divisor) {
         try {
             java.io.File dir = new java.io.File("/sys/class/power_supply");
-            java.io.File[] entries = dir.listFiles();
+            java.io.File[] entries = batteryEntries(dir);
             if (entries == null) return 0;
             for (java.io.File entry : entries) {
                 java.io.File f = new java.io.File(entry, file);
@@ -172,6 +209,29 @@ public final class BatteryReading {
             }
         } catch (Exception ignored) {}
         return 0;
+    }
+
+    /**
+     * Membaca node sysfs berupa teks (bukan angka), misal {@code charge_type}
+     * atau {@code battery_charging_enabled}. Mengembalikan null bila node tidak
+     * tersedia atau tidak dapat dibaca.
+     */
+    public static String readSysfsText(String file) {
+        try {
+            java.io.File dir = new java.io.File("/sys/class/power_supply");
+            java.io.File[] entries = batteryEntries(dir);
+            if (entries == null) return null;
+            for (java.io.File entry : entries) {
+                java.io.File f = new java.io.File(entry, file);
+                if (!f.exists()) continue;
+                try (java.io.BufferedReader r =
+                             new java.io.BufferedReader(new java.io.FileReader(f))) {
+                    String line = r.readLine();
+                    if (line != null) return line.trim();
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     /**
@@ -221,7 +281,7 @@ public final class BatteryReading {
     private static int readSysfsValue(String file) {
         try {
             java.io.File dir = new java.io.File("/sys/class/power_supply");
-            java.io.File[] entries = dir.listFiles();
+            java.io.File[] entries = batteryEntries(dir);
             if (entries == null) return 0;
             for (java.io.File entry : entries) {
                 java.io.File f = new java.io.File(entry, file);

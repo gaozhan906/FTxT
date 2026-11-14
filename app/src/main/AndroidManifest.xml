@@ -121,6 +121,10 @@
             android:exported="false"/>
 
         <activity
+            android:name=".ui.VoltageStabilityActivity"
+            android:exported="false"/>
+
+        <activity
             android:name=".ui.SessionDetailActivity"
             android:exported="false"/>
 

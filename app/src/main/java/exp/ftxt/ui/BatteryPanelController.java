@@ -27,6 +27,7 @@ public class BatteryPanelController {
 
     private CheckBox batterySwitch;
     private SeekBar batterySizeSeekBar;
+    private SeekBar batteryLabelSizeSeekBar;
     private View batteryColorPreview;
     private View batteryLabelColorPreview;
     private View batterySeparatorColorPreview;
@@ -40,6 +41,7 @@ public class BatteryPanelController {
     private CheckBox batteryValueOnlyCheck;
     private BatteryOrderZonesView batteryOrderZones;
     private CheckBox batterySafeArea;
+    private CheckBox batteryBypassDetect;
     private CheckBox batteryBgSwitch;
     private LinearLayout batteryBgConfigContainer;
     private View batteryBgColorPreview;
@@ -48,7 +50,7 @@ public class BatteryPanelController {
     private SeekBar batteryBgOffsetYSeekBar;
     private SeekBar batteryBgMarginSeekBar;
     private SeekBar batteryBgRadiusSeekBar;
-    private TextView batterySizeLabel, batteryBgPaddingLabel, batteryBgOffsetXLabel, batteryBgOffsetYLabel;
+    private TextView batterySizeLabel, batteryLabelSizeLabel, batteryBgPaddingLabel, batteryBgOffsetXLabel, batteryBgOffsetYLabel;
     private TextView batteryBgMarginLabel, batteryBgRadiusLabel;
     private TextView batteryShadowBlurLabel, batteryShadowOffsetXLabel, batteryShadowOffsetYLabel;
     private BatteryPositionController batteryPositionController;
@@ -100,6 +102,7 @@ public class BatteryPanelController {
     private void bindViews(View rootView) {
         batterySwitch = rootView.findViewById(R.id.batterySwitch);
         batterySizeSeekBar = rootView.findViewById(R.id.batterySizeSeekBar);
+        batteryLabelSizeSeekBar = rootView.findViewById(R.id.batteryLabelSizeSeekBar);
         batteryColorPreview = rootView.findViewById(R.id.batteryColorPreview);
         batteryLabelColorPreview = rootView.findViewById(R.id.batteryLabelColorPreview);
         batterySeparatorColorPreview = rootView.findViewById(R.id.batterySeparatorColorPreview);
@@ -113,6 +116,7 @@ public class BatteryPanelController {
         batteryValueOnlyCheck = rootView.findViewById(R.id.batteryValueOnlyCheck);
         batteryOrderZones = rootView.findViewById(R.id.batteryOrderZones);
         batterySafeArea = rootView.findViewById(R.id.batterySafeArea);
+        batteryBypassDetect = rootView.findViewById(R.id.batteryBypassDetect);
         batteryBgSwitch = rootView.findViewById(R.id.batteryBgSwitch);
         batteryBgConfigContainer = rootView.findViewById(R.id.bgConfigBattery);
         batteryBgColorPreview = rootView.findViewById(R.id.batteryBgColorPreview);
@@ -122,6 +126,7 @@ public class BatteryPanelController {
         batteryBgMarginSeekBar = rootView.findViewById(R.id.batteryBgMarginSeekBar);
         batteryBgRadiusSeekBar = rootView.findViewById(R.id.batteryBgRadiusSeekBar);
         batterySizeLabel = rootView.findViewById(R.id.batterySizeLabel);
+        batteryLabelSizeLabel = rootView.findViewById(R.id.batteryLabelSizeLabel);
         batteryBgPaddingLabel = rootView.findViewById(R.id.batteryBgPaddingLabel);
         batteryBgOffsetXLabel = rootView.findViewById(R.id.batteryBgOffsetXLabel);
         batteryBgOffsetYLabel = rootView.findViewById(R.id.batteryBgOffsetYLabel);
@@ -153,6 +158,7 @@ public class BatteryPanelController {
         batterySwitch.setChecked(BatteryStatsConfig.enabled);
         activity.applyCheckboxTint(batterySwitch, BatteryStatsConfig.enabled);
         batterySizeSeekBar.setProgress((int) BatteryStatsConfig.size);
+        batteryLabelSizeSeekBar.setProgress((int) BatteryStatsConfig.labelSize);
         batteryColorPreview.setBackgroundColor(BatteryStatsConfig.color);
         batteryLabelColorPreview.setBackgroundColor(BatteryStatsConfig.labelColor);
         batterySeparatorColorPreview.setBackgroundColor(BatteryStatsConfig.separatorColor);
@@ -174,7 +180,10 @@ public class BatteryPanelController {
         activity.applyCheckboxTint(batteryLockSwitch, BatteryStatsConfig.touchPassthrough);
         batteryValueOnlyCheck.setChecked(BatteryStatsConfig.showOnlyValue);
         batterySafeArea.setChecked(BatteryStatsConfig.safeArea);
+        batteryBypassDetect.setChecked(BatteryStatsConfig.bypassDetection);
+        activity.applyCheckboxTint(batteryBypassDetect, BatteryStatsConfig.bypassDetection);
         batterySizeLabel.setText("Ukuran Teks: " + (int) BatteryStatsConfig.size);
+        batteryLabelSizeLabel.setText("Ukuran Label: " + (int) BatteryStatsConfig.labelSize);
         batteryBgPaddingLabel.setText("Ukuran Background: " + BatteryStatsConfig.bg.padding);
         batteryBgOffsetXLabel.setText("Offset X: " + BatteryStatsConfig.bg.offsetX);
         batteryBgOffsetYLabel.setText("Offset Y: " + BatteryStatsConfig.bg.offsetY);
@@ -221,7 +230,23 @@ public class BatteryPanelController {
                 if (progress > 140) { progress = 140; sb.setProgress(progress); }
                 BatteryStatsConfig.size = progress;
                 batterySizeLabel.setText("Ukuran Teks: " + progress);
+                activity.getSharedPreferences("ftxt_prefs", MainActivity.MODE_PRIVATE)
+                        .edit().putFloat("battery_size", progress).apply();
                 FloatingService.updateSizeForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.size);
+            }
+            @Override public void onStartTrackingTouch(SeekBar sb) {}
+            @Override public void onStopTrackingTouch(SeekBar sb) {}
+        });
+
+        batteryLabelSizeSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar sb, int progress, boolean fromUser) {
+                if (progress < 5) { progress = 5; sb.setProgress(progress); }
+                if (progress > 140) { progress = 140; sb.setProgress(progress); }
+                BatteryStatsConfig.labelSize = progress;
+                batteryLabelSizeLabel.setText("Ukuran Label: " + progress);
+                activity.getSharedPreferences("ftxt_prefs", MainActivity.MODE_PRIVATE)
+                        .edit().putFloat("battery_label_size", progress).apply();
+                FloatingService.updateLabelSizeForModule(FloatingService.batteryStatsModule(), BatteryStatsConfig.labelSize);
             }
             @Override public void onStartTrackingTouch(SeekBar sb) {}
             @Override public void onStopTrackingTouch(SeekBar sb) {}
@@ -418,8 +443,18 @@ public class BatteryPanelController {
                     .edit().putBoolean("battery_safe_area", isChecked).apply();
         });
 
+        batteryBypassDetect.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            BatteryStatsConfig.bypassDetection = isChecked;
+            activity.applyCheckboxTint(batteryBypassDetect, isChecked);
+            activity.getSharedPreferences("ftxt_prefs", MainActivity.MODE_PRIVATE)
+                    .edit().putBoolean("battery_bypass_detection", isChecked).apply();
+            FloatingService.updateBatteryStatsInPlace();
+        });
+
         batterySizeLabel.setOnClickListener(v ->
                 SliderLabelEditor.showSliderEditor(activity, "Ukuran Teks", batterySizeSeekBar, 140, batterySizeLabel, "Ukuran Teks: "));
+        batteryLabelSizeLabel.setOnClickListener(v ->
+                SliderLabelEditor.showSliderEditor(activity, "Ukuran Label", batteryLabelSizeSeekBar, 140, batteryLabelSizeLabel, "Ukuran Label: "));
         batteryBgPaddingLabel.setOnClickListener(v ->
                 SliderLabelEditor.showSliderEditor(activity, "Ukuran Background", batteryBgPaddingSeekBar, 80, batteryBgPaddingLabel, "Ukuran Background: "));
         batteryBgOffsetXLabel.setOnClickListener(v ->
@@ -455,13 +490,15 @@ public class BatteryPanelController {
         batteryOrderZones.setOrder(BatteryStatsConfig.itemOrder);
     }
 
-    private void onOrderChanged(String order, boolean temp, boolean pct, boolean volt, boolean cur, boolean power) {
+    private void onOrderChanged(String order, boolean temp, boolean pct, boolean volt, boolean cur,
+                                boolean power, boolean charge) {
         BatteryStatsConfig.itemOrder = order;
         BatteryStatsConfig.showTemperature = temp;
         BatteryStatsConfig.showPercentage = pct;
         BatteryStatsConfig.showVoltage = volt;
         BatteryStatsConfig.showCurrent = cur;
         BatteryStatsConfig.showPower = power;
+        BatteryStatsConfig.showCharge = charge;
         activity.getSharedPreferences("ftxt_prefs", MainActivity.MODE_PRIVATE)
                 .edit()
                 .putString("battery_item_order", order)
@@ -470,6 +507,7 @@ public class BatteryPanelController {
                 .putBoolean("battery_show_voltage", volt)
                 .putBoolean("battery_show_current", cur)
                 .putBoolean("battery_show_power", power)
+                .putBoolean("battery_show_charge", charge)
                 .apply();
         FloatingService.updateBatteryStatsInPlace();
     }

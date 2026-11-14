@@ -110,6 +110,61 @@
                         </LinearLayout>
 
                         <LinearLayout
+                            android:id="@+id/batVoltageStabilityOpen"
+                            android:orientation="vertical"
+                            android:background="@drawable/bat_card_bg"
+                            android:padding="12dp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="10dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <LinearLayout
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <View
+                                    android:layout_width="3dp"
+                                    android:layout_height="15dp"
+                                    android:background="@color/bat_monitor_header"/>
+
+                                <TextView
+                                    android:text="Voltage Stability Monitor"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/bat_monitor_header"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"/>
+
+                                <View
+                                    android:layout_width="0dp"
+                                    android:layout_height="1dp"
+                                    android:layout_weight="1"/>
+
+                                <TextView
+                                    android:text="Buka →"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold"
+                                    android:textColor="@color/bat_monitor_header"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"/>
+                            </LinearLayout>
+
+                            <TextView
+                                android:text="Pantau kestabilan tegangan, voltage drop, recovery, dan estimasi resistansi efektif saat charging, discharging, atau idle."
+                                android:textSize="11sp"
+                                android:textColor="@color/bat_monitor_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:lineSpacingExtra="2dp"/>
+                        </LinearLayout>
+
+                        <LinearLayout
                             android:orientation="vertical"
                             android:background="@drawable/bat_card_bg"
                             android:padding="12dp"

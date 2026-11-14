@@ -10,6 +10,7 @@
 /captures
 .externalNativeBuild
 /sementara
+/_karantina
 keystore.properties
 talkhere.txt
 /_planning/
@@ -18,6 +19,8 @@ talkhere.txt
 /_temporary/
 /_temporar/
 /_tempor/
+/_tools
+/_tools/
 shared/*/build/
 features/*/build/
 core/build/

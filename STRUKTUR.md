@@ -120,15 +120,22 @@ FTxT/
 │   │       └── CrosshairModule.java — Overlay bidikan ImageView 44 gaya, posisi titik tengah, drag + safe area
 │   │
 │   └── battery/                  — Fitur Battery Info + Battery Strip
-│       ├── build.gradle          — Library: namespace exp.ftxt.features.battery, depend :shared:config, :shared:ui, :shared:color
-│       └── src/main/java/exp/ftxt/features/
+│       ├── build.gradle          — Library: namespace exp.ftxt.features.battery, depend :shared:config, :shared:ui, :shared:color, Shizuku API
+│       ├── src/main/java/exp/ftxt/features/
 │           ├── battery_stats/
-│           │   ├── BatteryStatsConfig.java   — Konfigurasi Battery Stats overlay (suhu, %, voltase, arus, daya, urutan item)
-│           │   ├── BatteryStatsModule.java   — Info baterai gabungan: °C + % + V + mA + W, baca via BatteryReading
-│           │   ├── BatteryMonitor.java       — Polling & pencatatan metrik baterai ke database (sampling ±1 detik, seragam)
+│           │   ├── BatteryStatsConfig.java   — Konfigurasi Battery Stats overlay (suhu, %, voltase, arus, daya, ikon status, ukuran label, bypass, urutan item)
+│           │   ├── BatteryStatsModule.java   — Overlay baterai gabungan: ikon status + °C + % + V + mA + W, baca via BatteryReading
+│           │   ├── BatteryMonitor.java       — Polling & perhitungan metrik tiap ±1 detik, tulis riwayat tiap ±5 detik
 │           │   ├── BatteryReading.java       — Util pembaca metrik baterai tunggal (battery intent + property + sysfs fallback)
-│           │   ├── BatteryHistoryDb.java     — Database SQLite riwayat baterai (sampel time-series + aktivitas + sesi, WAL)
-│           │   ├── BatteryCapacityEstimator.java — Estimasi kapasitas & skor kesehatan baterai (median 3 sumber, reset keseluruhan)
+│           │   ├── BatteryHistoryDb.java     — Database SQLite riwayat baterai (sampel time-series + aktivitas + sesi + anomali, WAL, v5)
+│           │   ├── BatteryCapacityEstimator.java — Estimasi kapasitas & skor kesehatan baterai (median 3 sumber, validasi sesi, reset keseluruhan)
+│           │   ├── BatteryAnomaly.java       — Model catatan anomali sampel baterai
+│           │   ├── BatteryAnomalyDetector.java — Deteksi anomali dan alasan sampel tidak valid
+│           │   ├── BatteryDataQuality.java   — Validasi kualitas sampel baterai real-time
+│           │   ├── BypassChargingDetector.java — Deteksi bypass/charge limit via Smart Panel, sysfs, dan dumpsys Shizuku
+│           │   ├── ChargingStatusIcon.java   — Resolver ikon status pengisian overlay
+│           │   ├── DumpsysBatteryProbe.java  — Probe dumpsys battery via Shizuku
+│           │   ├── VoltageStabilityAnalyzer.java — Analisis voltage drop, recovery, dan resistansi efektif
 │           │   ├── DischargeTracker.java     — Pelacak sesi pengosongan aktif (reaksi langsung status colok/cabut)
 │           │   ├── SessionSegmentBuilder.java— Segmentasi sampel menjadi sesi pengisian & pengosongan
 │           │   └── SessionRebuild.java       — Rekonstruksi sesi tak tersimpan di thread latar
@@ -137,6 +144,7 @@ FTxT/
 │               ├── BatteryBarView.java       — Custom View bar baterai H/V (empty strip, fade, shine, wave, edge glow, startup sweep, drain tick)
 │               ├── BatteryBarModule.java     — Bar baterai: mode cepat (snap sisi) & manual, update interval, pemicu peringatan
 │               └── DischargeAlertPlayer.java — Pemutar bunyi & getar peringatan pengosongan baterai
+│       └── src/main/res/drawable/ — Ikon status pengisian: ic_charge_normal, ic_charge_fast, ic_usb, ic_wireless, ic_battery_full, ic_battery_discharging, ic_bypass, ic_charge_limit
 │
 ├── core/                         — Library inti layanan (include ':core')
 │   ├── build.gradle              — Library: namespace exp.ftxt.core; depend 7 :features:* + :shared:config + :shared:ui + androidx.core:core
@@ -204,17 +212,19 @@ FTxT/
     │   │   │   ├── BatteryPositionController.java      — Kontrol posisi Battery Info + preset
     │   │   │   ├── BatteryBarPanelController.java      — UI panel Battery Strip: quick/manual mode, warna, animasi
     │   │   │   ├── BatteryBarPositionController.java   — Kontrol posisi Battery Strip + preset
-    │   │   │   ├── BatteryMonitorTabController.java    — Controller tab Monitor: 3 sub-tab (Info & Grafik, Sesi Berjalan, Kondisi & Riwayat)
+    │   │   │   ├── BatteryMonitorTabController.java    — Controller tab Monitor: 3 sub-tab (Info & Grafik, Sesi Berjalan, Kondisi & Riwayat) + pintasan Voltage Stability Monitor
     │   │   │   ├── BatteryChartHistoryController.java  — Controller kartu Grafik Riwayat (grid 2×2, 5 grafik, pemilih rentang 5m–48j)
     │   │   │   ├── BatteryHealthCardController.java    — Controller kartu Kesehatan Baterai (estimasi, reset, salin/ekspor snapshot)
     │   │   │   ├── BatterySessionLiveController.java   — Controller panel Sesi Berjalan real-time (refresh 1 detik, view statis)
     │   │   │   ├── BatterySessionHistoryController.java— Controller kartu Riwayat Sesi periode (grafik batang, daftar, filter)
     │   │   │   ├── BatterySnapshotExporter.java        — Salin/ekspor snapshot tab Monitor ke Download
     │   │   │   ├── BatteryOrderZonesView.java          — Custom view zona drag chip untuk urutan info baterai
-    │   │   │   ├── BatteryChartView.java               — Custom View line chart Canvas riwayat metrik baterai (warna segmen kondisi, LUT suhu)
+    │   │   │   ├── BatteryChartView.java               — Custom View line chart Canvas riwayat metrik baterai (warna segmen kondisi, LUT suhu, ambang jeda adaptif)
     │   │   │   ├── BatteryRingView.java                — Custom view ring gauge baterai melingkar (arc gradien hue)
     │   │   │   ├── BatterySessionBarChartView.java     — Custom View grafik batang riwayat sesi (hijau terisi / oranye terpakai)
     │   │   │   ├── BatteryChartDetailActivity.java     — Halaman detail grafik fullscreen (zoom & pan, crosshair, statistik)
+    │   │   │   ├── VoltageStabilityActivity.java       — Halaman pemantauan kestabilan tegangan (live + riwayat berkondisi)
+    │   │   │   ├── VoltageStabilityChartView.java      — Custom View grafik tegangan berkondisi (charging/discharging/idle)
     │   │   │   ├── SessionListActivity.java            — Halaman daftar sesi periode (hari/minggu/bulan) dengan filter
     │   │   │   ├── SessionDetailActivity.java          — Halaman detail satu sesi (struktur sama dengan panel Sesi Berjalan)
     │   │   │   ├── ActivityBarView.java                — Custom View bar aktivitas Layar Aktif/Mati/Mengisi di halaman detail grafik
@@ -334,6 +344,7 @@ FTxT/
     │   │   ├── activity_about.xml           — Layout halaman "Tentang Aplikasi" (info versi, pembaruan, pengembang, footer)
     │   │   ├── activity_documentation.xml   — Layout halaman dokumentasi in-app
     │       │   ├── activity_battery_chart_detail.xml — Layout halaman detail grafik fullscreen
+    │       │   ├── activity_voltage_stability.xml — Layout halaman Voltage Stability Monitor
     │       │   ├── activity_session_list.xml    — Layout halaman daftar sesi periode
     │       │   ├── activity_session_detail.xml  — Layout halaman detail satu sesi
     │       │   ├── item_session_row.xml         — Item baris padat daftar sesi
