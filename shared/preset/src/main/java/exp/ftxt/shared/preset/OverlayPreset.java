@@ -80,6 +80,14 @@ public class OverlayPreset {
     public Boolean crosshairColorEnabled;
     public Integer crosshairColor;
 
+    public Integer appMaxRows;
+    public Integer appMode;
+    public Float appInterval;
+    public Integer appThresholdBps;
+    public Integer appHoldMs;
+    public Boolean appShowIcon;
+    public Boolean appShowIdle;
+
     public OverlayPreset() {
         shadow = new ShadowConfig();
     }

@@ -26,6 +26,8 @@ import exp.ftxt.features.fps_display.FpsConfig;
 import exp.ftxt.features.fps_display.FpsModule;
 import exp.ftxt.features.network_stats.NetworkConfig;
 import exp.ftxt.features.network_stats.NetworkModule;
+import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
+import exp.ftxt.features.network_stats.app_usage.AppUsageModule;
 import exp.ftxt.features.memory_stats.MemoryConfig;
 import exp.ftxt.features.memory_stats.MemoryModule;
 import exp.ftxt.features.memory_stats.MemoryMonitor;
@@ -47,6 +49,7 @@ public class FloatingService extends Service {
     private ClockModule clockModule;
     private BatteryStatsModule batteryStatsModule;
     private NetworkModule networkModule;
+    private AppUsageModule appUsageModule;
     private BatteryBarModule batteryBarModule;
     private MemoryModule memoryModule;
     private CrosshairModule crosshairModule;
@@ -59,6 +62,7 @@ public class FloatingService extends Service {
     public ClockModule getClockModule() { return clockModule; }
     public BatteryStatsModule getBatteryStatsModule() { return batteryStatsModule; }
     public NetworkModule getNetworkModule() { return networkModule; }
+    public AppUsageModule getAppUsageModule() { return appUsageModule; }
     public BatteryBarModule getBatteryBarModule() { return batteryBarModule; }
 
     public static TextModule textModule() {
@@ -80,6 +84,10 @@ public class FloatingService extends Service {
     public static NetworkModule networkModule() {
         if (instance != null) instance.ensureNetworkModule();
         return instance != null ? instance.networkModule : null;
+    }
+    public static AppUsageModule appUsageModule() {
+        if (instance != null) instance.ensureAppUsageModule();
+        return instance != null ? instance.appUsageModule : null;
     }
     public static BatteryBarModule batteryBarModule() {
         if (instance != null) instance.ensureBatteryBarModule();
@@ -139,6 +147,14 @@ public class FloatingService extends Service {
         }
     }
 
+    private void ensureAppUsageModule() {
+        if (appUsageModule == null) {
+            appUsageModule = new AppUsageModule();
+            allModules.add(appUsageModule);
+            appUsageModule.init(windowManager, this, prefs);
+        }
+    }
+
     private void ensureBatteryBarModule() {
         if (batteryBarModule == null) {
             batteryBarModule = new BatteryBarModule();
@@ -179,6 +195,7 @@ public class FloatingService extends Service {
         registerClockTarget();
         registerBatteryStatsTarget();
         registerNetworkTarget();
+        registerAppUsageTarget();
         registerMemoryTarget();
         registerBatteryBarTarget();
         registerTextTarget();
@@ -226,6 +243,15 @@ public class FloatingService extends Service {
                 () -> { ensureNetworkModule(); return (SmartPanelTarget) networkModule; },
                 () -> { NetworkConfig.enabled = true; ensureNetworkModule(); startModule(networkModule); },
                 () -> { NetworkConfig.enabled = false; stopModule(networkModule); if (networkModule != null) networkModule.stop(); }
+        ));
+    }
+
+    private void registerAppUsageTarget() {
+        SmartPanelRegistry.register(new SmartPanelRegistry.Entry(
+                "appdata", "App Data",
+                () -> { ensureAppUsageModule(); return (SmartPanelTarget) appUsageModule; },
+                () -> { AppUsageConfig.enabled = true; ensureAppUsageModule(); startModule(appUsageModule); },
+                () -> { AppUsageConfig.enabled = false; stopModule(appUsageModule); if (appUsageModule != null) appUsageModule.stop(); }
         ));
     }
 
@@ -338,6 +364,7 @@ public class FloatingService extends Service {
             if (ClockConfig.enabled) { ensureClockModule(); clockModule.start(windowManager, this); }
             if (BatteryStatsConfig.enabled) { ensureBatteryStatsModule(); batteryStatsModule.start(windowManager, this); }
             if (NetworkConfig.enabled) { ensureNetworkModule(); networkModule.start(windowManager, this); }
+            if (AppUsageConfig.enabled) { ensureAppUsageModule(); appUsageModule.start(windowManager, this); }
             if (FpsConfig.enabled || isGameModeActive()) { ensureFpsModule(); fpsModule.start(windowManager, this); }
             if (BatteryBarConfig.enabled) { ensureBatteryBarModule(); batteryBarModule.start(windowManager, this); }
             if (MemoryConfig.enabled) { ensureMemoryModule(); memoryModule.start(windowManager, this); }

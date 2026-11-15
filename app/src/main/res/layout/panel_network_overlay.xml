@@ -1,7 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-            <androidx.core.widget.NestedScrollView
-                xmlns:android="http://schemas.android.com/apk/res/android"
-                android:id="@+id/networkSubSpeedPage"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/overlaySubTabSpeed"
+            android:text="Kecepatan"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/usage_accent"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="6dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/overlaySubTabApps"
+            android:text="Aplikasi"
+            android:textSize="13sp"
+            android:textColor="@color/usage_filter_unselected_text"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="6dp"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.core.widget.NestedScrollView
+                android:id="@+id/networkOverlaySpeedPage"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:overScrollMode="always"
@@ -855,3 +902,14 @@
             </LinearLayout>
 
             </androidx.core.widget.NestedScrollView>
+
+        <include
+            android:id="@+id/networkOverlayAppPage"
+            layout="@layout/panel_network_overlay_app"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"/>
+
+    </FrameLayout>
+
+</LinearLayout>

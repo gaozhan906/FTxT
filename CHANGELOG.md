@@ -1,3 +1,17 @@
+# [4.98.0] 2026/11/15 15:36 WITA 364 ***ONGOING***
+### 🔖 Deskripsi
+> Rilis ini menambah overlay pemakaian data per aplikasi di panel Network, melengkapi pemantauan kecepatan dengan informasi aplikasi yang sedang berkomunikasi.
+
+### ✨ Fitur Baru
+- **Overlay pemakaian data per aplikasi** — Sub-tab Aplikasi di Overlay Network menampilkan hingga lima aplikasi yang sedang memakai data beserta kecepatan unduh/unggah, dengan mode Top Talkers atau Aplikasi Depan.
+- **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, durasi tahan, ikon, satuan, warna, shadow, background, posisi, dan preset dapat diatur seperti overlay lainnya.
+- **Panduan izin akses penggunaan** — Overlay menampilkan petunjuk dan tombol menuju pengaturan bila izin pemakaian aplikasi belum diberikan.
+
+### 💡 Memo
+- Data aplikasi dan mode Aplikasi Depan memerlukan izin akses penggunaan; tanpa izin, overlay hanya menampilkan status kosong.
+
+---
+
 # [4.97.2] 2026/11/15 13:35 WITA 363 ***RELEASE***
 ### 🔖 Deskripsi
 > Rilis ini berfokus pada keandalan catatan pemakaian data dan konsistensi indikator bypass pada Battery Strip.

@@ -12,6 +12,8 @@ import exp.ftxt.features.floating_text.TextConfig;
 import exp.ftxt.features.fps_display.FpsConfig;
 import exp.ftxt.features.memory_stats.MemoryConfig;
 import exp.ftxt.features.network_stats.NetworkConfig;
+import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
+import exp.ftxt.features.network_stats.app_usage.ConnectingAppSource;
 
 /**
  * Memuat konfigurasi overlay dari SharedPreferences ke static config modul.
@@ -117,6 +119,41 @@ public final class ConfigLoader {
         NetworkConfig.verticalLayout = prefs.getBoolean("network_vertical_layout", false);
         NetworkConfig.displayWidthDp = prefs.getInt("network_display_width_dp", NetworkConfig.DEFAULT_WIDTH_DP);
         NetworkConfig.updateInterval = readFloatPref(prefs, "network_update_interval", 1f);
+
+        AppUsageConfig.enabled = prefs.getBoolean("appdata_enabled", false);
+        AppUsageConfig.size = readFloatPref(prefs, "appdata_size", 12f);
+        AppUsageConfig.color = prefs.getInt("appdata_color", Color.GREEN);
+        AppUsageConfig.labelColor = prefs.getInt("appdata_label_color", Color.CYAN);
+        AppUsageConfig.textBold = prefs.getBoolean("appdata_text_bold", false);
+        AppUsageConfig.textItalic = prefs.getBoolean("appdata_text_italic", false);
+        AppUsageConfig.unitMode = prefs.getInt("appdata_unit_mode", AppUsageConfig.UNIT_KB);
+        AppUsageConfig.unitTrimmed = prefs.getBoolean("appdata_unit_trimmed", false);
+        AppUsageConfig.showDecimal = prefs.getBoolean("appdata_show_decimal", false);
+        AppUsageConfig.decimalPlaces = Math.max(1, Math.min(3,
+                prefs.getInt("appdata_decimal_places", 1)));
+        AppUsageConfig.maxRows = Math.max(1, Math.min(AppUsageConfig.MAX_ROWS,
+                prefs.getInt("appdata_max_rows", 3)));
+        AppUsageConfig.mode = prefs.getInt("appdata_mode",
+                ConnectingAppSource.MODE_TOP_TALKERS);
+        AppUsageConfig.updateInterval = readFloatPref(prefs, "appdata_update_interval", 1f);
+        AppUsageConfig.thresholdBps = prefs.getLong("appdata_threshold_bps", 1024L);
+        AppUsageConfig.holdMs = prefs.getInt("appdata_hold_ms", 3000);
+        AppUsageConfig.showIcon = prefs.getBoolean("appdata_show_icon", true);
+        AppUsageConfig.showWhenIdle = prefs.getBoolean("appdata_show_when_idle", true);
+        AppUsageConfig.shadow.enabled = prefs.getBoolean("appdata_shadow_enabled", false);
+        AppUsageConfig.shadow.color = prefs.getInt("appdata_shadow_color", Color.BLACK);
+        AppUsageConfig.shadow.blur = prefs.getFloat("appdata_shadow_blur", 5f);
+        AppUsageConfig.shadow.offsetX = prefs.getFloat("appdata_shadow_offset_x", 3f);
+        AppUsageConfig.shadow.offsetY = prefs.getFloat("appdata_shadow_offset_y", 3f);
+        AppUsageConfig.safeArea = prefs.getBoolean("appdata_safe_area", true);
+        AppUsageConfig.touchPassthrough = prefs.getBoolean("appdata_lock", true);
+        AppUsageConfig.bg.enabled = prefs.getBoolean("appdata_bg_enabled", false);
+        AppUsageConfig.bg.color = prefs.getInt("appdata_bg_color", 0xCC000000);
+        AppUsageConfig.bg.padding = prefs.getInt("appdata_bg_padding", 8);
+        AppUsageConfig.bg.offsetX = prefs.getInt("appdata_bg_offset_x", 0);
+        AppUsageConfig.bg.offsetY = prefs.getInt("appdata_bg_offset_y", 0);
+        AppUsageConfig.bg.margin = prefs.getInt("appdata_bg_margin", 0);
+        AppUsageConfig.bg.radius = prefs.getInt("appdata_bg_radius", 0);
 
         BatteryStatsConfig.enabled = prefs.getBoolean("battery_enabled", false);
         BatteryStatsConfig.size = prefs.getFloat("battery_size", 12f);
