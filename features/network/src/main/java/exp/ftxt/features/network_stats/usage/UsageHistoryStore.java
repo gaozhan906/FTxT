@@ -14,9 +14,10 @@ import java.util.Set;
 public class UsageHistoryStore extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "network_usage_history.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     private static final String T_DAILY = "usage_daily";
+    private static final String T_PACKAGE = "usage_package";
     private static final String T_META = "usage_meta";
 
     private static final String KEY_LAST_SYNC_AT = "last_sync_at";
@@ -65,6 +66,7 @@ public class UsageHistoryStore extends SQLiteOpenHelper {
                 "updated_at INTEGER NOT NULL," +
                 "PRIMARY KEY(day, network, uid))");
         db.execSQL("CREATE INDEX idx_usage_daily_day ON " + T_DAILY + "(day)");
+        createPackageTable(db);
         db.execSQL("CREATE TABLE " + T_META + " (" +
                 "key TEXT PRIMARY KEY," +
                 "value TEXT)");
@@ -72,35 +74,35 @@ public class UsageHistoryStore extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion == newVersion) return;
-        db.execSQL("DROP TABLE IF EXISTS " + T_DAILY);
-        db.execSQL("DROP TABLE IF EXISTS " + T_META);
-        onCreate(db);
+        createPackageTable(db);
     }
 
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        onUpgrade(db, oldVersion, newVersion);
+        createPackageTable(db);
+    }
+
+    private static void createPackageTable(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + T_PACKAGE + " (" +
+                "uid INTEGER PRIMARY KEY," +
+                "package TEXT NOT NULL," +
+                "updated_at INTEGER NOT NULL)");
+        try {
+            db.execSQL("INSERT OR IGNORE INTO " + T_PACKAGE + " (uid, package, updated_at)"
+                    + " SELECT uid, package, MAX(updated_at) FROM " + T_DAILY
+                    + " WHERE package IS NOT NULL AND package != ''"
+                    + " GROUP BY uid");
+        } catch (Exception ignored) {
+        }
     }
 
     public synchronized void sync(Map<String, Map<String, Map<Integer, long[]>>> daily,
                                   Map<Integer, String> packages,
-                                  Set<String> availableNetworks,
-                                  String today,
-                                  String replaceStartDay) {
+                                  Set<String> availableNetworks) {
         SQLiteDatabase db = getWritableDatabase();
         long updatedAt = System.currentTimeMillis();
         db.beginTransaction();
         try {
-            for (String network : availableNetworks) {
-                if (replaceStartDay == null) {
-                    db.delete(T_DAILY, "day = ? AND network = ?", new String[]{today, network});
-                } else {
-                    db.delete(T_DAILY, "day >= ? AND day <= ? AND network = ?",
-                            new String[]{replaceStartDay, today, network});
-                }
-            }
-
             for (Map.Entry<String, Map<String, Map<Integer, long[]>>> dayEntry : daily.entrySet()) {
                 String day = dayEntry.getKey();
                 for (Map.Entry<String, Map<Integer, long[]>> netEntry : dayEntry.getValue().entrySet()) {
@@ -115,29 +117,39 @@ public class UsageHistoryStore extends SQLiteOpenHelper {
                         if (rx + tx <= 0) continue;
 
                         ContentValues values = new ContentValues();
-                        values.put("day", day);
-                        values.put("network", network);
-                        values.put("uid", uid);
                         values.put("rx", rx);
                         values.put("tx", tx);
                         values.put("updated_at", updatedAt);
                         String packageName = packages.get(uid);
-                        if (packageName != null) values.put("package", packageName);
+                        if (packageName != null && !packageName.isEmpty()) {
+                            values.put("package", packageName);
+                        }
 
-                        if (day.equals(today) || replaceStartDay != null) {
+                        int updated = db.update(T_DAILY, values,
+                                "day = ? AND network = ? AND uid = ?",
+                                new String[]{day, network, String.valueOf(uid)});
+                        if (updated == 0) {
+                            values.put("day", day);
+                            values.put("network", network);
+                            values.put("uid", uid);
                             db.insertWithOnConflict(T_DAILY, null, values,
-                                    SQLiteDatabase.CONFLICT_REPLACE);
-                        } else {
-                            int updated = db.update(T_DAILY, values,
-                                    "day = ? AND network = ? AND uid = ?",
-                                    new String[]{day, network, String.valueOf(uid)});
-                            if (updated == 0) {
-                                db.insertOrThrow(T_DAILY, null, values);
-                            }
+                                    SQLiteDatabase.CONFLICT_IGNORE);
                         }
                     }
                 }
             }
+            for (Map.Entry<Integer, String> packageEntry : packages.entrySet()) {
+                String packageName = packageEntry.getValue();
+                if (packageName == null || packageName.isEmpty()) continue;
+
+                ContentValues values = new ContentValues();
+                values.put("uid", packageEntry.getKey());
+                values.put("package", packageName);
+                values.put("updated_at", updatedAt);
+                db.insertWithOnConflict(T_PACKAGE, null, values,
+                        SQLiteDatabase.CONFLICT_REPLACE);
+            }
+
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -147,9 +159,11 @@ public class UsageHistoryStore extends SQLiteOpenHelper {
     public synchronized List<Entry> loadRange(String startDay, String endDay) {
         List<Entry> entries = new ArrayList<>();
         Cursor cursor = getReadableDatabase().rawQuery(
-                "SELECT day, network, uid, package, rx, tx FROM " + T_DAILY
-                        + " WHERE day >= ? AND day <= ?"
-                        + " ORDER BY day ASC, network ASC, uid ASC",
+                "SELECT d.day, d.network, d.uid, COALESCE(d.package, p.package), d.rx, d.tx"
+                        + " FROM " + T_DAILY + " d"
+                        + " LEFT JOIN " + T_PACKAGE + " p ON p.uid = d.uid"
+                        + " WHERE d.day >= ? AND d.day <= ?"
+                        + " ORDER BY d.day ASC, d.network ASC, d.uid ASC",
                 new String[]{startDay, endDay});
         try {
             while (cursor.moveToNext()) {

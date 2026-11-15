@@ -1,3 +1,18 @@
+# [4.97.2] 2026/11/15 13:35 WITA 363 ***RELEASE***
+### 🔖 Deskripsi
+> Rilis ini berfokus pada keandalan catatan pemakaian data dan konsistensi indikator bypass pada Battery Strip.
+
+### ♻️ Perubahan Fitur
+- **Animasi Shine Battery Strip** — Kini hanya tampil saat bypass charging aktif dan langsung berhenti ketika bypass tidak aktif.
+
+### 🐞 Bug Fixes
+- **Riwayat aplikasi uninstalled** — Data pemakaian aplikasi yang sudah dihapus kini tetap tersimpan saat sinkronisasi dan tampil dengan nama serta label `(Uninstalled)`.
+
+### 💡 Memo
+- Riwayat aplikasi yang sudah terlanjur terhapus sebelum pembaruan ini tidak dapat dipulihkan.
+
+---
+
 # [4.97.1] 2026/11/14 20:50 WITA 361 ***RELEASE***
 ### 🔖 Deskripsi
 > Memperbarui modul Network Usage agar riwayat penggunaan data dari aplikasi yang telah di-uninstall tetap tersimpan dengan label tambahan `(Uninstalled)`.
@@ -7,7 +22,7 @@
 
 ---
 
-# [4.97.0] 2026/11/14 12:26 WITA 359 ***RELEASE***
+# [4.97.0] 2026/11/14 12:26 WITA 359 ***PUSH***
 > Pembaruan utama rilis ini berpusat pada pemantauan kestabilan tegangan, deteksi bypass charging, dan penyempurnaan overlay baterai, disertai perbaikan kualitas data serta grafik riwayat.
 
 ### ✨ Fitur Baru

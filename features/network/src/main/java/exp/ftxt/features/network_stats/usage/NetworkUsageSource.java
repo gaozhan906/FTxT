@@ -68,11 +68,7 @@ public final class NetworkUsageSource {
         }
 
         try {
-            String replaceStartDay = fullSync
-                    ? query.today().minusDays(FULL_SYNC_DAYS - 1L).toString()
-                    : null;
-            store.sync(live.daily, live.packages, live.availableNetworks,
-                    query.today().toString(), replaceStartDay);
+            store.sync(live.daily, live.packages, live.availableNetworks);
             if (fullSync && !liveUnavailable && !live.availableNetworks.isEmpty()) {
                 store.trimBefore(query.today().minusDays(HISTORY_DAYS - 1L).toString());
                 store.setLastSync(query.nowMs, query.today().toString());
@@ -233,18 +229,35 @@ public final class NetworkUsageSource {
                 Map<String, Map<Integer, long[]>> dbDay = dbDaily.get(dayKey);
                 if (dbDay != null) dbMap = dbDay.get(network);
 
-                if (live.availableNetworks.contains(network) && liveMap != null) {
-                    selected.put(network, liveMap);
+                Map<Integer, long[]> selectedMap = null;
+
+                if (live.availableNetworks.contains(network)) {
+                    if (liveMap != null) {
+                        selectedMap = new HashMap<>(liveMap);
+                        usedLive = true;
+                    } else if (dayKey.equals(today)) {
+                        usedLive = true;
+                    }
                     mergePackages(packages, live.packages);
-                    usedLive = true;
-                } else if (live.availableNetworks.contains(network) && dayKey.equals(today)) {
-                    usedLive = true;
+
+                    if (dbMap != null) {
+                        if (selectedMap == null) selectedMap = new HashMap<>();
+                        for (Map.Entry<Integer, long[]> dbEntry : dbMap.entrySet()) {
+                            if (!selectedMap.containsKey(dbEntry.getKey())) {
+                                selectedMap.put(dbEntry.getKey(), dbEntry.getValue());
+                                usedCache = true;
+                            }
+                        }
+                    }
                 } else if (dbMap != null) {
-                    selected.put(network, dbMap);
-                    Map<Integer, String> dbPkg = packageMap(dbPackages, dayKey, network);
-                    if (dbPkg != null) packages.putAll(dbPkg);
+                    selectedMap = dbMap;
                     usedCache = true;
                 }
+
+                if (selectedMap != null) selected.put(network, selectedMap);
+
+                Map<Integer, String> dbPkg = packageMap(dbPackages, dayKey, network);
+                if (dbPkg != null) mergePackages(packages, dbPkg);
             }
 
             long wifiRx = sum(selected, WIFI, 0);

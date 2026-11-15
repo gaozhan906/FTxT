@@ -94,7 +94,7 @@ FTxT/
 │   │       ├── NetworkStatsSource.java — Query NetworkStatsManager per UID (WiFi/seluler)
 │   │       └── usage/
 │   │           ├── NetworkUsageSource.java — Facade live + cache + SQLite
-│   │           ├── UsageHistoryStore.java — Riwayat harian SQLite retensi 90 hari
+│   │           ├── UsageHistoryStore.java — Riwayat harian SQLite retensi 90 hari + registry paket per uid
 │   │           ├── UsageCache.java — Cache snapshot 30 detik
 │   │           ├── UsagePeriod.java, UsageNetwork.java, UsageSource.java, UsageQuery.java — Model filter
 │   │           ├── UsageBucket.java, UsageApp.java, UsageDay.java, UsageSnapshot.java — Model hasil
@@ -141,7 +141,7 @@ FTxT/
 │           │   └── SessionRebuild.java       — Rekonstruksi sesi tak tersimpan di thread latar
 │           └── battery_bar/
 │               ├── BatteryBarConfig.java     — Konfigurasi Battery Bar overlay (animasi, beep & getar)
-│               ├── BatteryBarView.java       — Custom View bar baterai H/V (empty strip, fade, shine, wave, edge glow, startup sweep, drain tick)
+│               ├── BatteryBarView.java       — Custom View bar baterai H/V (empty strip, fade, shine indikator bypass, wave, edge glow, startup sweep, drain tick)
 │               ├── BatteryBarModule.java     — Bar baterai: mode cepat (snap sisi) & manual, update interval, pemicu peringatan
 │               └── DischargeAlertPlayer.java — Pemutar bunyi & getar peringatan pengosongan baterai
 │       └── src/main/res/drawable/ — Ikon status pengisian: ic_charge_normal, ic_charge_fast, ic_usb, ic_wireless, ic_battery_full, ic_battery_discharging, ic_bypass, ic_charge_limit

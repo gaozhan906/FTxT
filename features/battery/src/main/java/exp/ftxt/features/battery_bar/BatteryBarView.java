@@ -33,6 +33,7 @@ public class BatteryBarView extends View {
     private float radiusPx = 8;
     private float percent = 0f;
     private boolean charging = false;
+    private boolean bypassActive = false;
     private boolean low = false;
     private int lowColor = Color.YELLOW;
     private int colorScheme = BatteryBarConfig.SCHEME_NONE;
@@ -170,10 +171,11 @@ public class BatteryBarView extends View {
         invalidate();
     }
 
-    public void updateStatus(float percent, boolean charging, boolean low) {
+    public void updateStatus(float percent, boolean charging, boolean low, boolean bypassActive) {
         float oldPercent = this.percent;
         this.percent = Math.max(0f, Math.min(100f, percent));
         this.charging = charging;
+        this.bypassActive = bypassActive;
         this.low = low;
 
         if (!startupSweepDone) {
@@ -195,7 +197,7 @@ public class BatteryBarView extends View {
     }
 
     private void updateAnimators() {
-        if (charging && shineEnabled) {
+        if (bypassActive && shineEnabled) {
             startShine();
         } else {
             stopShine();
@@ -476,7 +478,7 @@ public class BatteryBarView extends View {
         drawDrainTick(canvas, w, h);
         drawEdgeGlow(canvas, w, h, shownPercent);
 
-        if (charging && shinePos >= -0.5f) {
+        if (bypassActive && shinePos >= -0.5f) {
             float bandWidth = Math.max(10f, (horizontal ? w : h) * (shineWidthPercent / 100f));
             if (horizontal) {
                 float fillEdge = invert ? w - w * (shownPercent / 100f) : w * (shownPercent / 100f);

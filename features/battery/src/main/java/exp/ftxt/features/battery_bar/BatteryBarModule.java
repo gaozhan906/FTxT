@@ -15,6 +15,7 @@ import android.view.WindowManager;
 
 import exp.ftxt.shared.ui.OverlayDragHandler;
 import exp.ftxt.shared.ui.OverlayModule;
+import exp.ftxt.features.battery_stats.BypassChargingDetector;
 
 import exp.ftxt.shared.ui.SmartPanelTarget;
 
@@ -35,6 +36,7 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
     private int lastPercent = -1;
     private boolean lastCharging;
     private boolean lastLow;
+    private boolean lastBypass;
 
     private int batteryLevel;
     private int batteryScale = 100;
@@ -118,6 +120,7 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         }
 
         lastPercent = -1;
+        lastBypass = false;
         applyLayout();
         updateDisplay();
 
@@ -381,16 +384,19 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
         boolean charging = batteryStatus == BatteryManager.BATTERY_STATUS_CHARGING
                 || batteryStatus == BatteryManager.BATTERY_STATUS_FULL;
         boolean low = percent < BatteryBarConfig.lowThreshold;
+        boolean bypassActive = isBypassActive();
         if (!BatteryBarConfig.dischargeAlertEnabled) {
             firedAlertTargets.clear();
             lastAlertMode = -1;
             lastAlertTargets = "";
         }
-        if (percent == lastPercent && charging == lastCharging && low == lastLow) return;
+        if (percent == lastPercent && charging == lastCharging && low == lastLow
+                && bypassActive == lastBypass) return;
         int oldPercent = lastPercent;
         lastPercent = percent;
         lastCharging = charging;
         lastLow = low;
+        lastBypass = bypassActive;
         if (charging) {
             firedAlertTargets.clear();
             lastAlertMode = -1;
@@ -402,7 +408,12 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
                 checkDischargeAlert(percent, oldPercent);
             }
         }
-        view.updateStatus(percent, charging, low);
+        view.updateStatus(percent, charging, low, bypassActive);
+    }
+
+    private boolean isBypassActive() {
+        BypassChargingDetector.State state = BypassChargingDetector.getState();
+        return state != null && state.isBypass();
     }
 
     private void checkDischargeAlert(int percent, int oldPercent) {
