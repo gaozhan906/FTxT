@@ -1,0 +1,468 @@
+diff -ruN a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	2026-11-16 04:14:54.000000000 +0000
++++ b/app/src/main/AndroidManifest.xml	2026-11-16 04:51:02.922655939 +0000
+@@ -2,6 +2,7 @@
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ 
+     <uses-permission android:name="android.permission.INTERNET"/>
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+diff -ruN a/app/src/main/java/exp/ftxt/ui/NetworkAppDataController.java b/app/src/main/java/exp/ftxt/ui/NetworkAppDataController.java
+--- a/app/src/main/java/exp/ftxt/ui/NetworkAppDataController.java	2026-11-16 04:14:54.000000000 +0000
++++ b/app/src/main/java/exp/ftxt/ui/NetworkAppDataController.java	2026-11-16 04:49:25.255461023 +0000
+@@ -8,8 +8,8 @@
+ import android.widget.CheckBox;
+ import android.widget.LinearLayout;
+ import android.widget.PopupWindow;
+-import android.widget.RadioButton;
+ import android.widget.RadioGroup;
++import android.widget.RadioButton;
+ import android.widget.ScrollView;
+ import android.widget.SeekBar;
+ import android.widget.TextView;
+@@ -18,7 +18,6 @@
+ import exp.ftxt.R;
+ import exp.ftxt.core.FloatingService;
+ import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
+-import exp.ftxt.features.network_stats.app_usage.ConnectingAppSource;
+ import exp.ftxt.shared.color.ColorPickerDialog;
+ import exp.ftxt.shared.ui.SectionHelper;
+ import exp.ftxt.shared.ui.SliderLabelEditor;
+@@ -47,9 +46,6 @@
+     private View appdataLabelColorPreview;
+     private View appdataShadowColorPreview;
+     private View appdataBgColorPreview;
+-    private RadioGroup appdataModeGroup;
+-    private RadioButton appdataModeTop;
+-    private RadioButton appdataModeForeground;
+     private SeekBar appdataRowsSeekBar;
+     private SeekBar appdataHoldSeekBar;
+     private CheckBox appdataSafeArea;
+@@ -137,9 +133,6 @@
+         appdataLabelColorPreview = rootView.findViewById(R.id.appdataLabelColorPreview);
+         appdataShadowColorPreview = rootView.findViewById(R.id.appdataShadowColorPreview);
+         appdataBgColorPreview = rootView.findViewById(R.id.appdataBgColorPreview);
+-        appdataModeGroup = rootView.findViewById(R.id.appdataModeGroup);
+-        appdataModeTop = rootView.findViewById(R.id.appdataModeTop);
+-        appdataModeForeground = rootView.findViewById(R.id.appdataModeForeground);
+         appdataRowsSeekBar = rootView.findViewById(R.id.appdataRowsSeekBar);
+         appdataHoldSeekBar = rootView.findViewById(R.id.appdataHoldSeekBar);
+         appdataSafeArea = rootView.findViewById(R.id.appdataSafeArea);
+@@ -221,12 +214,6 @@
+         appdataShadowColorPreview.setBackgroundColor(AppUsageConfig.shadow.color);
+         appdataBgColorPreview.setBackgroundColor(AppUsageConfig.bg.color);
+ 
+-        if (AppUsageConfig.mode == ConnectingAppSource.MODE_FOREGROUND) {
+-            appdataModeForeground.setChecked(true);
+-        } else {
+-            appdataModeTop.setChecked(true);
+-        }
+-
+         appdataRowsSeekBar.setProgress(clampRows(AppUsageConfig.maxRows) - 1);
+         appdataRowsLabel.setText("Jumlah Aplikasi: " + clampRows(AppUsageConfig.maxRows));
+         int displaySeconds = Math.max(0, Math.min(30, AppUsageConfig.holdMs / 1000));
+@@ -317,15 +304,8 @@
+     private void updatePermissionState(boolean requestIfMissing) {
+         boolean granted = PermissionHelper.hasUsageAccess(activity);
+         appdataPermissionCard.setVisibility(granted ? View.GONE : View.VISIBLE);
+-        appdataModeForeground.setEnabled(granted);
+-        appdataModeForeground.setAlpha(granted ? 1f : 0.5f);
+-        if (!granted) {
+-            if (AppUsageConfig.mode == ConnectingAppSource.MODE_FOREGROUND) {
+-                AppUsageConfig.mode = ConnectingAppSource.MODE_TOP_TALKERS;
+-                appdataModeTop.setChecked(true);
+-                persist("appdata_mode", AppUsageConfig.mode);
+-            }
+-            if (requestIfMissing) PermissionHelper.requestUsageAccess(activity);
++        if (!granted && requestIfMissing) {
++            PermissionHelper.requestUsageAccess(activity);
+         }
+     }
+ 
+@@ -485,19 +465,6 @@
+                                     FloatingService.appUsageModule());
+                         }));
+ 
+-        appdataModeGroup.setOnCheckedChangeListener((group, checkedId) -> {
+-            if (checkedId == R.id.appdataModeForeground
+-                    && !PermissionHelper.hasUsageAccess(activity)) {
+-                appdataModeTop.setChecked(true);
+-                PermissionHelper.requestUsageAccess(activity);
+-                return;
+-            }
+-            AppUsageConfig.mode = checkedId == R.id.appdataModeForeground
+-                    ? ConnectingAppSource.MODE_FOREGROUND
+-                    : ConnectingAppSource.MODE_TOP_TALKERS;
+-            persist("appdata_mode", AppUsageConfig.mode);
+-        });
+-
+         appdataRowsSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                 int rows = clampRows(progress + 1);
+diff -ruN a/app/src/main/java/exp/ftxt/ui/NetworkAppDataPositionController.java b/app/src/main/java/exp/ftxt/ui/NetworkAppDataPositionController.java
+--- a/app/src/main/java/exp/ftxt/ui/NetworkAppDataPositionController.java	2026-11-16 04:14:54.000000000 +0000
++++ b/app/src/main/java/exp/ftxt/ui/NetworkAppDataPositionController.java	2026-11-16 04:48:22.297380120 +0000
+@@ -68,7 +68,6 @@
+             p.touchPassthrough = AppUsageConfig.touchPassthrough;
+             p.safeArea = AppUsageConfig.safeArea;
+             p.appMaxRows = AppUsageConfig.maxRows;
+-            p.appMode = AppUsageConfig.mode;
+             p.appInterval = AppUsageConfig.updateInterval;
+             p.appThresholdBps = (int) AppUsageConfig.thresholdBps;
+             p.appHoldMs = AppUsageConfig.holdMs;
+@@ -101,7 +100,6 @@
+             if (p.touchPassthrough != null) AppUsageConfig.touchPassthrough = p.touchPassthrough;
+             if (p.safeArea != null) AppUsageConfig.safeArea = p.safeArea;
+             if (p.appMaxRows != null) AppUsageConfig.maxRows = p.appMaxRows;
+-            if (p.appMode != null) AppUsageConfig.mode = p.appMode;
+             if (p.appInterval != null) AppUsageConfig.updateInterval = p.appInterval;
+             if (p.appThresholdBps != null) AppUsageConfig.thresholdBps = p.appThresholdBps;
+             if (p.appHoldMs != null) AppUsageConfig.holdMs = p.appHoldMs;
+@@ -128,7 +126,6 @@
+                     .putInt("appdata_bg_margin", AppUsageConfig.bg.margin)
+                     .putInt("appdata_bg_radius", AppUsageConfig.bg.radius)
+                     .putInt("appdata_max_rows", AppUsageConfig.maxRows)
+-                    .putInt("appdata_mode", AppUsageConfig.mode)
+                     .putFloat("appdata_update_interval", AppUsageConfig.updateInterval)
+                     .putLong("appdata_threshold_bps", AppUsageConfig.thresholdBps)
+                     .putInt("appdata_hold_ms", AppUsageConfig.holdMs)
+diff -ruN a/app/src/main/res/layout/panel_network_overlay_app.xml b/app/src/main/res/layout/panel_network_overlay_app.xml
+--- a/app/src/main/res/layout/panel_network_overlay_app.xml	2026-11-16 04:14:54.000000000 +0000
++++ b/app/src/main/res/layout/panel_network_overlay_app.xml	2026-11-16 04:47:58.730304603 +0000
+@@ -321,27 +321,6 @@
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content">
+ 
+-            <RadioGroup
+-                android:id="@+id/appdataModeGroup"
+-                android:orientation="horizontal"
+-                android:layout_width="match_parent"
+-                android:layout_height="wrap_content">
+-
+-                <RadioButton
+-                    android:id="@+id/appdataModeTop"
+-                    android:text="Top Talkers"
+-                    android:layout_width="0dp"
+-                    android:layout_height="wrap_content"
+-                    android:layout_weight="1"/>
+-
+-                <RadioButton
+-                    android:id="@+id/appdataModeForeground"
+-                    android:text="Aplikasi Depan"
+-                    android:layout_width="0dp"
+-                    android:layout_height="wrap_content"
+-                    android:layout_weight="1"/>
+-
+-            </RadioGroup>
+ 
+             <TextView
+                 android:id="@+id/appdataRowsLabel"
+diff -ruN a/core/src/main/java/exp/ftxt/core/ConfigLoader.java b/core/src/main/java/exp/ftxt/core/ConfigLoader.java
+--- a/core/src/main/java/exp/ftxt/core/ConfigLoader.java	2026-11-16 04:14:54.000000000 +0000
++++ b/core/src/main/java/exp/ftxt/core/ConfigLoader.java	2026-11-16 04:47:58.729024814 +0000
+@@ -13,7 +13,6 @@
+ import exp.ftxt.features.memory_stats.MemoryConfig;
+ import exp.ftxt.features.network_stats.NetworkConfig;
+ import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
+-import exp.ftxt.features.network_stats.app_usage.ConnectingAppSource;
+ 
+ /**
+  * Memuat konfigurasi overlay dari SharedPreferences ke static config modul.
+@@ -133,8 +132,6 @@
+                 prefs.getInt("appdata_decimal_places", 1)));
+         AppUsageConfig.maxRows = Math.max(1, Math.min(AppUsageConfig.MAX_ROWS,
+                 prefs.getInt("appdata_max_rows", 3)));
+-        AppUsageConfig.mode = prefs.getInt("appdata_mode",
+-                ConnectingAppSource.MODE_TOP_TALKERS);
+         AppUsageConfig.updateInterval = readFloatPref(prefs, "appdata_update_interval", 1f);
+         AppUsageConfig.thresholdBps = prefs.getLong("appdata_threshold_bps", 1024L);
+         AppUsageConfig.holdMs = Math.max(0, Math.min(30000,
+diff -ruN a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageConfig.java b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageConfig.java
+--- a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageConfig.java	2026-11-16 04:14:54.000000000 +0000
++++ b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageConfig.java	2026-11-16 04:48:17.457269754 +0000
+@@ -23,7 +23,6 @@
+     public static int decimalPlaces = 1;
+ 
+     public static int maxRows = 3;
+-    public static int mode = ConnectingAppSource.MODE_TOP_TALKERS;
+     public static float updateInterval = 1f;
+     public static long thresholdBps = 1024L;
+     public static int holdMs = 10000;
+diff -ruN a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageModule.java b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageModule.java
+--- a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageModule.java	2026-11-16 04:15:00.000000000 +0000
++++ b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageModule.java	2026-11-16 04:47:58.728576751 +0000
+@@ -372,9 +372,8 @@
+                     currentExecutor.execute(() -> {
+                         List<ConnectingAppSource.AppTraffic> result = null;
+                         try {
+-                            result = currentSource.query(AppUsageConfig.mode,
+-                                    AppUsageConfig.maxRows, AppUsageConfig.thresholdBps,
+-                                    intervalMs);
++                            result = currentSource.query(AppUsageConfig.maxRows,
++                                    AppUsageConfig.thresholdBps, intervalMs);
+                         } catch (Exception e) {
+                             android.util.Log.w("AppUsageModule",
+                                     "Gagal memperbarui trafik aplikasi", e);
+diff -ruN a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageOverlayView.java b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageOverlayView.java
+--- a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageOverlayView.java	2026-11-16 04:14:54.000000000 +0000
++++ b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/AppUsageOverlayView.java	2026-11-16 04:47:58.730606897 +0000
+@@ -205,17 +205,15 @@
+     }
+ 
+     private void appendCombinedSpeed(SpannableStringBuilder builder, long bytesPerSec) {
+-        builder.append("↕");
+-        builder.setSpan(new ForegroundColorSpan(labelColor),
+-                0, builder.length(), 0);
+-
++        // Tampilkan satu nilai total tanpa glyph arah yang dapat bertabrakan
++        // dengan angka pada font/display density tertentu.
+         int valueStart = builder.length();
+         builder.append(formatValue(bytesPerSec));
+         int valueEnd = builder.length();
+         builder.setSpan(new ForegroundColorSpan(valueColor),
+                 valueStart, valueEnd, 0);
+ 
+-        builder.append(unitSuffix(bytesPerSec));
++        builder.append(' ').append(unitSuffix(bytesPerSec));
+         builder.setSpan(new ForegroundColorSpan(labelColor),
+                 valueEnd, builder.length(), 0);
+     }
+diff -ruN a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/ConnectingAppSource.java b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/ConnectingAppSource.java
+--- a/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/ConnectingAppSource.java	2026-11-16 04:15:26.000000000 +0000
++++ b/features/network/src/main/java/exp/ftxt/features/network_stats/app_usage/ConnectingAppSource.java	2026-11-16 04:50:47.705814596 +0000
+@@ -3,12 +3,11 @@
+ import android.app.AppOpsManager;
+ import android.app.usage.NetworkStats;
+ import android.app.usage.NetworkStatsManager;
+-import android.app.usage.UsageEvents;
+-import android.app.usage.UsageStatsManager;
+ import android.content.Context;
+ import android.content.pm.PackageManager;
+ import android.graphics.drawable.Drawable;
+ import android.net.ConnectivityManager;
++import android.net.NetworkInfo;
+ import android.os.Build;
+ import android.os.SystemClock;
+ import android.telephony.TelephonyManager;
+@@ -23,30 +22,22 @@
+ 
+ public final class ConnectingAppSource {
+ 
+-    public static final int MODE_TOP_TALKERS = 0;
+-    public static final int MODE_FOREGROUND = 1;
+-
+     private static final String TAG = "ConnectingAppSource";
+-    private static final long FOREGROUND_WINDOW_MS = 60000L;
+-
+     public static final class AppTraffic {
+         public final int uid;
+         public final String packageName;
+         public final String label;
+         public final long rxBytesPerSec;
+         public final long txBytesPerSec;
+-        public final boolean foreground;
+         public final Drawable icon;
+ 
+         public AppTraffic(int uid, String packageName, String label,
+-                          long rxBytesPerSec, long txBytesPerSec,
+-                          boolean foreground, Drawable icon) {
++                          long rxBytesPerSec, long txBytesPerSec, Drawable icon) {
+             this.uid = uid;
+             this.packageName = packageName;
+             this.label = label;
+             this.rxBytesPerSec = rxBytesPerSec;
+             this.txBytesPerSec = txBytesPerSec;
+-            this.foreground = foreground;
+             this.icon = icon;
+         }
+ 
+@@ -57,15 +48,12 @@
+ 
+     private final Context context;
+     private final PackageManager packageManager;
+-    private final UsageStatsManager usageStatsManager;
+     private final NetworkStatsManager networkStatsManager;
+     private final String selfPackage;
+     private final int selfUid;
+ 
+     private final LruCache<String, Drawable> iconCache = new LruCache<>(48);
+     private final Map<String, String> labelCache = new HashMap<>();
+-    private String cachedForeground;
+-    private long cachedForegroundAt;
+ 
+     // NetworkStatsManager menerima rentang waktu wall-clock, sedangkan durasi
+     // sampling dihitung dengan elapsedRealtime agar perubahan jam tidak merusak B/s.
+@@ -75,15 +63,13 @@
+     public ConnectingAppSource(Context context) {
+         this.context = context.getApplicationContext();
+         this.packageManager = this.context.getPackageManager();
+-        this.usageStatsManager =
+-                (UsageStatsManager) this.context.getSystemService(Context.USAGE_STATS_SERVICE);
+         this.networkStatsManager =
+                 (NetworkStatsManager) this.context.getSystemService(Context.NETWORK_STATS_SERVICE);
+         this.selfPackage = this.context.getPackageName();
+         this.selfUid = android.os.Process.myUid();
+     }
+ 
+-    public List<AppTraffic> query(int mode, int maxRows,
++    public List<AppTraffic> query(int maxRows,
+                                   long thresholdBps, long intervalMs) {
+         long sampleWallTimeMs = System.currentTimeMillis();
+         long sampleElapsedMs = SystemClock.elapsedRealtime();
+@@ -110,17 +96,6 @@
+             return Collections.emptyList();
+         }
+ 
+-        int foregroundUid = -1;
+-        String foregroundPackage =
+-                mode == MODE_FOREGROUND ? foregroundPackage(sampleWallTimeMs) : null;
+-        if (foregroundPackage != null) {
+-            try {
+-                foregroundUid = packageManager.getPackageUid(foregroundPackage, 0);
+-            } catch (Exception ignored) {
+-                // Paket dapat tidak terlihat oleh PackageManager karena package visibility.
+-            }
+-        }
+-
+         List<Candidate> candidates = new ArrayList<>();
+         for (Map.Entry<Integer, long[]> entry : intervalTotals.entrySet()) {
+             int uid = entry.getKey();
+@@ -131,10 +106,7 @@
+             long txBps = values[1] * 1000L / elapsedMs;
+             if (rxBps + txBps < Math.max(0L, thresholdBps)) continue;
+ 
+-            boolean foreground = uid == foregroundUid;
+-            if (mode == MODE_FOREGROUND && !foreground) continue;
+-
+-            candidates.add(new Candidate(uid, rxBps, txBps, foreground));
++            candidates.add(new Candidate(uid, rxBps, txBps));
+         }
+ 
+         if (candidates.isEmpty()) return Collections.emptyList();
+@@ -153,7 +125,6 @@
+                     identity[1],
+                     candidate.rxBps,
+                     candidate.txBps,
+-                    candidate.foreground,
+                     resolveIcon(identity[0])
+             ));
+         }
+@@ -169,12 +140,20 @@
+         Map<Integer, long[]> totals = new HashMap<>();
+         if (networkStatsManager == null || !hasUsageAccess()) return totals;
+ 
+-        collectNetwork(ConnectivityManager.TYPE_WIFI, null, startTimeMs, endTimeMs, totals);
+-
+-        String subscriberId = subscriberId();
+-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || subscriberId != null) {
+-            collectNetwork(ConnectivityManager.TYPE_MOBILE, subscriberId,
+-                    startTimeMs, endTimeMs, totals);
++        // ISM memilih satu jenis jaringan aktif untuk setiap sampel; jangan
++        // menjumlahkan statistik Wi-Fi dan seluler sekaligus.
++        ConnectivityManager connectivityManager =
++                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
++        if (connectivityManager == null) return totals;
++
++        NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
++        if (activeNetwork == null || !activeNetwork.isConnected()) return totals;
++
++        int networkType = activeNetwork.getType();
++        if (networkType == ConnectivityManager.TYPE_WIFI) {
++            collectNetwork(networkType, null, startTimeMs, endTimeMs, totals);
++        } else if (networkType == ConnectivityManager.TYPE_MOBILE) {
++            collectNetwork(networkType, subscriberId(), startTimeMs, endTimeMs, totals);
+         }
+ 
+         return totals;
+@@ -190,8 +169,7 @@
+             if (stats == null) return;
+ 
+             NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+-            while (stats.hasNextBucket()) {
+-                stats.getNextBucket(bucket);
++            while (stats.getNextBucket(bucket)) {
+                 int uid = bucket.getUid();
+                 if (uid < 0 || uid == selfUid) continue;
+ 
+@@ -241,53 +219,6 @@
+         }
+     }
+ 
+-    private String foregroundPackage(long nowMs) {
+-        if (usageStatsManager == null) return cachedForeground;
+-        UsageEvents events = null;
+-        try {
+-            events = usageStatsManager.queryEvents(
+-                    nowMs - FOREGROUND_WINDOW_MS, nowMs);
+-            if (events == null) return cachedForeground;
+-
+-            UsageEvents.Event event = new UsageEvents.Event();
+-            String latestForegroundPackage = null;
+-            long latestForegroundAt = -1L;
+-            boolean cachedBackgrounded = false;
+-            while (events.hasNextEvent()) {
+-                events.getNextEvent(event);
+-                int type = event.getEventType();
+-                String packageName = event.getPackageName();
+-                if (packageName == null) continue;
+-                long timestamp = event.getTimeStamp();
+-
+-                // MOVE_TO_FOREGROUND/BACKGROUND memakai nilai event yang sama
+-                // dengan ACTIVITY_RESUMED/PAUSED pada Android versi lebih baru.
+-                if (type == UsageEvents.Event.MOVE_TO_FOREGROUND) {
+-                    if (timestamp >= latestForegroundAt) {
+-                        latestForegroundAt = timestamp;
+-                        latestForegroundPackage = packageName;
+-                    }
+-                } else if (type == UsageEvents.Event.MOVE_TO_BACKGROUND
+-                        && packageName.equals(cachedForeground)
+-                        && timestamp >= cachedForegroundAt) {
+-                    cachedBackgrounded = true;
+-                }
+-            }
+-
+-            if (latestForegroundPackage != null && latestForegroundAt >= cachedForegroundAt) {
+-                cachedForeground = latestForegroundPackage.equals(selfPackage)
+-                        ? null : latestForegroundPackage;
+-                cachedForegroundAt = latestForegroundAt;
+-            } else if (cachedBackgrounded) {
+-                cachedForeground = null;
+-                cachedForegroundAt = 0L;
+-            }
+-        } catch (Exception e) {
+-            Log.w(TAG, "Gagal membaca event aplikasi depan", e);
+-        }
+-        return cachedForeground;
+-    }
+-
+     private String[] resolveIdentity(int uid) {
+         List<String> packagesForUid = new ArrayList<>();
+         try {
+@@ -358,13 +289,11 @@
+         final int uid;
+         final long rxBps;
+         final long txBps;
+-        final boolean foreground;
+ 
+-        Candidate(int uid, long rxBps, long txBps, boolean foreground) {
++        Candidate(int uid, long rxBps, long txBps) {
+             this.uid = uid;
+             this.rxBps = rxBps;
+             this.txBps = txBps;
+-            this.foreground = foreground;
+         }
+     }
+ }
+diff -ruN a/shared/preset/src/main/java/exp/ftxt/shared/preset/OverlayPreset.java b/shared/preset/src/main/java/exp/ftxt/shared/preset/OverlayPreset.java
+--- a/shared/preset/src/main/java/exp/ftxt/shared/preset/OverlayPreset.java	2026-11-16 04:14:54.000000000 +0000
++++ b/shared/preset/src/main/java/exp/ftxt/shared/preset/OverlayPreset.java	2026-11-16 04:48:22.297581563 +0000
+@@ -81,7 +81,6 @@
+     public Integer crosshairColor;
+ 
+     public Integer appMaxRows;
+-    public Integer appMode;
+     public Float appInterval;
+     public Integer appThresholdBps;
+     public Integer appHoldMs;
