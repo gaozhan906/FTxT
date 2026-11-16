@@ -21,17 +21,21 @@ import exp.ftxt.shared.ui.ShadowTextView;
 
 public class AppUsageOverlayView extends LinearLayout {
 
-    private static final int ICON_SIZE_DP = 18;
+    private static final float ICON_SIZE_RATIO = 1.5f;
     private static final int ICON_GAP_DP = 6;
-    private static final int ROW_GAP_DP = 2;
+    private static final int MIN_ROW_GAP_DP = 4;
+    private static final float ROW_GAP_RATIO = 0.35f;
 
     private final Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final List<Row> rows = new ArrayList<>();
     private final ShadowTextView idleText;
-    private final int iconSizePx;
+    private final float density;
+    private final float scaledDensity;
     private final int iconGapPx;
-    private final int rowGapPx;
     private final int maxTextWidthPx;
+
+    private int rowGapPx;
+    private int iconSizePx;
 
     private int valueColor = AppUsageConfig.color;
     private int labelColor = AppUsageConfig.labelColor;
@@ -42,6 +46,7 @@ public class AppUsageOverlayView extends LinearLayout {
     private boolean showDecimal = AppUsageConfig.showDecimal;
     private int decimalPlaces = AppUsageConfig.decimalPlaces;
     private boolean showIcon = AppUsageConfig.showIcon;
+    private boolean showName = AppUsageConfig.showName;
     private int textSize = (int) AppUsageConfig.size;
 
     private boolean bgEnabled;
@@ -57,10 +62,11 @@ public class AppUsageOverlayView extends LinearLayout {
         setOrientation(VERTICAL);
         setGravity(Gravity.START);
 
-        float density = getResources().getDisplayMetrics().density;
-        iconSizePx = Math.round(ICON_SIZE_DP * density);
+        density = getResources().getDisplayMetrics().density;
+        scaledDensity = getResources().getDisplayMetrics().scaledDensity;
+        iconSizePx = iconSizeFor(textSize);
         iconGapPx = Math.round(ICON_GAP_DP * density);
-        rowGapPx = Math.round(ROW_GAP_DP * density);
+        rowGapPx = rowGapFor(textSize);
         maxTextWidthPx = Math.round(
                 getResources().getDisplayMetrics().widthPixels * 0.8f);
 
@@ -75,11 +81,19 @@ public class AppUsageOverlayView extends LinearLayout {
 
     public void setOverlayTextSize(float size) {
         textSize = Math.max(6, Math.round(size));
+        iconSizePx = iconSizeFor(textSize);
+        rowGapPx = rowGapFor(textSize);
         idleText.setTextSize(textSize);
         for (Row row : rows) {
             row.text.setTextSize(textSize);
+            applyIconSize(row.icon);
         }
+        applyRowSpacing();
         requestLayout();
+    }
+
+    public void setShowName(boolean show) {
+        showName = show;
     }
 
     public void setTextColors(int color, int labelColor) {
@@ -181,19 +195,19 @@ public class AppUsageOverlayView extends LinearLayout {
 
     private SpannableStringBuilder buildText(ConnectingAppSource.AppTraffic app) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
-        builder.append(app.label);
-        builder.setSpan(new ForegroundColorSpan(labelColor), 0, builder.length(), 0);
-        appendSpeed(builder, "↓", app.rxBytesPerSec);
-        appendSpeed(builder, "↑", app.txBytesPerSec);
+        if (showName) {
+            builder.append(app.label).append(' ');
+            builder.setSpan(new ForegroundColorSpan(labelColor),
+                    0, builder.length(), 0);
+        }
+        appendCombinedSpeed(builder, app.totalBytesPerSec());
         return builder;
     }
 
-    private void appendSpeed(SpannableStringBuilder builder, String arrow,
-                             long bytesPerSec) {
-        builder.append("  ").append(arrow);
-        int arrowStart = builder.length() - arrow.length();
+    private void appendCombinedSpeed(SpannableStringBuilder builder, long bytesPerSec) {
+        builder.append("↕");
         builder.setSpan(new ForegroundColorSpan(labelColor),
-                arrowStart, builder.length(), 0);
+                0, builder.length(), 0);
 
         int valueStart = builder.length();
         builder.append(formatValue(bytesPerSec));
@@ -206,10 +220,41 @@ public class AppUsageOverlayView extends LinearLayout {
                 valueEnd, builder.length(), 0);
     }
 
+    private int iconSizeFor(int textSizeSp) {
+        return Math.max(1, Math.round(textSizeSp * scaledDensity * ICON_SIZE_RATIO));
+    }
+
+    private void applyIconSize(ImageView icon) {
+        if (icon == null) return;
+        LinearLayout.LayoutParams params = new LayoutParams(iconSizePx, iconSizePx);
+        params.setMarginEnd(iconGapPx);
+        icon.setLayoutParams(params);
+    }
+
+    private int rowGapFor(int textSizeSp) {
+        int proportional = Math.round(textSizeSp * scaledDensity * ROW_GAP_RATIO);
+        return Math.max(Math.round(MIN_ROW_GAP_DP * density), proportional);
+    }
+
+    private void applyRowSpacing() {
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
+            LinearLayout.LayoutParams params =
+                    (LinearLayout.LayoutParams) row.container.getLayoutParams();
+            if (params == null) {
+                params = new LayoutParams(
+                        LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+            }
+            params.topMargin = i == 0 ? 0 : rowGapPx;
+            row.container.setLayoutParams(params);
+        }
+    }
+
     private void ensureRows(int count) {
         while (rows.size() < count) {
             rows.add(createRow());
         }
+        applyRowSpacing();
     }
 
     private Row createRow() {
@@ -218,17 +263,8 @@ public class AppUsageOverlayView extends LinearLayout {
         row.container.setOrientation(HORIZONTAL);
         row.container.setGravity(Gravity.CENTER_VERTICAL);
 
-        if (!rows.isEmpty()) {
-            LayoutParams params = new LayoutParams(
-                    LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-            params.topMargin = rowGapPx;
-            row.container.setLayoutParams(params);
-        }
-
         row.icon = new ImageView(getContext());
-        LayoutParams iconParams = new LayoutParams(iconSizePx, iconSizePx);
-        iconParams.setMarginEnd(iconGapPx);
-        row.icon.setLayoutParams(iconParams);
+        applyIconSize(row.icon);
         row.icon.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
         row.text = new ShadowTextView(getContext());

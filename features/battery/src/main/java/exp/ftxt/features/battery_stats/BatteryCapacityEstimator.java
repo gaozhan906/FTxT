@@ -261,7 +261,40 @@ public class BatteryCapacityEstimator {
         ArrayList<Float> combinedEstimates = new ArrayList<>();
         int validSamples = 0;
         int screenOffCount = 0;
+        ArrayList<BatteryHistoryDb.SessionRow> storedCharges = db.queryChargeSessions(now - span, now);
+        ArrayList<BatteryHistoryDb.DischargeSession> storedDischarges =
+                db.queryDischargeSessions(now - span, now);
+        // Override manual mengambil nilai integral sesi yang dipilih; sesi tersebut
+        // tidak boleh dihitung ulang dari sampel mentah sehingga tidak terjadi duplikasi.
+        for (BatteryHistoryDb.SessionRow row : storedCharges) {
+            if (row.calculationOverride != 1) continue;
+            float delta = row.endPercent - row.startPercent;
+            double amountMah = row.mAhIntegral > 0d ? row.mAhIntegral : row.mAhCounter;
+            if (delta < MIN_DELTA_PERCENT || amountMah <= 0d) continue;
+            float estimate = (float) (amountMah * 100.0 / delta);
+            if (!Float.isNaN(estimate) && !Float.isInfinite(estimate) && estimate > 0f) {
+                chargeEstimates.add(estimate);
+                combinedEstimates.add(estimate);
+                validSamples += row.sampleCount;
+                if (row.mostlyScreenOff) screenOffCount++;
+            }
+        }
+        for (BatteryHistoryDb.DischargeSession row : storedDischarges) {
+            if (row.calculationOverride != 1) continue;
+            float delta = row.startPercent - row.endPercent;
+            double amountMah = row.usedMahIntegral > 0d
+                    ? row.usedMahIntegral : row.usedMahCounter;
+            if (delta < MIN_DELTA_PERCENT || amountMah <= 0d) continue;
+            float estimate = (float) (amountMah * 100.0 / delta);
+            if (!Float.isNaN(estimate) && !Float.isInfinite(estimate) && estimate > 0f) {
+                dischargeEstimates.add(estimate);
+                combinedEstimates.add(estimate);
+                validSamples += row.sampleCount;
+                if (row.screenOffDominant) screenOffCount++;
+            }
+        }
         for (SessionSegmentBuilder.Segment seg : segments) {
+            if (hasManualOverride(seg, storedCharges, storedDischarges)) continue;
             if (seg.direction == SessionSegmentBuilder.Direction.FLAT) continue;
             float dPercent = Math.abs(seg.endPercent - seg.startPercent);
             if (dPercent < MIN_DELTA_PERCENT) continue;
@@ -295,6 +328,25 @@ public class BatteryCapacityEstimator {
         return r;
     }
 
+    private static boolean hasManualOverride(SessionSegmentBuilder.Segment seg,
+            ArrayList<BatteryHistoryDb.SessionRow> charges,
+            ArrayList<BatteryHistoryDb.DischargeSession> discharges) {
+        if (seg.direction == SessionSegmentBuilder.Direction.CHARGE) {
+            for (BatteryHistoryDb.SessionRow row : charges) {
+                if (row.calculationOverride != 0
+                        && seg.endTime >= row.startTime - 30_000L
+                        && seg.startTime <= row.endTime + 30_000L) return true;
+            }
+        } else if (seg.direction == SessionSegmentBuilder.Direction.DISCHARGE) {
+            for (BatteryHistoryDb.DischargeSession row : discharges) {
+                if (row.calculationOverride != 0
+                        && seg.endTime >= row.startTime - 30_000L
+                        && seg.startTime <= row.endTime + 30_000L) return true;
+            }
+        }
+        return false;
+    }
+
     /** Fallback: bila belum ada segmen valid dari samples, pakai tabel sessions & discharge_sessions. */
     private static HealthResult fallbackFromSessions(Context ctx,
             ArrayList<BatteryHistoryDb.SessionRow> sessionsCopy, int design) {
@@ -304,22 +356,37 @@ public class BatteryCapacityEstimator {
         ArrayList<Float> chargePool = new ArrayList<>();
         ArrayList<Float> dischargePool = new ArrayList<>();
         ArrayList<Float> offPool = new ArrayList<>();
-        for (BatteryHistoryDb.SessionRow sn : sessionsCopy) {
-            if (!sn.valid) continue;
-            if (sn.capacityMah <= 0f) continue;
-            chargePool.add(sn.capacityMah);
+        ArrayList<BatteryHistoryDb.SessionRow> storedSessions = sessionsCopy;
+        try {
+            storedSessions = BatteryHistoryDb.get(ctx).getSessions();
+        } catch (Exception ignored) {}
+        for (BatteryHistoryDb.SessionRow sn : storedSessions) {
+            if (sn.calculationOverride == -1) continue;
+            if (!sn.valid && sn.calculationOverride != 1) continue;
+            float estimate = sn.capacityMah;
+            if (sn.calculationOverride == 1 && sn.endPercent > sn.startPercent) {
+                double amountMah = sn.mAhIntegral > 0d ? sn.mAhIntegral : sn.mAhCounter;
+                estimate = amountMah > 0d ? (float) (amountMah * 100.0
+                        / (sn.endPercent - sn.startPercent)) : 0f;
+            }
+            if (estimate <= 0f) continue;
+            chargePool.add(estimate);
             r.totalSamples += sn.sampleCount;
-            if (sn.mostlyScreenOff) offPool.add(sn.capacityMah);
+            if (sn.mostlyScreenOff) offPool.add(estimate);
         }
         try {
             BatteryHistoryDb db = BatteryHistoryDb.get(ctx);
             for (BatteryHistoryDb.DischargeSession d : db.queryDischargeSessions(0L, Long.MAX_VALUE)) {
-                if (!d.valid) continue;
+                if (d.calculationOverride == -1) continue;
+                if (!d.valid && d.calculationOverride != 1) continue;
                 float dPercent = d.startPercent - d.endPercent;
                 if (dPercent < MIN_DELTA_PERCENT) continue;
-                if (d.usedMahIntegral <= 0) continue;
-                float estimate = (float) (d.usedMahIntegral * 100.0 / dPercent);
-                if (estimate < MIN_ESTIMATE_MAH || estimate > MAX_ESTIMATE_MAH) continue;
+                double amountMah = d.usedMahIntegral > 0d
+                        ? d.usedMahIntegral : d.usedMahCounter;
+                if (amountMah <= 0d) continue;
+                float estimate = (float) (amountMah * 100.0 / dPercent);
+                if (d.calculationOverride != 1
+                        && (estimate < MIN_ESTIMATE_MAH || estimate > MAX_ESTIMATE_MAH)) continue;
                 dischargePool.add(estimate);
                 r.totalSamples += d.sampleCount;
                 if (d.screenOffDominant) offPool.add(estimate);
@@ -339,6 +406,11 @@ public class BatteryCapacityEstimator {
             r.fromScreenOffSessions = false;
         }
         return r;
+    }
+
+    public static synchronized void invalidateCache() {
+        healthCache = null;
+        healthCacheUntil = 0L;
     }
 
     public static synchronized void setDesignCapacity(int mah) {

@@ -38,7 +38,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private List<ConnectingAppSource.AppTraffic> lastApps = Collections.emptyList();
-    private long lastNonEmptyAt;
+    private long lastActivityAt;
 
     private String orientationSuffix;
 
@@ -67,12 +67,12 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
         source = new ConnectingAppSource(ctx);
         executor = Executors.newSingleThreadExecutor();
 
-        view = new AppUsageOverlayView(ctx);
-        applyViewConfig();
         lastApps = Collections.emptyList();
-        lastNonEmptyAt = 0L;
+        lastActivityAt = System.currentTimeMillis();
         hasContent = false;
         userHidden = false;
+        view = new AppUsageOverlayView(ctx);
+        applyViewConfig();
 
         params = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -266,12 +266,15 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     @Override
     public void hide() {
         userHidden = true;
+        resetContent();
         if (view != null) view.setVisibility(View.GONE);
     }
 
     @Override
     public void show() {
         userHidden = false;
+        resetContent();
+        lastActivityAt = System.currentTimeMillis();
         applyContentVisibility();
     }
 
@@ -289,6 +292,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
         view.setShowDecimal(AppUsageConfig.showDecimal);
         view.setDecimalPlaces(AppUsageConfig.decimalPlaces);
         view.setShowIcon(AppUsageConfig.showIcon);
+        view.setShowName(AppUsageConfig.showName);
         view.setShadowConfig(AppUsageConfig.shadow);
         view.setBackgroundConfig(AppUsageConfig.bg);
         renderContent();
@@ -306,22 +310,36 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
 
     private void applyContentVisibility() {
         if (view == null) return;
-        boolean visible = !userHidden && (hasContent || AppUsageConfig.showWhenIdle);
+        long now = System.currentTimeMillis();
+        boolean expired = !withinDisplay(now);
+        boolean visible = !userHidden && !expired
+                && (hasContent || AppUsageConfig.showWhenIdle);
         view.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
+    private void resetContent() {
+        lastApps = Collections.emptyList();
+        hasContent = false;
+        lastActivityAt = 0L;
+        if (view != null) view.showIdle();
+    }
+
+    private boolean withinDisplay(long now) {
+        int displayMs = Math.max(0, AppUsageConfig.holdMs);
+        return displayMs == 0 || now - lastActivityAt <= displayMs;
+    }
+
     private void renderResult(List<ConnectingAppSource.AppTraffic> apps) {
-        if (!running || view == null) return;
+        if (!running || view == null || userHidden) return;
         long now = System.currentTimeMillis();
 
         List<ConnectingAppSource.AppTraffic> result =
                 apps != null ? apps : Collections.emptyList();
         if (!result.isEmpty()) {
             lastApps = result;
-            lastNonEmptyAt = now;
+            lastActivityAt = now;
             hasContent = true;
-        } else if (!lastApps.isEmpty()
-                && now - lastNonEmptyAt <= Math.max(0, AppUsageConfig.holdMs)) {
+        } else if (!lastApps.isEmpty() && withinDisplay(now)) {
             result = lastApps;
             hasContent = true;
         } else {

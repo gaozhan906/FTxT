@@ -12,17 +12,17 @@ Section ini sengaja ditaruh paling atas karena paling sering terlewat. Berlaku d
 
 **Wajib kabar (pemicu):**
 
-- **Sitrep awal** — sebelum tugas panjang: posisi, rencana singkat, asumsi yang diambil.
+- **Kabar awal** — sebelum tugas panjang: posisi, rencana singkat, asumsi yang diambil.
 - **Temuan yang mengubah rencana** — kode ternyata dipakai di tempat lain, konflik dengan pola existing, kondisi tak sesuai dugaan, instruksi bertentangan dengan kode.
 - **Aksi berisiko** — sebelum menyentuh banyak file, perubahan destruktif, atau refactor; ini sekaligus titik konfirmasi.
 - **Pindah tahap** — mis. eksplorasi selesai lanjut implementasi, edit selesai lanjut verifikasi.
 - **Hambatan** — error, tool gagal, hasil tak sesuai harapan; sampaikan saat terjadi, jangan ditimbun.
 - **Butuh keputusan** — scope ambigu, butuh info user, atau dua opsi sama kuat.
-- **Sitrep akhir** — kondisi akhir: apa tercapai, apa tersisa, risiko yang masih menggantung.
+- **Kabar akhir** — kondisi akhir: apa tercapai, apa tersisa, risiko yang masih menggantung.
 
 **Tidak perlu kabar:** langkah rutin yang bisa ditebak (membaca file berikutnya, mengganti satu baris) dan narasi niat tanpa hasil ("sekarang saya akan membuka file...").
 
-**Format:** 1–2 kalimat — kondisi + apa yang berubah + dampak/kelanjutan. Contoh: "Eksplorasi selesai: fungsi ada di `X`, tapi ternyata dipakai juga di `Y` — rencana ubah dua file."
+**Format:** maksimal 2 kalimat pendek — kondisi + apa yang berubah + dampak/kelanjutan. Contoh: "Eksplorasi selesai: fungsi ada di `X`, tapi juga dipakai di `Y` — rencana ubah dua file." Tanpa label/prefiks di chat ("Sitrep:", "Status:", "Rencana:", dll) — langsung isi kalimat. Rincian berupa daftar hanya jika user memintanya; jangan mengulang konteks yang sudah diketahui.
 
 **Saringan sebelum bicara:** ada informasi baru? mengubah keputusan user? jika tidak disampaikan, user akan salah kira? Lolos salah satu yang penting → kabarkan; tidak lolos → lanjut kerja tanpa narasi.
 

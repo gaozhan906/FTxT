@@ -1,10 +1,11 @@
-# [4.98.0] 2026/11/15 15:36 WITA 364 ***ONGOING***
+# [4.98.0] 2026/11/16 11:05 WITA 366 ***ONGOING***
 ### 🔖 Deskripsi
 > Rilis ini menambah overlay pemakaian data per aplikasi di panel Network, melengkapi pemantauan kecepatan dengan informasi aplikasi yang sedang berkomunikasi.
 
 ### ✨ Fitur Baru
-- **Overlay pemakaian data per aplikasi** — Sub-tab Aplikasi di Overlay Network menampilkan hingga lima aplikasi yang sedang memakai data beserta kecepatan unduh/unggah, dengan mode Top Talkers atau Aplikasi Depan.
-- **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, durasi tahan, ikon, satuan, warna, shadow, background, posisi, dan preset dapat diatur seperti overlay lainnya.
+- **Overlay pemakaian data per aplikasi** — Sub-tab Aplikasi di Overlay Network menampilkan hingga lima aplikasi yang sedang memakai data dengan satu nilai kecepatan gabungan unduh dan unggah; nama aplikasi dapat ditampilkan opsional.
+- **Sembunyi otomatis** — Overlay menghilang setelah melewati waktu tampil tanpa aktivitas data, lalu tampilan direset agar aktivitas berikutnya dimulai dari nol dan muncul kembali saat ada aktivitas baru.
+- **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, waktu tampil, nama/ikon, skala teks dan ikon, satuan, warna, shadow, background, posisi, serta preset dapat diatur seperti overlay lainnya.
 - **Panduan izin akses penggunaan** — Overlay menampilkan petunjuk dan tombol menuju pengaturan bila izin pemakaian aplikasi belum diberikan.
 
 ### 💡 Memo

@@ -73,6 +73,7 @@ public class NetworkAppDataPositionController {
             p.appThresholdBps = (int) AppUsageConfig.thresholdBps;
             p.appHoldMs = AppUsageConfig.holdMs;
             p.appShowIcon = AppUsageConfig.showIcon;
+            p.appShowName = AppUsageConfig.showName;
             p.appShowIdle = AppUsageConfig.showWhenIdle;
         }
 
@@ -105,6 +106,7 @@ public class NetworkAppDataPositionController {
             if (p.appThresholdBps != null) AppUsageConfig.thresholdBps = p.appThresholdBps;
             if (p.appHoldMs != null) AppUsageConfig.holdMs = p.appHoldMs;
             if (p.appShowIcon != null) AppUsageConfig.showIcon = p.appShowIcon;
+            if (p.appShowName != null) AppUsageConfig.showName = p.appShowName;
             if (p.appShowIdle != null) AppUsageConfig.showWhenIdle = p.appShowIdle;
 
             prefs.edit()
@@ -131,6 +133,7 @@ public class NetworkAppDataPositionController {
                     .putLong("appdata_threshold_bps", AppUsageConfig.thresholdBps)
                     .putInt("appdata_hold_ms", AppUsageConfig.holdMs)
                     .putBoolean("appdata_show_icon", AppUsageConfig.showIcon)
+                    .putBoolean("appdata_show_name", AppUsageConfig.showName)
                     .putBoolean("appdata_show_when_idle", AppUsageConfig.showWhenIdle)
                     .apply();
         }

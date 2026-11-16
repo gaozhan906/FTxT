@@ -85,11 +85,10 @@ public class BatterySessionHistoryController {
         rootView.findViewById(R.id.batHistFilterInfo)
                 .setOnClickListener(v -> InfoTooltip.show(activity, v,
                         "Sesi Tidak Valid",
-                        "Sesi pendek saat kabel dicolok/dilepas sebentar (di bawah "
-                                + "ambang minimal) direkam sebagai sesi TIDAK VALID — "
-                                + "bertanda Invalid di daftar sesi.\n\n"
-                                + "Sesi tersebut TIDAK dihitung dalam ringkasan periode, "
-                                + "grafik batang, maupun estimasi kapasitas baterai."));
+                        "Sesi yang tidak memenuhi validasi otomatis tetap disimpan di riwayat. "
+                                + "Secara default sesi tidak valid tidak dihitung. Buka detail sesi "
+                                + "untuk memilih Tetap hitung, Jangan hitung, atau kembali ke otomatis. "
+                                + "Keputusan manual dapat diubah kapan saja."));
     }
 
     private void bindTabs() {
@@ -237,17 +236,21 @@ public class BatterySessionHistoryController {
             return;
         }
         int charges = 0, discharges = 0;
+        int manualIncluded = 0;
         double chargeMah = 0d, dischargeMah = 0d;
         double effSum = 0d;
         int effCount = 0;
         for (BatteryHistoryDb.SessionEntry e : entries) {
-            if (!e.valid) continue;
+            if (!e.isIncludedInCalculation()) continue;
+            if (!e.valid && e.calculationOverride == 1) manualIncluded++;
             if (e.isCharge) {
                 charges++;
-                chargeMah += e.mAhCounter > 0 ? e.mAhCounter : e.mAhIntegral;
+                chargeMah += e.calculationOverride == 1 && e.mAhIntegral > 0
+                        ? e.mAhIntegral : e.mAhCounter > 0 ? e.mAhCounter : e.mAhIntegral;
             } else {
                 discharges++;
-                dischargeMah += e.mAhCounter > 0 ? e.mAhCounter : e.mAhIntegral;
+                dischargeMah += e.calculationOverride == 1 && e.mAhIntegral > 0
+                        ? e.mAhIntegral : e.mAhCounter > 0 ? e.mAhCounter : e.mAhIntegral;
                 if (e.efficiencyPercent >= 0) {
                     effSum += e.efficiencyPercent;
                     effCount++;
@@ -257,6 +260,9 @@ public class BatterySessionHistoryController {
         SpannableStringBuilder sb = new SpannableStringBuilder();
         sb.append(String.format(Locale.US, "Sesi: %d isi · %d buang\n",
                 charges, discharges));
+        if (manualIncluded > 0) {
+            sb.append(String.format(Locale.US, "Termasuk manual: %d sesi\n", manualIncluded));
+        }
         sb.append(String.format(Locale.US, "Terisi: %s mAh\n",
                 fmtMah(chargeMah)));
         sb.append(String.format(Locale.US, "Terpakai: %s mAh\n",

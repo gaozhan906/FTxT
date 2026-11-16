@@ -1,23 +1,22 @@
 package exp.ftxt.features.network_stats.app_usage;
 
-import android.app.usage.NetworkStats;
-import android.app.usage.NetworkStatsManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.os.Build;
-import android.telephony.TelephonyManager;
+import android.net.TrafficStats;
+import android.os.SystemClock;
 import android.util.LruCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ConnectingAppSource {
 
@@ -51,11 +50,10 @@ public final class ConnectingAppSource {
     }
 
     private static final long FOREGROUND_WINDOW_MS = 60000L;
-    private static final long MIN_QUERY_WINDOW_MS = 2000L;
+    private static final long UID_REFRESH_MS = 30000L;
 
     private final Context context;
     private final PackageManager packageManager;
-    private final NetworkStatsManager networkStatsManager;
     private final UsageStatsManager usageStatsManager;
     private final String selfPackage;
     private final int selfUid;
@@ -65,11 +63,14 @@ public final class ConnectingAppSource {
     private String cachedForeground;
     private long cachedForegroundAt;
 
+    private int[] cachedUids;
+    private long cachedUidsAt;
+    private Map<Integer, long[]> lastTotals;
+    private long lastSampleAtMs;
+
     public ConnectingAppSource(Context context) {
         this.context = context.getApplicationContext();
         this.packageManager = this.context.getPackageManager();
-        this.networkStatsManager =
-                (NetworkStatsManager) this.context.getSystemService(Context.NETWORK_STATS_SERVICE);
         this.usageStatsManager =
                 (UsageStatsManager) this.context.getSystemService(Context.USAGE_STATS_SERVICE);
         this.selfPackage = this.context.getPackageName();
@@ -78,24 +79,17 @@ public final class ConnectingAppSource {
 
     public List<AppTraffic> query(long nowMs, int mode, int maxRows,
                                   long thresholdBps, long intervalMs) {
-        if (networkStatsManager == null) return Collections.emptyList();
+        Map<Integer, long[]> current = sample();
+        Map<Integer, long[]> previous = lastTotals;
+        long elapsedMs = lastSampleAtMs > 0 ? nowMs - lastSampleAtMs : 0L;
 
-        long windowMs = Math.max(MIN_QUERY_WINDOW_MS, intervalMs + 1000L);
-        long startMs = nowMs - windowMs;
-        long elapsedMs = Math.max(1L, nowMs - startMs);
+        lastTotals = current;
+        lastSampleAtMs = nowMs;
 
-        Map<Integer, long[]> totals = new HashMap<>();
-        collect(ConnectivityManager.TYPE_WIFI, null, startMs, nowMs, totals);
-
-        String subscriberId = subscriberId();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || subscriberId != null) {
-            collect(ConnectivityManager.TYPE_MOBILE, subscriberId, startMs, nowMs, totals);
-        }
-
-        if (totals.isEmpty()) return Collections.emptyList();
+        if (previous == null || elapsedMs <= 0L) return Collections.emptyList();
 
         int foregroundUid = -1;
-        String foregroundPackage = foregroundPackage(nowMs);
+        String foregroundPackage = mode == MODE_FOREGROUND ? foregroundPackage(nowMs) : null;
         if (foregroundPackage != null) {
             try {
                 foregroundUid = packageManager.getPackageUid(foregroundPackage, 0);
@@ -104,13 +98,16 @@ public final class ConnectingAppSource {
         }
 
         List<Candidate> candidates = new ArrayList<>();
-        for (Map.Entry<Integer, long[]> entry : totals.entrySet()) {
+        for (Map.Entry<Integer, long[]> entry : current.entrySet()) {
             int uid = entry.getKey();
             if (uid < 0 || uid == selfUid) continue;
 
+            long[] prev = previous.get(uid);
+            if (prev == null) continue;
+
             long[] values = entry.getValue();
-            long rx = Math.max(0L, values[0]);
-            long tx = Math.max(0L, values[1]);
+            long rx = Math.max(0L, values[0] - prev[0]);
+            long tx = Math.max(0L, values[1] - prev[1]);
             if (rx + tx <= 0L) continue;
 
             long rxBps = rx * 1000L / elapsedMs;
@@ -146,36 +143,38 @@ public final class ConnectingAppSource {
         return result;
     }
 
-    private void collect(int networkType, String subscriberId,
-                         long startMs, long endMs, Map<Integer, long[]> totals) {
-        NetworkStats stats = null;
+    private Map<Integer, long[]> sample() {
+        Map<Integer, long[]> totals = new HashMap<>();
+        for (int uid : uids()) {
+            if (uid < 0 || uid == selfUid) continue;
+            long rx = TrafficStats.getUidRxBytes(uid);
+            long tx = TrafficStats.getUidTxBytes(uid);
+            if (rx < 0L || tx < 0L) continue;
+            totals.put(uid, new long[]{rx, tx});
+        }
+        return totals;
+    }
+
+    private int[] uids() {
+        long now = SystemClock.elapsedRealtime();
+        if (cachedUids != null && now - cachedUidsAt < UID_REFRESH_MS) {
+            return cachedUids;
+        }
+        Set<Integer> unique = new HashSet<>();
         try {
-            stats = networkStatsManager.querySummary(networkType, subscriberId, startMs, endMs);
-            if (stats == null) return;
-
-            NetworkStats.Bucket bucket = new NetworkStats.Bucket();
-            while (stats.hasNextBucket()) {
-                stats.getNextBucket(bucket);
-                int uid = bucket.getUid();
-                if (uid < 0) continue;
-
-                long[] values = totals.get(uid);
-                if (values == null) {
-                    values = new long[2];
-                    totals.put(uid, values);
-                }
-                values[0] += Math.max(0L, bucket.getRxBytes());
-                values[1] += Math.max(0L, bucket.getTxBytes());
+            for (ApplicationInfo info : packageManager.getInstalledApplications(0)) {
+                unique.add(info.uid);
             }
         } catch (Exception ignored) {
-        } finally {
-            if (stats != null) {
-                try {
-                    stats.close();
-                } catch (Exception ignored) {
-                }
-            }
         }
+        int[] result = new int[unique.size()];
+        int index = 0;
+        for (int uid : unique) {
+            result[index++] = uid;
+        }
+        cachedUids = result;
+        cachedUidsAt = now;
+        return result;
     }
 
     private String foregroundPackage(long nowMs) {
@@ -263,17 +262,6 @@ public final class ConnectingAppSource {
             Drawable icon = packageManager.getApplicationIcon(packageName);
             if (icon != null) iconCache.put(packageName, icon);
             return icon;
-        } catch (Exception ignored) {
-            return null;
-        }
-    }
-
-    private String subscriberId() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return null;
-        try {
-            TelephonyManager telephony =
-                    (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            return telephony != null ? telephony.getSubscriberId() : null;
         } catch (Exception ignored) {
             return null;
         }

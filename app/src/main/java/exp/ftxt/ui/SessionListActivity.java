@@ -54,6 +54,7 @@ public class SessionListActivity extends AppCompatActivity {
     private LinearLayout container;
     private ProgressBar loading;
     private ScrollView scroll;
+    private boolean resumedOnce;
 
     public static void start(Context context, long bucketStartMs, long bucketEndMs, int filter) {
         Intent intent = new Intent(context, SessionListActivity.class);
@@ -78,6 +79,17 @@ public class SessionListActivity extends AppCompatActivity {
 
         setupHeader(filter);
         loadSessions(bucketStart, bucketEnd, filter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (resumedOnce) {
+            loadSessions(getIntent().getLongExtra(E_BUCKET_START, 0L),
+                    getIntent().getLongExtra(E_BUCKET_END, 0L),
+                    getIntent().getIntExtra(E_FILTER, FILTER_ALL));
+        }
+        resumedOnce = true;
     }
 
     private void setupHeader(int filter) {
@@ -179,7 +191,9 @@ public class SessionListActivity extends AppCompatActivity {
                 ? R.drawable.bat_badge_active_bg : R.drawable.bat_badge_stopped_bg);
 
         if (!e.valid) {
-            typeTag.setText((e.isCharge ? "PENGISIAN" : "PENGOSONGAN") + " · INVALID");
+            String suffix = e.calculationOverride == 1 ? " · MANUAL +"
+                    : e.calculationOverride == -1 ? " · MANUAL −" : " · INVALID";
+            typeTag.setText((e.isCharge ? "PENGISIAN" : "PENGOSONGAN") + suffix);
             typeTag.setTextColor(getColor(R.color.bat_monitor_label));
             typeTag.setBackgroundResource(R.drawable.bat_badge_stopped_bg);
             ImageButton invalidInfo = view.findViewById(R.id.itemSessionInvalidInfo);
@@ -241,11 +255,17 @@ public class SessionListActivity extends AppCompatActivity {
 
     private String invalidReasonText(BatteryHistoryDb.SessionEntry e) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Sesi ini berlangsung sangat singkat saat kabel dilepas/dicolok sebentar.\n");
+        sb.append("Validasi otomatis menandai sesi ini tidak valid.\n");
         if (e.invalidReason != null && !e.invalidReason.isEmpty()) {
             sb.append("\nKeterangan: ").append(e.invalidReason);
         }
-        sb.append("\nData direkam agar riwayat lengkap, tetapi tidak dihitung dalam ringkasan & estimasi kapasitas.");
+        if (e.calculationOverride == 1) {
+            sb.append("\nKeputusan manual: sesi tetap dihitung.");
+        } else if (e.calculationOverride == -1) {
+            sb.append("\nKeputusan manual: sesi dikecualikan dari perhitungan.");
+        } else {
+            sb.append("\nData direkam agar riwayat lengkap, tetapi tidak dihitung dalam ringkasan & estimasi kapasitas.");
+        }
         return sb.toString();
     }
 

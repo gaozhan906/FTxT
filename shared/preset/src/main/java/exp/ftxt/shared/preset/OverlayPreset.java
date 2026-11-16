@@ -86,6 +86,7 @@ public class OverlayPreset {
     public Integer appThresholdBps;
     public Integer appHoldMs;
     public Boolean appShowIcon;
+    public Boolean appShowName;
     public Boolean appShowIdle;
 
     public OverlayPreset() {

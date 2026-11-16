@@ -26,13 +26,14 @@ public class AppUsageConfig {
     public static int mode = ConnectingAppSource.MODE_TOP_TALKERS;
     public static float updateInterval = 1f;
     public static long thresholdBps = 1024L;
-    public static int holdMs = 3000;
+    public static int holdMs = 10000;
     public static boolean showIcon = true;
+    public static boolean showName = false;
     public static boolean showWhenIdle = true;
 
     public static ShadowConfig shadow = new ShadowConfig();
     public static BackgroundConfig bg = new BackgroundConfig();
-    public static boolean touchPassthrough = true;
+    public static boolean touchPassthrough = false;
     public static boolean safeArea = true;
     public static float posX = 0.5f;
     public static float posY = 0.12f;

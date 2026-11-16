@@ -2,6 +2,7 @@ package exp.ftxt.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.app.AlertDialog;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -17,6 +18,7 @@ import java.util.Locale;
 
 import exp.ftxt.R;
 import exp.ftxt.features.battery_stats.BatteryHistoryDb;
+import exp.ftxt.features.battery_stats.BatteryCapacityEstimator;
 
 /**
  * Halaman detail satu sesi (pengisian/pengosongan). Struktur tampilannya
@@ -44,6 +46,7 @@ public class SessionDetailActivity extends AppCompatActivity {
     private static final String E_SAMPLES = "sampleCount";
     private static final String E_VALID = "valid";
     private static final String E_INVALID_REASON = "invalidReason";
+    private static final String E_OVERRIDE = "calculationOverride";
 
     private static final SimpleDateFormat FMT = new SimpleDateFormat("dd/MM/yy HH:mm:ss", Locale.US);
 
@@ -68,6 +71,7 @@ public class SessionDetailActivity extends AppCompatActivity {
         intent.putExtra(E_SAMPLES, e.sampleCount);
         intent.putExtra(E_VALID, e.valid);
         intent.putExtra(E_INVALID_REASON, e.invalidReason);
+        intent.putExtra(E_OVERRIDE, e.calculationOverride);
         context.startActivity(intent);
     }
 
@@ -95,6 +99,7 @@ public class SessionDetailActivity extends AppCompatActivity {
         int samples = getIntent().getIntExtra(E_SAMPLES, 0);
         boolean valid = getIntent().getBooleanExtra(E_VALID, true);
         String invalidReason = getIntent().getStringExtra(E_INVALID_REASON);
+        int calculationOverride = getIntent().getIntExtra(E_OVERRIDE, 0);
 
         int accent = getColor(isCharge ? R.color.bat_monitor_active : R.color.bat_chart_power);
         String statusWord = isCharge ? "PENGISIAN" : "PENGOSONGAN";
@@ -195,9 +200,46 @@ public class SessionDetailActivity extends AppCompatActivity {
             reasonText.setTextColor(getColor(R.color.bat_monitor_label));
             reasonText.setPadding(dp(14), dp(6), dp(14), dp(10));
             scrollContent.addView(reasonText, 1);
+
+            TextView decision = new TextView(this);
+            decision.setText(decisionLabel(calculationOverride));
+            decision.setTextSize(13);
+            decision.setTypeface(Typeface.DEFAULT_BOLD);
+            decision.setTextColor(getColor(R.color.bat_monitor_header));
+            decision.setGravity(Gravity.CENTER);
+            decision.setPadding(dp(14), dp(14), dp(14), dp(14));
+            decision.setBackgroundResource(R.drawable.bat_card_bg);
+            decision.setClickable(true);
+            decision.setFocusable(true);
+            decision.setOnClickListener(v -> showCalculationDecision(isCharge, start, end));
+            LinearLayout.LayoutParams decisionLp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+            decisionLp.topMargin = dp(8);
+            scrollContent.addView(decision, decisionLp);
         }
 
         findViewById(R.id.sesDetailBack).setOnClickListener(v -> finish());
+    }
+
+    private String decisionLabel(int override) {
+        if (override == 1) return "Keputusan: Tetap hitung\nKetuk untuk mengubah keputusan";
+        if (override == -1) return "Keputusan: Jangan hitung\nKetuk untuk mengubah keputusan";
+        return "Keputusan: Ikuti otomatis\nKetuk untuk memilih tindakan";
+    }
+
+    private void showCalculationDecision(boolean isCharge, long start, long end) {
+        String[] choices = {"Tetap hitung", "Jangan hitung", "Kembali ke otomatis"};
+        new AlertDialog.Builder(this)
+                .setTitle("Keputusan sesi tidak valid")
+                .setItems(choices, (dialog, which) -> {
+                    int value = which == 0 ? 1 : which == 1 ? -1 : 0;
+                    BatteryHistoryDb.get(this).setCalculationOverride(isCharge, start, end, value);
+                    BatteryCapacityEstimator.invalidateCache();
+                    getIntent().putExtra(E_OVERRIDE, value);
+                    recreate();
+                })
+                .setNegativeButton("Batal", null)
+                .show();
     }
 
     /** Untuk pengosongan, ambil integral; fallback counter bila integral 0. */

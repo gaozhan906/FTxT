@@ -137,8 +137,10 @@ public final class ConfigLoader {
                 ConnectingAppSource.MODE_TOP_TALKERS);
         AppUsageConfig.updateInterval = readFloatPref(prefs, "appdata_update_interval", 1f);
         AppUsageConfig.thresholdBps = prefs.getLong("appdata_threshold_bps", 1024L);
-        AppUsageConfig.holdMs = prefs.getInt("appdata_hold_ms", 3000);
+        AppUsageConfig.holdMs = Math.max(0, Math.min(30000,
+                prefs.getInt("appdata_hold_ms", 10000)));
         AppUsageConfig.showIcon = prefs.getBoolean("appdata_show_icon", true);
+        AppUsageConfig.showName = prefs.getBoolean("appdata_show_name", false);
         AppUsageConfig.showWhenIdle = prefs.getBoolean("appdata_show_when_idle", true);
         AppUsageConfig.shadow.enabled = prefs.getBoolean("appdata_shadow_enabled", false);
         AppUsageConfig.shadow.color = prefs.getInt("appdata_shadow_color", Color.BLACK);
@@ -146,7 +148,7 @@ public final class ConfigLoader {
         AppUsageConfig.shadow.offsetX = prefs.getFloat("appdata_shadow_offset_x", 3f);
         AppUsageConfig.shadow.offsetY = prefs.getFloat("appdata_shadow_offset_y", 3f);
         AppUsageConfig.safeArea = prefs.getBoolean("appdata_safe_area", true);
-        AppUsageConfig.touchPassthrough = prefs.getBoolean("appdata_lock", true);
+        AppUsageConfig.touchPassthrough = prefs.getBoolean("appdata_lock", false);
         AppUsageConfig.bg.enabled = prefs.getBoolean("appdata_bg_enabled", false);
         AppUsageConfig.bg.color = prefs.getInt("appdata_bg_color", 0xCC000000);
         AppUsageConfig.bg.padding = prefs.getInt("appdata_bg_padding", 8);

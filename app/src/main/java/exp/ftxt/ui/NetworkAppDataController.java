@@ -33,6 +33,7 @@ public class NetworkAppDataController {
     private LinearLayout appdataPermissionCard;
     private TextView appdataPermissionText;
     private CheckBox appdataShowIconCheck;
+    private CheckBox appdataShowNameCheck;
     private CheckBox appdataShowIdleCheck;
     private RadioGroup appdataUnitGroup;
     private RadioButton appdataUnitKb;
@@ -122,6 +123,7 @@ public class NetworkAppDataController {
         appdataPermissionCard = rootView.findViewById(R.id.appdataPermissionCard);
         appdataPermissionText = rootView.findViewById(R.id.appdataPermissionText);
         appdataShowIconCheck = rootView.findViewById(R.id.appdataShowIconCheck);
+        appdataShowNameCheck = rootView.findViewById(R.id.appdataShowNameCheck);
         appdataShowIdleCheck = rootView.findViewById(R.id.appdataShowIdleCheck);
         appdataUnitGroup = rootView.findViewById(R.id.appdataUnitGroup);
         appdataUnitKb = rootView.findViewById(R.id.appdataUnitKb);
@@ -192,6 +194,8 @@ public class NetworkAppDataController {
 
         appdataShowIconCheck.setChecked(AppUsageConfig.showIcon);
         activity.applyCheckboxTint(appdataShowIconCheck, AppUsageConfig.showIcon);
+        appdataShowNameCheck.setChecked(AppUsageConfig.showName);
+        activity.applyCheckboxTint(appdataShowNameCheck, AppUsageConfig.showName);
         appdataShowIdleCheck.setChecked(AppUsageConfig.showWhenIdle);
         activity.applyCheckboxTint(appdataShowIdleCheck, AppUsageConfig.showWhenIdle);
 
@@ -225,10 +229,9 @@ public class NetworkAppDataController {
 
         appdataRowsSeekBar.setProgress(clampRows(AppUsageConfig.maxRows) - 1);
         appdataRowsLabel.setText("Jumlah Aplikasi: " + clampRows(AppUsageConfig.maxRows));
-        appdataHoldSeekBar.setProgress(Math.max(0, Math.min(10,
-                AppUsageConfig.holdMs / 1000)));
-        appdataHoldLabel.setText("Tahan setelah berhenti: "
-                + Math.max(0, Math.min(10, AppUsageConfig.holdMs / 1000)) + " detik");
+        int displaySeconds = Math.max(0, Math.min(30, AppUsageConfig.holdMs / 1000));
+        appdataHoldSeekBar.setProgress(displaySeconds);
+        appdataHoldLabel.setText("Waktu Tampil: " + formatDisplayTime(displaySeconds));
         appdataIntervalValue.setText(formatInterval(AppUsageConfig.updateInterval));
         appdataThresholdValue.setText(formatThreshold(AppUsageConfig.thresholdBps));
 
@@ -277,6 +280,10 @@ public class NetworkAppDataController {
     private String formatInterval(float value) {
         if (value == (long) value) return String.valueOf((long) value);
         return String.format("%.2f", value).replaceAll("0$", "").replaceAll("\\.$", "");
+    }
+
+    private String formatDisplayTime(int seconds) {
+        return seconds == 0 ? "Selalu" : seconds + " detik";
     }
 
     private String formatThreshold(long bytesPerSec) {
@@ -370,6 +377,13 @@ public class NetworkAppDataController {
             AppUsageConfig.showIcon = isChecked;
             activity.applyCheckboxTint(appdataShowIconCheck, isChecked);
             persist("appdata_show_icon", isChecked);
+            FloatingService.updateLayoutForModule(FloatingService.appUsageModule());
+        });
+
+        appdataShowNameCheck.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            AppUsageConfig.showName = isChecked;
+            activity.applyCheckboxTint(appdataShowNameCheck, isChecked);
+            persist("appdata_show_name", isChecked);
             FloatingService.updateLayoutForModule(FloatingService.appUsageModule());
         });
 
@@ -499,8 +513,9 @@ public class NetworkAppDataController {
         appdataHoldSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 AppUsageConfig.holdMs = progress * 1000;
-                appdataHoldLabel.setText("Tahan setelah berhenti: " + progress + " detik");
+                appdataHoldLabel.setText("Waktu Tampil: " + formatDisplayTime(progress));
                 persist("appdata_hold_ms", AppUsageConfig.holdMs);
+                FloatingService.updateLayoutForModule(FloatingService.appUsageModule());
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
