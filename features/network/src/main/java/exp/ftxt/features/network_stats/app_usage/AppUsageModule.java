@@ -68,7 +68,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
         executor = Executors.newSingleThreadExecutor();
 
         lastApps = Collections.emptyList();
-        lastActivityAt = System.currentTimeMillis();
+        lastActivityAt = 0L;
         hasContent = false;
         userHidden = false;
         view = new AppUsageOverlayView(ctx);
@@ -311,9 +311,8 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     private void applyContentVisibility() {
         if (view == null) return;
         long now = System.currentTimeMillis();
-        boolean expired = !withinDisplay(now);
-        boolean visible = !userHidden && !expired
-                && (hasContent || AppUsageConfig.showWhenIdle);
+        boolean visible = !userHidden
+                && (hasContent ? withinDisplay(now) : AppUsageConfig.showWhenIdle);
         view.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
@@ -364,14 +363,13 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
             final ExecutorService currentExecutor = executor;
             if (currentSource != null && currentExecutor != null
                     && querying.compareAndSet(false, true)) {
-                final long now = System.currentTimeMillis();
                 final long intervalMs =
                         Math.max(500L, (long) (AppUsageConfig.updateInterval * 1000f));
                 try {
                     currentExecutor.execute(() -> {
                         List<ConnectingAppSource.AppTraffic> result = null;
                         try {
-                            result = currentSource.query(now, AppUsageConfig.mode,
+                            result = currentSource.query(AppUsageConfig.mode,
                                     AppUsageConfig.maxRows, AppUsageConfig.thresholdBps,
                                     intervalMs);
                         } catch (Exception ignored) {
