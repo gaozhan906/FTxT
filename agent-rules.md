@@ -4,6 +4,30 @@ Aturan ini mengatur **perilaku kerja** dan **cara komunikasi** agent di chat. Be
 
 ---
 
+## 0. Kabar Progres (Prioritas Tinggi)
+
+Section ini sengaja ditaruh paling atas karena paling sering terlewat. Berlaku di setiap tugas kerja.
+
+**Prinsip:** efisiensikan **kalimat**, bukan sekadar token. Setiap kabar harus membawa informasi baru yang mengubah keputusan atau ekspektasi user. Hemat kata boleh; menghilangkan bobot informasi tidak. Kabar terlalu detail = boros, kabar terlalu ringkas sampai kehilangan isi = gagal.
+
+**Wajib kabar (pemicu):**
+
+- **Sitrep awal** — sebelum tugas panjang: posisi, rencana singkat, asumsi yang diambil.
+- **Temuan yang mengubah rencana** — kode ternyata dipakai di tempat lain, konflik dengan pola existing, kondisi tak sesuai dugaan, instruksi bertentangan dengan kode.
+- **Aksi berisiko** — sebelum menyentuh banyak file, perubahan destruktif, atau refactor; ini sekaligus titik konfirmasi.
+- **Pindah tahap** — mis. eksplorasi selesai lanjut implementasi, edit selesai lanjut verifikasi.
+- **Hambatan** — error, tool gagal, hasil tak sesuai harapan; sampaikan saat terjadi, jangan ditimbun.
+- **Butuh keputusan** — scope ambigu, butuh info user, atau dua opsi sama kuat.
+- **Sitrep akhir** — kondisi akhir: apa tercapai, apa tersisa, risiko yang masih menggantung.
+
+**Tidak perlu kabar:** langkah rutin yang bisa ditebak (membaca file berikutnya, mengganti satu baris) dan narasi niat tanpa hasil ("sekarang saya akan membuka file...").
+
+**Format:** 1–2 kalimat — kondisi + apa yang berubah + dampak/kelanjutan. Contoh: "Eksplorasi selesai: fungsi ada di `X`, tapi ternyata dipakai juga di `Y` — rencana ubah dua file."
+
+**Saringan sebelum bicara:** ada informasi baru? mengubah keputusan user? jika tidak disampaikan, user akan salah kira? Lolos salah satu yang penting → kabarkan; tidak lolos → lanjut kerja tanpa narasi.
+
+---
+
 ## 1. Perilaku Kerja
 
 **Lakukan:**
@@ -88,7 +112,7 @@ Nilai environment aktual **dihasilkan otomatis** oleh `_tools/env-setup.sh` ke b
 
 ## 4. Catatan Komunikasi
 
-- **Selalu beri kabar di tengah proses.** Jangan bekerja dalam diam: sebelum/langkah awal sebutkan sedang apa, saat berpindah tahap (mis. decode selesai, lanjut verifikasi) beri update singkat, dan jika ada langkah panjang atau error jelaskan saat itu juga — jangan menunggu sampai akhir.
+- **Kabar progres:** ikuti §0 untuk pemicu, isi, dan formatnya. Jangan bekerja dalam diam, tapi juga jangan mengabarkan setiap langkah rutin.
 - JANGAN gunakan tabel markdown di chat.
 - DILARANG tulis laporan section (Accomplished, Next Steps, Ringkasan, dll) di chat — langsung ke inti.
 - DILARANG menutup jawaban dengan tawaran tindakan atau pertanyaan balik yang tidak diminta (revert, build, saran, pilihan opsi).
