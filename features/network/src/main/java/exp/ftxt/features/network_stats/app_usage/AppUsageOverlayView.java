@@ -200,14 +200,18 @@ public class AppUsageOverlayView extends LinearLayout {
             builder.setSpan(new ForegroundColorSpan(labelColor),
                     0, builder.length(), 0);
         }
-        appendCombinedSpeed(builder, app.totalBytesPerSec());
+        appendDirection(builder, "↓", app.rxBytesPerSec);
+        builder.append("   ");
+        appendDirection(builder, "↑", app.txBytesPerSec);
         return builder;
     }
 
-    private void appendCombinedSpeed(SpannableStringBuilder builder, long bytesPerSec) {
-        builder.append("↕");
+    private void appendDirection(SpannableStringBuilder builder,
+                                 String direction, long bytesPerSec) {
+        int directionStart = builder.length();
+        builder.append(direction).append(" ");
         builder.setSpan(new ForegroundColorSpan(labelColor),
-                0, builder.length(), 0);
+                directionStart, builder.length(), 0);
 
         int valueStart = builder.length();
         builder.append(formatValue(bytesPerSec));
@@ -215,7 +219,7 @@ public class AppUsageOverlayView extends LinearLayout {
         builder.setSpan(new ForegroundColorSpan(valueColor),
                 valueStart, valueEnd, 0);
 
-        builder.append(unitSuffix(bytesPerSec));
+        builder.append(" ").append(unitSuffix(bytesPerSec));
         builder.setSpan(new ForegroundColorSpan(labelColor),
                 valueEnd, builder.length(), 0);
     }

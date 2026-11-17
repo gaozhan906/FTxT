@@ -6,25 +6,17 @@ Aturan ini mengatur **perilaku kerja** dan **cara komunikasi** agent di chat. Be
 
 ## 0. Kabar Progres (Prioritas Tinggi)
 
-Section ini sengaja ditaruh paling atas karena paling sering terlewat. Berlaku di setiap tugas kerja.
+Ditaruh paling atas karena paling sering terlewat. Berlaku di setiap tugas kerja.
 
-**Prinsip:** efisiensikan **kalimat**, bukan sekadar token. Setiap kabar harus membawa informasi baru yang mengubah keputusan atau ekspektasi user. Hemat kata boleh; menghilangkan bobot informasi tidak. Kabar terlalu detail = boros, kabar terlalu ringkas sampai kehilangan isi = gagal.
+**Prinsip:** kabarkan **keadaan yang sudah terjadi** dan relevan bagi user — bukan rencana atau niat langkah berikutnya. Hemat kalimat, tapi jangan hilangkan informasi yang mengubah keputusan atau ekspektasi user.
 
-**Wajib kabar (pemicu):**
+**Wajib kabar:** awal tugas panjang (posisi, rencana singkat, asumsi); aksi berisiko (banyak file, refactor, destruktif) sekaligus titik konfirmasi; perpindahan tahap (eksplorasi → implementasi, edit → verifikasi); temuan yang mengubah rencana (kode dipakai di tempat lain, konflik pola, kondisi tak sesuai dugaan); hambatan (error, tool gagal, hasil tak sesuai); kebutuhan keputusan (scope ambigu, butuh info user, dua opsi sama kuat); serta kondisi akhir (apa tercapai, apa tersisa, risiko menggantung).
 
-- **Kabar awal** — sebelum tugas panjang: posisi, rencana singkat, asumsi yang diambil.
-- **Temuan yang mengubah rencana** — kode ternyata dipakai di tempat lain, konflik dengan pola existing, kondisi tak sesuai dugaan, instruksi bertentangan dengan kode.
-- **Aksi berisiko** — sebelum menyentuh banyak file, perubahan destruktif, atau refactor; ini sekaligus titik konfirmasi.
-- **Pindah tahap** — mis. eksplorasi selesai lanjut implementasi, edit selesai lanjut verifikasi.
-- **Hambatan** — error, tool gagal, hasil tak sesuai harapan; sampaikan saat terjadi, jangan ditimbun.
-- **Butuh keputusan** — scope ambigu, butuh info user, atau dua opsi sama kuat.
-- **Kabar akhir** — kondisi akhir: apa tercapai, apa tersisa, risiko yang masih menggantung.
+**Jangan kabar:** niat tanpa hasil ("saya akan membuka file…"), langkah rutin 1–2 tool call yang bisa ditebak, atau konteks yang sudah diketahui. Jangan pula bekerja dalam diam melewati tahap penting.
 
-**Tidak perlu kabar:** langkah rutin yang bisa ditebak (membaca file berikutnya, mengganti satu baris) dan narasi niat tanpa hasil ("sekarang saya akan membuka file...").
+**Format:** langsung isi tanpa label ("Sitrep:", "Status:", "Rencana:", dll); idealnya 1–2 kalimat pendek, boleh lebih hanya bila memuat keputusan atau hambatan; daftar hanya jika user memintanya. Contoh: "Eksplorasi selesai: fungsi ada di `X`, juga dipakai di `Y` — rencana ubah dua file."
 
-**Format:** maksimal 2 kalimat pendek — kondisi + apa yang berubah + dampak/kelanjutan. Contoh: "Eksplorasi selesai: fungsi ada di `X`, tapi juga dipakai di `Y` — rencana ubah dua file." Tanpa label/prefiks di chat ("Sitrep:", "Status:", "Rencana:", dll) — langsung isi kalimat. Rincian berupa daftar hanya jika user memintanya; jangan mengulang konteks yang sudah diketahui.
-
-**Saringan sebelum bicara:** ada informasi baru? mengubah keputusan user? jika tidak disampaikan, user akan salah kira? Lolos salah satu yang penting → kabarkan; tidak lolos → lanjut kerja tanpa narasi.
+**Saringan:** ada informasi baru? mengubah keputusan user? jika tidak disampaikan user akan salah kira? Salah satu lolos → kabarkan; tidak → lanjut tanpa narasi.
 
 ---
 

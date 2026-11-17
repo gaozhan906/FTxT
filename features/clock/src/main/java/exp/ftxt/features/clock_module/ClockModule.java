@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import exp.ftxt.shared.ui.OverlayDragHandler;
+import exp.ftxt.shared.ui.OverlayInsets;
 import exp.ftxt.shared.ui.OverlayModule;
 import exp.ftxt.shared.ui.OverlayShadow;
 import exp.ftxt.shared.ui.ShadowTextView;
@@ -173,6 +174,7 @@ public class ClockModule implements OverlayModule, SmartPanelTarget {
                 params.x = Math.max(0, Math.min(params.x, maxX));
                 params.y = Math.max(0, Math.min(params.y, maxY));
             }
+            params.y = OverlayInsets.clampY(params.y, getScreenHeight(), view.getHeight());
             try {
                 wm.updateViewLayout(view, params);
             } catch (Exception e) {

@@ -11,6 +11,7 @@ import android.widget.ImageView;
 
 import exp.ftxt.shared.config.BackgroundConfig;
 import exp.ftxt.shared.ui.OverlayDragHandler;
+import exp.ftxt.shared.ui.OverlayInsets;
 import exp.ftxt.shared.ui.OverlayModule;
 import exp.ftxt.shared.ui.ShadowImageView;
 import exp.ftxt.shared.ui.SmartPanelTarget;
@@ -362,6 +363,7 @@ public class CrosshairModule implements OverlayModule, SmartPanelTarget {
             params.x = Math.max(0, Math.min(params.x, maxX));
             params.y = Math.max(0, Math.min(params.y, maxY));
         }
+        params.y = OverlayInsets.clampY(params.y, screenHeight, vh);
     }
 
     private void refreshScreenSize() {

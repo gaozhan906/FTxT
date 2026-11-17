@@ -14,6 +14,7 @@ import android.view.Gravity;
 import android.view.WindowManager;
 
 import exp.ftxt.shared.ui.OverlayDragHandler;
+import exp.ftxt.shared.ui.OverlayInsets;
 import exp.ftxt.shared.ui.OverlayModule;
 import exp.ftxt.features.battery_stats.BypassChargingDetector;
 
@@ -370,6 +371,8 @@ public class BatteryBarModule implements OverlayModule, SmartPanelTarget {
                 params.y = Math.max(0, Math.min(params.y, maxY));
             }
         }
+
+        params.y = OverlayInsets.clampY(params.y, sh, params.height);
 
         try {
             wm.updateViewLayout(view, params);

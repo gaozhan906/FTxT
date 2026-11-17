@@ -321,28 +321,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <RadioGroup
-                android:id="@+id/appdataModeGroup"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <RadioButton
-                    android:id="@+id/appdataModeTop"
-                    android:text="Top Talkers"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"/>
-
-                <RadioButton
-                    android:id="@+id/appdataModeForeground"
-                    android:text="Aplikasi Depan"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"/>
-
-            </RadioGroup>
-
             <TextView
                 android:id="@+id/appdataRowsLabel"
                 android:text="Jumlah Aplikasi: 3"

@@ -1,12 +1,16 @@
-# [4.98.0] 2026/11/16 11:05 WITA 366 ***ONGOING***
+# [4.98.0] 2026/11/17 12:49 WITA 369 ***ONGOING***
 ### 🔖 Deskripsi
-> Rilis ini menambah overlay pemakaian data per aplikasi di panel Network, melengkapi pemantauan kecepatan dengan informasi aplikasi yang sedang berkomunikasi.
+> Rilis ini menambah overlay pemakaian data per aplikasi di panel Network dan pengaturan perilaku overlay saat keyboard muncul.
 
 ### ✨ Fitur Baru
 - **Overlay pemakaian data per aplikasi** — Sub-tab Aplikasi di Overlay Network menampilkan hingga lima aplikasi yang sedang memakai data dengan satu nilai kecepatan gabungan unduh dan unggah; nama aplikasi dapat ditampilkan opsional.
-- **Sembunyi otomatis** — Overlay menghilang setelah melewati waktu tampil tanpa aktivitas data, lalu tampilan direset agar aktivitas berikutnya dimulai dari nol dan muncul kembali saat ada aktivitas baru.
+- **Sembunyi otomatis overlay aplikasi** — Overlay menghilang setelah melewati waktu tampil tanpa aktivitas data, lalu tampilan direset agar aktivitas berikutnya dimulai dari nol dan muncul kembali saat ada aktivitas baru.
 - **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, waktu tampil, nama/ikon, skala teks dan ikon, satuan, warna, shadow, background, posisi, serta preset dapat diatur seperti overlay lainnya.
 - **Panduan izin akses penggunaan** — Overlay menampilkan petunjuk dan tombol menuju pengaturan bila izin pemakaian aplikasi belum diberikan.
+- **Perilaku overlay saat keyboard muncul** — Panel Konfigurasi menyediakan pilihan tetap diam, sembunyikan sementara, atau geser ke atas keyboard untuk seluruh overlay.
+
+### 🐞 Bug Fixes
+- **Posisi overlay setelah orientasi berubah** — Setelah salah satu overlay dimatikan (misalnya FPS), overlay lain tidak lagi mengikuti rotasi sehingga bisa menghilang di mode landscape; kini penyesuaian orientasi tetap berjalan selama masih ada overlay aktif.
 
 ### 💡 Memo
 - Data aplikasi dan mode Aplikasi Depan memerlukan izin akses penggunaan; tanpa izin, overlay hanya menampilkan status kosong.

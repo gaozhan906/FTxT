@@ -68,7 +68,6 @@ public class NetworkAppDataPositionController {
             p.touchPassthrough = AppUsageConfig.touchPassthrough;
             p.safeArea = AppUsageConfig.safeArea;
             p.appMaxRows = AppUsageConfig.maxRows;
-            p.appMode = AppUsageConfig.mode;
             p.appInterval = AppUsageConfig.updateInterval;
             p.appThresholdBps = (int) AppUsageConfig.thresholdBps;
             p.appHoldMs = AppUsageConfig.holdMs;
@@ -101,7 +100,6 @@ public class NetworkAppDataPositionController {
             if (p.touchPassthrough != null) AppUsageConfig.touchPassthrough = p.touchPassthrough;
             if (p.safeArea != null) AppUsageConfig.safeArea = p.safeArea;
             if (p.appMaxRows != null) AppUsageConfig.maxRows = p.appMaxRows;
-            if (p.appMode != null) AppUsageConfig.mode = p.appMode;
             if (p.appInterval != null) AppUsageConfig.updateInterval = p.appInterval;
             if (p.appThresholdBps != null) AppUsageConfig.thresholdBps = p.appThresholdBps;
             if (p.appHoldMs != null) AppUsageConfig.holdMs = p.appHoldMs;
@@ -128,7 +126,6 @@ public class NetworkAppDataPositionController {
                     .putInt("appdata_bg_margin", AppUsageConfig.bg.margin)
                     .putInt("appdata_bg_radius", AppUsageConfig.bg.radius)
                     .putInt("appdata_max_rows", AppUsageConfig.maxRows)
-                    .putInt("appdata_mode", AppUsageConfig.mode)
                     .putFloat("appdata_update_interval", AppUsageConfig.updateInterval)
                     .putLong("appdata_threshold_bps", AppUsageConfig.thresholdBps)
                     .putInt("appdata_hold_ms", AppUsageConfig.holdMs)

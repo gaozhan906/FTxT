@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 
 import android.view.WindowManager;
 
@@ -33,6 +35,7 @@ import exp.ftxt.features.memory_stats.MemoryModule;
 import exp.ftxt.features.memory_stats.MemoryMonitor;
 import exp.ftxt.features.floating_text.TextConfig;
 import exp.ftxt.features.floating_text.TextModule;
+import exp.ftxt.shared.ui.OverlayInsets;
 import exp.ftxt.shared.ui.OverlayModule;
 import exp.ftxt.shared.ui.SmartPanelTarget;
 
@@ -43,6 +46,7 @@ public class FloatingService extends Service {
     private SharedPreferences prefs;
 
     public static FloatingService instance;
+    private static boolean overlaysHiddenByUser;
 
     private TextModule textModule;
     private FpsModule fpsModule;
@@ -56,6 +60,17 @@ public class FloatingService extends Service {
     private SmartPanelModule smartPanelModule;
     private final List<OverlayModule> allModules = new ArrayList<>();
     private BroadcastReceiver configChangeReceiver;
+
+    private final Handler insetsHandler = new Handler(Looper.getMainLooper());
+    private final Runnable insetsPoll = new Runnable() {
+        @Override
+        public void run() {
+            if (isAnyModuleActive() && OverlayInsets.refresh(windowManager)) {
+                updateRunningPositions();
+            }
+            insetsHandler.postDelayed(this, 400L);
+        }
+    };
 
     public TextModule getTextModule() { return textModule; }
     public FpsModule getFpsModule() { return fpsModule; }
@@ -356,6 +371,7 @@ public class FloatingService extends Service {
             // Pemantau baterai full-aktif: berjalan selama FloatingService hidup,
             // sehingga hanya ada satu notifikasi foreground untuk seluruh aplikasi.
             BatteryMonitor.start(this);
+            insetsHandler.post(insetsPoll);
 
             if (prefs.getBoolean("text_overlay_on", false)) {
                 ensureTextModule();
@@ -417,6 +433,7 @@ public class FloatingService extends Service {
     public static void startModule(OverlayModule module) {
         if (instance != null && module != null) {
             module.start(instance.windowManager, instance);
+            instance.applyKeyboardVisibility(module);
             instance.acquireWakeLockIfNeeded();
             instance.registerConfigReceiver();
         }
@@ -426,7 +443,7 @@ public class FloatingService extends Service {
         if (instance != null && module != null) {
             module.stop();
             instance.releaseWakeLockIfEmpty();
-            instance.unregisterConfigReceiver();
+            if (!instance.isAnyModuleActive()) instance.unregisterConfigReceiver();
             instance.stopSelfIfEmpty();
         }
     }
@@ -578,6 +595,29 @@ public class FloatingService extends Service {
         }
     }
 
+    private void updateRunningPositions() {
+        for (OverlayModule module : allModules) {
+            if (module.isRunning()) {
+                applyKeyboardVisibility(module);
+                module.updatePosition();
+            }
+        }
+    }
+
+    private void applyKeyboardVisibility(OverlayModule module) {
+        if (OverlayInsets.shouldHide()) {
+            module.hide();
+        } else if (!overlaysHiddenByUser) {
+            module.show();
+        }
+    }
+
+    public static void updateKeyboardBehavior() {
+        if (instance == null) return;
+        OverlayInsets.refresh(instance.windowManager);
+        instance.updateRunningPositions();
+    }
+
     public static void updateNotification() {
         if (instance != null) {
             NotificationHelper.updateNotification(instance);
@@ -616,12 +656,14 @@ public class FloatingService extends Service {
                 instance.smartPanelModule.stop();
             }
             instance.releaseWakeLockIfEmpty();
+            if (!instance.isAnyModuleActive()) instance.unregisterConfigReceiver();
             instance.stopSelfIfEmpty();
         }
     }
 
     public static void hideAllOverlays() {
         if (instance == null) return;
+        overlaysHiddenByUser = true;
         for (OverlayModule module : instance.allModules) {
             module.hide();
         }
@@ -629,6 +671,7 @@ public class FloatingService extends Service {
 
     public static void showAllOverlays() {
         if (instance == null) return;
+        overlaysHiddenByUser = false;
         for (OverlayModule module : instance.allModules) {
             module.show();
         }
@@ -636,6 +679,7 @@ public class FloatingService extends Service {
 
     public static boolean areAllOverlaysHidden() {
         if (instance == null) return true;
+        if (OverlayInsets.shouldHide() && !overlaysHiddenByUser) return false;
         for (OverlayModule module : instance.allModules) {
             if (module.isRunning() && !module.isHidden()) return false;
         }
@@ -652,6 +696,7 @@ public class FloatingService extends Service {
         super.onDestroy();
 
         NotificationHelper.stopIconCycling();
+        insetsHandler.removeCallbacks(insetsPoll);
         unregisterConfigReceiver();
         MemoryMonitor.stop();
         BatteryMonitor.stop();

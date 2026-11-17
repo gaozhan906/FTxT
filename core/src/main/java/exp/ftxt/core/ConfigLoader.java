@@ -14,6 +14,7 @@ import exp.ftxt.features.memory_stats.MemoryConfig;
 import exp.ftxt.features.network_stats.NetworkConfig;
 import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
 import exp.ftxt.features.network_stats.app_usage.ConnectingAppSource;
+import exp.ftxt.shared.ui.OverlayInsets;
 
 /**
  * Memuat konfigurasi overlay dari SharedPreferences ke static config modul.
@@ -26,6 +27,9 @@ public final class ConfigLoader {
 
     public static void load(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE);
+
+        OverlayInsets.setBehavior(prefs.getInt("overlay_keyboard_behavior",
+                OverlayInsets.BEHAVIOR_STAY));
 
         TextConfig.touchPassthrough = prefs.getBoolean("text_lock", true);
         TextConfig.safeArea = prefs.getBoolean("text_safe_area", true);
@@ -133,8 +137,9 @@ public final class ConfigLoader {
                 prefs.getInt("appdata_decimal_places", 1)));
         AppUsageConfig.maxRows = Math.max(1, Math.min(AppUsageConfig.MAX_ROWS,
                 prefs.getInt("appdata_max_rows", 3)));
-        AppUsageConfig.mode = prefs.getInt("appdata_mode",
-                ConnectingAppSource.MODE_TOP_TALKERS);
+        // Mode lama diabaikan: overlay aplikasi kini selalu menampilkan UID
+        // dengan trafik tertinggi, tanpa pilihan Top Talkers/Aplikasi Depan.
+        AppUsageConfig.mode = ConnectingAppSource.MODE_TOP_TALKERS;
         AppUsageConfig.updateInterval = readFloatPref(prefs, "appdata_update_interval", 1f);
         AppUsageConfig.thresholdBps = prefs.getLong("appdata_threshold_bps", 1024L);
         AppUsageConfig.holdMs = Math.max(0, Math.min(30000,

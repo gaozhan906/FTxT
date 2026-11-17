@@ -250,6 +250,7 @@ Metadata: tags, favorite, timestamp, thumbnail warna. Version history hingga 10 
 - **Akses Izin** — Kelola izin overlay, notifikasi, optimasi baterai, Akses Penggunaan, serta izin Shizuku (untuk FPS game dan akurasi deteksi bypass charging)
 - **Konfigurasi** — Pengaturan tampilan aplikasi:
   - **Ikon Aplikasi** — Pemilih ikon launcher di halaman Konfigurasi terkunci Fitur Developer: baris ikon di-disable dan hanya bisa dibuka setelah Fitur Developer dibuka lewat password.
+  - **Perilaku overlay saat keyboard** — Pilihan tetap diam, sembunyikan sementara, atau geser ke atas keyboard; berlaku untuk semua overlay (default tetap diam).
   - **Tampilkan panel Info Memori** — Toggle untuk menampilkan/menyembunyikan panel Info Memori dari Navigation Drawer (default OFF)
   - **Tampilkan panel Debugging** — Toggle untuk menampilkan/menyembunyikan panel Debugging dari Navigation Drawer (default OFF). Switch terkunci password: masukkan password lalu tap Unlock untuk membuka, tombol Relock untuk mengunci ulang. Status unlock tersimpan persisten.
   - **Notifikasi Kustom** — Saklar judul notifikasi foreground (default nonaktif): saat aktif, judul menampilkan info baterai real-time (persen, status + arus, tegangan, daya, mAh, suhu) dan diperbarui dengan interval yang bisa dipilih 1/3/5/10 detik (default 5 detik); saat nonaktif, hanya tombol aksi (toggle/kill/open) yang tampil.

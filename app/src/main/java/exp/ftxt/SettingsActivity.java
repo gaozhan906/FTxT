@@ -55,6 +55,7 @@ import exp.ftxt.features.network_stats.NetworkConfig;
 import exp.ftxt.features.memory_stats.MemoryMonitor;
 import exp.ftxt.features.memory_stats.MemoryModule;
 import exp.ftxt.features.gamefps.reader.ShizukuHelper;
+import exp.ftxt.shared.ui.OverlayInsets;
 import exp.ftxt.utils.PermissionHelper;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -111,6 +112,7 @@ public class SettingsActivity extends AppCompatActivity {
     private RadioGroup notifIntervalGroup;
     private Switch smartPanelSwitch;
     private TextView smartPanelStatus;
+    private RadioGroup keyboardBehaviorGroup;
 
     private static final String[] DATE_FORMATS = {
             "d + Hari", "dd + Hari", "d + Bulan", "dd + Bulan",
@@ -222,6 +224,27 @@ public class SettingsActivity extends AppCompatActivity {
             FloatingService.setSmartPanelEnabled(isChecked);
             updateSmartPanelStatus(isChecked);
             FloatingService.updateNotification();
+        });
+
+        keyboardBehaviorGroup = findViewById(R.id.keyboardBehaviorGroup);
+        int keyboardBehavior = prefs.getInt("overlay_keyboard_behavior",
+                OverlayInsets.BEHAVIOR_STAY);
+        OverlayInsets.setBehavior(keyboardBehavior);
+        keyboardBehaviorGroup.check(
+                keyboardBehavior == OverlayInsets.BEHAVIOR_HIDE
+                        ? R.id.keyboardBehaviorHide
+                        : keyboardBehavior == OverlayInsets.BEHAVIOR_SHIFT
+                        ? R.id.keyboardBehaviorShift
+                        : R.id.keyboardBehaviorStay);
+        keyboardBehaviorGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            int behavior = checkedId == R.id.keyboardBehaviorHide
+                    ? OverlayInsets.BEHAVIOR_HIDE
+                    : checkedId == R.id.keyboardBehaviorShift
+                    ? OverlayInsets.BEHAVIOR_SHIFT
+                    : OverlayInsets.BEHAVIOR_STAY;
+            OverlayInsets.setBehavior(behavior);
+            prefs.edit().putInt("overlay_keyboard_behavior", behavior).apply();
+            FloatingService.updateKeyboardBehavior();
         });
 
         String iconChoice = prefs.getString("icon_choice", null);

@@ -40,6 +40,7 @@ FTxT/
 │   │       ├── ShadowImageView.java   — ImageView dengan shadow (dipakai modul Crosshair)
 │   │       ├── OverlayModule.java     — Interface untuk menyeragamkan method semua modul overlay
 │   │       ├── OverlayShadow.java     — Apply elevation-based shadow ke overlay
+│   │       ├── OverlayInsets.java     — Pelacak tinggi keyboard + perilaku overlay saat IME muncul
 │   │       ├── OverlayDragHandler.java— Touch listener untuk drag overlay
 │   │       ├── DpadController.java    — Kontrol D-Pad dengan repeat untuk fine position (interval pixel 1–20)
 │   │       ├── SliderPositionController.java — Slider X/Y posisi normalized 0-1000
@@ -149,7 +150,7 @@ FTxT/
 ├── core/                         — Library inti layanan (include ':core')
 │   ├── build.gradle              — Library: namespace exp.ftxt.core; depend 7 :features:* + :shared:config + :shared:ui + androidx.core:core
 │   ├── src/main/java/exp/ftxt/core/
-│   │   ├── FloatingService.java     — Foreground service: kelola semua overlay via WindowManager
+│   │   ├── FloatingService.java     — Foreground service: kelola semua overlay via WindowManager + perilaku keyboard
 │   │   ├── ConfigLoader.java        — Muat konfigurasi overlay dari SharedPreferences ke static config sebelum service berjalan
 │   │   ├── SmartPanelConfig.java    — Konfigurasi Smart Panel (toggle, posisi ikon)
 │   │   ├── SmartPanelModule.java    — Modul overlay Smart Panel: ikon mengambang + panel kontrol modul
@@ -181,7 +182,7 @@ FTxT/
     │   │
     │   ├── java/exp/ftxt/
     │   │   ├── MainActivity.java         — Activity utama: toolbar, nav drawer, panel system, theme toggle
-    │   │   ├── SettingsActivity.java     — Manajemen izin: overlay, notifikasi, baterai
+    │   │   ├── SettingsActivity.java     — Manajemen izin & konfigurasi aplikasi (termasuk perilaku overlay saat keyboard)
     │   │   ├── DocumentationActivity.java— Baca dokumentasi in-app dari assets (.md) via Markwon (dukung ekstra dokumen langsung)
     │   │   ├── AboutActivity.java        — Halaman "Tentang Aplikasi" fullscreen: info versi, cek pembaruan, pengembang & tautan
     │   │   ├── PresetExampleActivity.java— Contoh integrasi sistem preset (referensi dev)
@@ -340,7 +341,7 @@ FTxT/
     │       │   └── crosshair_1..44.png      — 44 PNG gaya bidikan modul Crosshair
     │       ├── layout/
 │   │   ├── activity_main.xml            — Layout utama dengan DrawerLayout + CoordinatorLayout
-    │   │   ├── activity_settings.xml        — Layout halaman pengaturan izin
+    │   │   ├── activity_settings.xml        — Layout halaman pengaturan izin & konfigurasi overlay
     │   │   ├── activity_about.xml           — Layout halaman "Tentang Aplikasi" (info versi, pembaruan, pengembang, footer)
     │   │   ├── activity_documentation.xml   — Layout halaman dokumentasi in-app
     │       │   ├── activity_battery_chart_detail.xml — Layout halaman detail grafik fullscreen

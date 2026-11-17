@@ -18,7 +18,6 @@ import exp.ftxt.MainActivity;
 import exp.ftxt.R;
 import exp.ftxt.core.FloatingService;
 import exp.ftxt.features.network_stats.app_usage.AppUsageConfig;
-import exp.ftxt.features.network_stats.app_usage.ConnectingAppSource;
 import exp.ftxt.shared.color.ColorPickerDialog;
 import exp.ftxt.shared.ui.SectionHelper;
 import exp.ftxt.shared.ui.SliderLabelEditor;
@@ -47,9 +46,6 @@ public class NetworkAppDataController {
     private View appdataLabelColorPreview;
     private View appdataShadowColorPreview;
     private View appdataBgColorPreview;
-    private RadioGroup appdataModeGroup;
-    private RadioButton appdataModeTop;
-    private RadioButton appdataModeForeground;
     private SeekBar appdataRowsSeekBar;
     private SeekBar appdataHoldSeekBar;
     private CheckBox appdataSafeArea;
@@ -137,9 +133,6 @@ public class NetworkAppDataController {
         appdataLabelColorPreview = rootView.findViewById(R.id.appdataLabelColorPreview);
         appdataShadowColorPreview = rootView.findViewById(R.id.appdataShadowColorPreview);
         appdataBgColorPreview = rootView.findViewById(R.id.appdataBgColorPreview);
-        appdataModeGroup = rootView.findViewById(R.id.appdataModeGroup);
-        appdataModeTop = rootView.findViewById(R.id.appdataModeTop);
-        appdataModeForeground = rootView.findViewById(R.id.appdataModeForeground);
         appdataRowsSeekBar = rootView.findViewById(R.id.appdataRowsSeekBar);
         appdataHoldSeekBar = rootView.findViewById(R.id.appdataHoldSeekBar);
         appdataSafeArea = rootView.findViewById(R.id.appdataSafeArea);
@@ -220,12 +213,6 @@ public class NetworkAppDataController {
         appdataLabelColorPreview.setBackgroundColor(AppUsageConfig.labelColor);
         appdataShadowColorPreview.setBackgroundColor(AppUsageConfig.shadow.color);
         appdataBgColorPreview.setBackgroundColor(AppUsageConfig.bg.color);
-
-        if (AppUsageConfig.mode == ConnectingAppSource.MODE_FOREGROUND) {
-            appdataModeForeground.setChecked(true);
-        } else {
-            appdataModeTop.setChecked(true);
-        }
 
         appdataRowsSeekBar.setProgress(clampRows(AppUsageConfig.maxRows) - 1);
         appdataRowsLabel.setText("Jumlah Aplikasi: " + clampRows(AppUsageConfig.maxRows));
@@ -317,15 +304,8 @@ public class NetworkAppDataController {
     private void updatePermissionState(boolean requestIfMissing) {
         boolean granted = PermissionHelper.hasUsageAccess(activity);
         appdataPermissionCard.setVisibility(granted ? View.GONE : View.VISIBLE);
-        appdataModeForeground.setEnabled(granted);
-        appdataModeForeground.setAlpha(granted ? 1f : 0.5f);
-        if (!granted) {
-            if (AppUsageConfig.mode == ConnectingAppSource.MODE_FOREGROUND) {
-                AppUsageConfig.mode = ConnectingAppSource.MODE_TOP_TALKERS;
-                appdataModeTop.setChecked(true);
-                persist("appdata_mode", AppUsageConfig.mode);
-            }
-            if (requestIfMissing) PermissionHelper.requestUsageAccess(activity);
+        if (!granted && requestIfMissing) {
+            PermissionHelper.requestUsageAccess(activity);
         }
     }
 
@@ -484,19 +464,6 @@ public class NetworkAppDataController {
                             FloatingService.updateBackgroundForModule(
                                     FloatingService.appUsageModule());
                         }));
-
-        appdataModeGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.appdataModeForeground
-                    && !PermissionHelper.hasUsageAccess(activity)) {
-                appdataModeTop.setChecked(true);
-                PermissionHelper.requestUsageAccess(activity);
-                return;
-            }
-            AppUsageConfig.mode = checkedId == R.id.appdataModeForeground
-                    ? ConnectingAppSource.MODE_FOREGROUND
-                    : ConnectingAppSource.MODE_TOP_TALKERS;
-            persist("appdata_mode", AppUsageConfig.mode);
-        });
 
         appdataRowsSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {

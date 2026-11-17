@@ -254,6 +254,53 @@
             android:layout_marginBottom="16dp"/>
 
         <TextView
+            android:text="Overlay &amp; Keyboard"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:text="Pilih perilaku semua overlay saat keyboard muncul."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"/>
+
+        <RadioGroup
+            android:id="@+id/keyboardBehaviorGroup"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp">
+
+            <RadioButton
+                android:id="@+id/keyboardBehaviorStay"
+                android:text="Tetap diam di posisi"
+                android:textSize="14sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <RadioButton
+                android:id="@+id/keyboardBehaviorHide"
+                android:text="Sembunyikan saat keyboard muncul"
+                android:textSize="14sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <RadioButton
+                android:id="@+id/keyboardBehaviorShift"
+                android:text="Paksa di atas keyboard"
+                android:textSize="14sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+        </RadioGroup>
+
+        <TextView
             android:text="Notifikasi Kustom"
             android:textSize="16sp"
             android:textStyle="bold"

@@ -1,7 +1,7 @@
 # FTxT (FunText) — Floating Text Overlay
 
 >**Current Release:** `4.97.2` **Beta**
-**Last Updated:** `2026-11-15`
+**Last Updated:** `2026-11-17`
 
 >>FTxT (FunText) adalah aplikasi Android overlay yang memungkinkan Anda menampilkan teks floating di atas aplikasi lain dengan fitur kustomisasi lengkap untuk ukuran, warna, transparansi, posisi, dan kontrol sentuhan.
 
@@ -25,6 +25,7 @@
 - **Konfigurasi Panel Sidebar** — Toggle tampil/sembunyi panel Info Memori & Debugging dari Navigation Drawer via Pengaturan > Konfigurasi; switch Debugging terkunci password dengan tombol Unlock/Relock
 - **Color Wheel & Hue Slider** — Dua mode color picker: Classic Color Wheel dengan crosshair + ARGB slider, atau Hue/Saturation/Brightness/Alpha slider. Two-way sync, color name auto-detection, HEX edit manual, saved colors
 - **Safe Area** — Batasi posisi overlay agar tidak masuk area notch/cutout
+- **Perilaku Overlay saat Keyboard** — Pilihan tetap diam, sembunyi sementara, atau bergeser ke atas keyboard, diatur dari Konfigurasi
 - **Touch Passthrough** — Kunci posisi agar sentuhan tembus ke aplikasi belakang (default ON)
 - **Position Control Lengkap** — Slider X/Y, D-Pad, preset posisi (hingga 50 slot), orientasi otomatis per mode layar
 - **Preset Full-Konfigurasi (v2)** — Simpan/muat seluruh config overlay (posisi, ukuran, warna, shadow, background, touchPassthrough, safeArea, toggle display spesifik) dengan metadata (tags, favorite, thumbnail, version history). UUID-based storage, backward compatible.
