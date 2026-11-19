@@ -1,6 +1,6 @@
-# [4.98.0] 2026/11/17 16:30 WITA 374 ***ONGOING***
+# [4.98.0] 2026/11/19 17:21 WITA 377 ***ONGOING***
 ### 🔖 Deskripsi
-> Rilis ini menambah overlay pemakaian data per aplikasi di panel Network dan pengaturan perilaku overlay saat keyboard muncul.
+> Rilis ini memperluas FTxT dengan halaman pengelola aplikasi dan overlay pemakaian data per aplikasi di panel Network. Baca bagian Fitur Baru untuk alur keduanya.
 
 ### ✨ Fitur Baru
 - **Overlay pemakaian data per aplikasi** — Sub-tab Aplikasi di Overlay Network menampilkan hingga lima aplikasi yang sedang memakai data dengan satu nilai kecepatan gabungan unduh dan unggah; nama aplikasi dapat ditampilkan opsional.
@@ -8,6 +8,7 @@
 - **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, waktu tampil, nama/ikon, skala teks dan ikon, satuan, warna, shadow, background, posisi, serta preset dapat diatur seperti overlay lainnya.
 - **Panduan izin akses penggunaan** — Overlay menampilkan petunjuk dan tombol menuju pengaturan bila izin pemakaian aplikasi belum diberikan.
 - **Perilaku overlay saat keyboard muncul** — Panel Konfigurasi menyediakan pilihan tetap diam, sembunyikan sementara, atau geser ke atas keyboard untuk seluruh overlay.
+- **App Manager** — Halaman baru untuk menelusuri aplikasi terpasang memakai pencarian, filter, dan urutan, memilih beberapa aplikasi sekaligus, melihat detail izin serta ukuran, lalu membuka, menghapus, membagikan APK, atau membuka Settings.
 
 ### 🔧 Optimasi & Penyesuaian
 - **Tata letak kontrol overlay** — Kunci Posisi dan Safe Area kini sebaris memakai ikon gembok: terbuka abu-abu saat nonaktif dan tertutup hijau saat aktif; sakelar Shadow dan Background pindah ke baris judul section.
@@ -19,6 +20,7 @@
 
 ### 💡 Memo
 - Data aplikasi dan mode Aplikasi Depan memerlukan izin akses penggunaan; tanpa izin, overlay hanya menampilkan status kosong.
+- Aksi lanjutan App Manager — paksa berhenti, hapus cache, dan hapus data mengarah ke Settings; paksa berhenti lewat Shizuku hanya tersedia bila izin sudah diberikan.
 
 ---
 

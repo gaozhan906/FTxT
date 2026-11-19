@@ -46,6 +46,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import exp.ftxt.core.ConfigLoader;
 import exp.ftxt.core.CrashLogger;
 import exp.ftxt.core.FloatingService;
+import exp.ftxt.ui.AppManagerActivity;
 import exp.ftxt.ui.PanelManager;
 import exp.ftxt.utils.ApkDownloadHelper;
 import exp.ftxt.utils.PermissionHelper;
@@ -383,6 +384,7 @@ public class MainActivity extends AppCompatActivity {
         popup.getMenu().add("Muat Preset");
         popup.getMenu().add("Konfigurasi");
         popup.getMenu().add("Dokumentasi");
+        popup.getMenu().add("App Manager");
         popup.getMenu().add("Tentang Aplikasi");
         popup.setOnMenuItemClickListener(item -> {
             String title = item.getTitle().toString();
@@ -394,6 +396,8 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SettingsActivity.class));
             } else if (title.equals("Dokumentasi")) {
                 startActivity(new Intent(this, DocumentationActivity.class));
+            } else if (title.equals("App Manager")) {
+                startActivity(new Intent(this, AppManagerActivity.class));
             } else if (title.equals("Tentang Aplikasi")) {
                 startActivity(new Intent(this, AboutActivity.class));
             }

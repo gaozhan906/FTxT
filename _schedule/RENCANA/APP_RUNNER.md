@@ -11,7 +11,7 @@ Pengguna memilih aplikasi dari daftar (semua aplikasi yang punya ikon launcher),
 
 Berkaitan dengan rencana lain:
 
-- `APP_MANAGER.md` — memakai sumber data yang sama (daftar aplikasi terinstall). Kalau `APP_MANAGER` dikerjakan lebih dulu, adapter/utility daftar aplikasi harus dipakai ulang, jangan diduplikasi.
+- `_schedule/AKTIF/APP_MANAGER.md` — memakai sumber data yang sama (daftar aplikasi terinstall). Helper daftar aplikasi di `core/appmanager` sudah tersedia dan wajib dipakai ulang, jangan diduplikasi.
 - `_schedule/VERIFIKASI/BYPASS_CHARGING_SHIZUKU.md` & `_schedule/VERIFIKASI/SHIZUKU_FPS_READER.md` — infra Shizuku (SDK, provider, helper eksekusi shell) dipakai bersama.
 
 ---
@@ -79,7 +79,7 @@ Fitur ini bukan overlay, jadi **tidak butuh module Gradle baru** dan tidak mengi
 |------|------------|
 | `core/.../core/apprunner/BackgroundAppManager.java` (baru) | Penyimpan daftar app yang dijaga + state, baca/tulis `ftxt_prefs` |
 | `core/.../core/apprunner/AppSupervisor.java` (baru) | Timer pemeriksaan + relaunch + backoff |
-| `core/.../core/apprunner/InstalledApps.java` (baru) | Query daftar aplikasi launcher, ikon, nama |
+| `core/.../core/appmanager/InstalledApps.java` (sudah ada dari App Manager) | Query daftar aplikasi launcher, ikon, nama; jangan buat helper kedua |
 | `core/.../core/apprunner/BackgroundAppConfig.java` (baru) | Interval pemeriksaan, batas restart, batas jumlah app |
 | `ui/AppRunnerActivity.java` (baru) | Halaman daftar aplikasi + search + toggle |
 | `ui/AppRunnerAdapter.java` (baru) | Adapter RecyclerView |
@@ -123,7 +123,7 @@ Kalau FTxT_activity langsung `finish()` setelah membuka app target, activity iku
 
 ### 5.4 Fase & urutan pengerjaan
 
-1. **Fase 1 — Fondasi** — `InstalledApps`, `BackgroundAppConfig`, `BackgroundAppManager`, `<queries>` di manifest
+1. **Fase 1 — Fondasi** — `InstalledApps` sudah tersedia di `core/appmanager` (dari App Manager); buat `BackgroundAppConfig`, `BackgroundAppManager`, lalu cek `<queries>` di manifest
 2. **Fase 2 — Supervisor** — `AppSupervisor` (timer, deteksi via UsageStats, relaunch, backoff) + integrasi `FloatingService`
 3. **Fase 3 — UI** — `AppRunnerActivity` + adapter + layout, search, toggle, status
 4. **Fase 4 — Notifikasi** — status "Menjaga: X" + tombol aksi

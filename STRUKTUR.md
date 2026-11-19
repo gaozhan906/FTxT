@@ -3,8 +3,7 @@
 ```
 FTxT/
 ├── .gitignore                    — Git ignore rules (build, gradle, local)
-├── AGENTS.md                     — Pedoman AI agent
-├── agent-rules.md                — Aturan perilaku kerja & komunikasi agent
+├── AGENTS.md                     — Aturan lengkap AI agent (perilaku, komunikasi, build, CHANGELOG)
 ├── CHANGELOG.md                  — Riwayat perubahan per release
 ├── PANDUAN.md                    — Panduan penggunaan lengkap
 ├── README.md                     — Ringkasan project & fitur

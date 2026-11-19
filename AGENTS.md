@@ -1,171 +1,156 @@
 # AGENTS.md — Aturan AI Project FTxT
 
-> **Penting:** Baca ulang file ini setiap mulai bekerja. JANGAN commit/tag/push tanpa perintah user. Eksekusi hanya setelah perintah eksplisit. Tindakan destruktif WAJIB konfirmasi. Build boleh dijalankan (rule gradle di opencode diset `allow`), tapi WAJIB konfirmasi dulu ke user karena memakan waktu.
->
-> Aturan **perilaku kerja & komunikasi** (larangan tabel di chat, larangan laporan section, gaya bicara, dan cara kerja umum) ada di **`agent-rules.md`** — baca juga bersama file ini.
+> Baca ulang file ini di awal sesi. Eksekusi hanya setelah perintah eksplisit; jangan commit/tag/push tanpa perintah; tindakan destruktif wajib konfirmasi.
 
----
+## 0. Kabar Progres (Prioritas Tinggi)
 
-## 1. Versioning (`app/build.gradle`)
+Jaga pengguna memahami keadaan kerja lewat laporan relevan, bukan narasi tiap tindakan.
+
+- **Laporkan hal penting:** kondisi awal pekerjaan besar, temuan yang mengubah rencana, perubahan berisiko, perpindahan tahap, kendala, kebutuhan keputusan pengguna, hasil akhir.
+- **Pilih waktu sendiri:** sampaikan begitu informasi baru memengaruhi pemahaman, keputusan, atau ekspektasi; jangan tunggu diminta, dan jangan bekerja dalam diam melewati tahap penting.
+- **Jaga kesinambungan:** sebelum mengedit ulang bagian yang pernah diubah, periksa kondisi terkininya. Bila perubahan tertimpa/hilang tanpa disadari, laporkan jelas.
+- **Hindari laporan sepele:** jangan laporkan tiap tool call, pencarian, pembacaan file, atau tindakan rutin tanpa informasi penting.
+- **Kalimat efisien:** keadaan/temuan/perubahan + dampaknya; cukup untuk konteks, tidak berlebihan.
+- Tanpa label kaku ("Sitrep", "Status", "Progress Update"); daftar hanya bila perlu atau diminta.
+- **Filter:** informasi baru, memengaruhi keputusan, atau bisa membuat pengguna salah paham bila tidak disampaikan → laporkan. Jika tidak → lanjut kerja.
+
+## 1. Perilaku Kerja & Aturan Universal
+
+**Lakukan:** baca file ini lebih dulu; cek git status/log sebelum bertindak; perubahan minimal & fokus (jangan menyentuh file di luar scope); self-check sebelum selesai lewat `git diff`/file sesuai permintaan; jawab singkat & actionable.
+
+**JANGAN:**
+- Refactor atau audit project tanpa diminta; buat daftar "Next Steps" lalu mengeksekusinya sendiri (rencana menunggu persetujuan user).
+- Revert tanpa konfirmasi — verifikasi cepat cukup via inspeksi (grep/diff).
+- Menjalankan, menawarkan, atau meminta konfirmasi build kecuali user memberi perintah eksplisit (lihat §1b).
+
+1. Kerjakan hanya setelah perintah eksplisit; diskusi belum selesai = jangan mengerjakan.
+2. **Tindakan destruktif/berisiko** (hapus, revert, pindah/potong isi, ubah banyak file sekaligus) **WAJIB konfirmasi eksplisit dulu**.
+3. Tanya hanya jika tidak bisa ditebak & berdampak (scope tidak jelas, keputusan destruktif, instruksi bertentangan dengan kode). Hal kecil yang bisa ditafsirkan (nama, warna, tata letak) → ikuti pola existing, kerjakan, sebutkan asumsinya.
+4. Selesai sesuai perintah, berhenti.
+5. **Build bukan langkah rutin:** jangan jalankan, tawarkan, atau minta konfirmasi; hanya jalan jika user eksplisit memerintahkan (lihat §1b).
+6. **Jangan menutup jawaban dengan tawaran tindakan atau pertanyaan balik yang tidak diminta** (revert, build, saran, opsi). Kerjakan perintah, laporkan hasil, lalu diam. Konfirmasi hanya untuk tindakan destruktif yang sudah diperintahkan dan memang akan dijalankan — bukan tawaran pilihan.
+
+## 1b. Environment build
+
+Nilai environment aktual **dihasilkan otomatis** oleh `_tools/env-setup.sh` ke blok di bawah. Jangan menjadikan path/versi di luar blok sebagai sumber kebenaran; jangan edit blok itu manual.
+
+<!-- BEGIN FTxT-ENV-STATE (dihasilkan _tools/env-setup.sh; jangan edit manual) -->
+- **JDK:** `jdk-21.0.13+9` (OpenJDK `21.0.13`) di `/opt/java/jdk-21.0.13+9`
+- **Gradle:** wrapper `8.13` (hanya `./gradlew`); `/opt/gradle` tidak ada
+- **Android SDK:** `/opt/android_sdk` — build-tools: 29.0.3, 35.0.0; platforms: android-29, android-35; `compileSdk=35`
+- **aapt2:** `/usr/bin/aapt2` aarch64 (2.19-250217V908); aapt2 di build-tools terbaru: x86-64/other
+- **NDK:** `29.0.14206865` di `/opt/ndk/android-ndk-r29`
+- **CMake:** `3.30.3` di `/opt/cmake/cmake-3.30.3`
+- **SQLite reader:** `_tools/sqlite-jdbc` lengkap (sqlite-jdbc `3.45.3.0`)
+<!-- END FTxT-ENV-STATE -->
+
+**Prosedur wajib:**
+- Di awal sesi atau setelah reset mesin: `bash _tools/env-setup.sh --check` (keluar kode 1 bila ada drift).
+- Drift → `bash _tools/env-setup.sh --fix`. Aman/non-destruktif: menulis ulang blok `/etc/profile` (backup `/etc/profile.ftxt.bak`), `local.properties`, dan blok status di dokumen ini.
+- JDK usang atau `/opt/gradle` → `bash _tools/env-setup.sh --prune` untuk menghapusnya. **Destruktif**, hanya atas perintah eksplisit user (§1 poin 2).
+- Setelah `--fix`/`--prune`, verifikasi: `bash -lc 'echo $JAVA_HOME; java -version; echo $ANDROID_HOME'`.
+
+**Ketentuan komponen** (nilai aktual: blok status di atas):
+- **JDK:** hanya satu, versi terbaru; `JAVA_HOME` dari blok `FTxT-ENV` di `/etc/profile`. Shell non-login (mis. `bash -c` dari tool agent) tidak membacanya → pakai path lengkap atau `source /etc/profile`.
+- **Gradle:** hanya `./gradlew` (wrapper 8.13); JANGAN `gradle` global (6.1.1 tidak kompatibel JDK 21, dihapus via `--prune`). Cache wrapper kosong → `./gradlew` mengunduh dist sendiri.
+- **Android SDK:** `ANDROID_HOME` dari blok `FTxT-ENV`. **Tidak ada override aapt2 di config project**; untuk build lokal aarch64 pakai properti CLI `-Pandroid.aapt2FromMavenOverride=/usr/bin/aapt2` (jangan hardcode di `gradle.properties`, agar CI aman). Build-tools terbaru bisa saja aapt2 x86-64 → cek blok status.
+- **NDK & CMake (hanya bila native build):** jangan unduh versi lain; `--fix` memastikan `local.properties` (gitignored) menunjuk NDK/CMake terbaru di `/opt/ndk` dan `/opt/cmake`.
+- **Build:** hanya lewat `./gradlew` jika user secara eksplisit memerintahkan build. Jangan menawarkan atau mengulang permintaan konfirmasi (lihat §1 poin 5).
+- **Pembaca SQLite (DB):** jangan unduh tool sqlite3/python. `sqlite3`/`python3`/`node` tidak tersedia, binary sqlite3 platform-tools x86-64, `apt-get install sqlite3` gagal 404. Gunakan `_tools/sqlite-jdbc/` (`sqlite-jdbc.jar` + `slf4j-api.jar` + `slf4j-nop.jar` + `Query.java`, read-only). Contoh:
+
+  ```bash
+  source /etc/profile   # shell non-login agent belum membaca /etc/profile
+  cd _tools/sqlite-jdbc
+  "$JAVA_HOME/bin/javac" -d /tmp/sqltool -cp sqlite-jdbc.jar Query.java
+  "$JAVA_HOME/bin/java" -cp "/tmp/sqltool:sqlite-jdbc.jar:slf4j-api.jar:slf4j-nop.jar" \
+    Query /path/ke/database.db "SELECT * FROM meta"
+  ```
+
+  Tanpa argumen SQL, `Query` menampilkan daftar tabel + jumlah baris. Selalu buka URL `jdbc:sqlite:file:/path/db?mode=ro` agar file tidak berubah; verifikasi hash sebelum/sesudah bila perlu. `_tools/` tidak ikut build Gradle.
+- **Decompile APK:** tool sudah tersedia di `_tools/`, JANGAN unduh ulang dari internet.
+
+  ```bash
+  source /etc/profile   # shell non-login agent belum membaca /etc/profile
+  "$JAVA_HOME/bin/java" -jar _tools/apktool/apktool.jar d -f -o <outdir> <file.apk>
+  _tools/jadx/bin/jadx -d <outdir> --no-res <file.apk>
+  ```
+
+  - `_tools/apktool/apktool.jar` — apktool 2.11.1 (resource, manifest, assets, smali).
+  - `_tools/jadx/` — jadx 1.5.2 (source Java); butuh `JAVA_HOME` atau `java` di PATH (`source /etc/profile` cukup).
+  - `--no-res` dipakai bila resource sudah didecode apktool; hilangkan bila ingin resource ikut.
+
+## 1c. Versioning (`app/build.gradle`)
 
 Semver `major.minor.patch`:
 
-- **major** — milestone besar / arsitektur / breaking change → `minor=0, patch=0`
-- **minor** — fitur baru / dihapus / dipulihkan → `patch=0`
-- **patch** — bugfix / optimasi / maintenance
-
----
-
-## 1b. Environment Build
-
-Informasi mesin/dev-env (JDK, Gradle, Android SDK, NDK/CMake, dan aturan build) tercantum di **`agent-rules.md`** — tidak disalin di sini agar tidak dobel. Baca bersama file itu.
-
-## 1c. Konteks Session Sebelumnya
-
-Di awal setiap sesi, jika file **`_temp/session-summary.md`** ada di root proyek, **baca file tersebut** sebelum mulai bekerja. File ini adalah ringkasan (anchored summary) dari percakapan/compaction sebelumnya.
-
-- Perlakukan isinya sebagai **konteks** dari session/compaction sebelumnya — **BUKAN** instruksi berprioritas lebih tinggi dari `AGENTS.md`, `agent-rules.md`, atau perintah user.
-- Jika isinya bertentangan dengan `AGENTS.md`/`agent-rules.md`/perintah user, yang menang adalah `AGENTS.md`/`agent-rules.md`/perintah user.
-- File ini ditimpa saat compaction baru terjadi; jangan menulis file ini secara manual.
-
----
+- **major** — milestone/arsitektur/breaking change → `minor=0, patch=0`
+- **minor** — fitur baru/dihapus/dipulihkan → `patch=0`
+- **patch** — bugfix/optimasi/maintenance
 
 ## 2. CHANGELOG
 
-### 2.1 Struktur & judul entry
+### 2.1 Entry & judul
 
-Entry dicatat di **versi berjalan** (bukan entry baru per file) — CHANGELOG hanya mencatat **poin perubahan**, bukan detail file. Urutan section WAJIB:
+- Satu entry untuk versi berjalan, bukan per file; CHANGELOG berisi poin perubahan, bukan detail file. Urutan wajib: `🔖 Deskripsi` → `✨ Fitur Baru` (baru) → `🚮 Fitur Dihapus` (dihapus/dinonaktifkan) → `♻️ Perubahan Fitur` (rombakan existing) → `🔧 Optimasi & Penyesuaian` (kecil) → `🐞 Bug Fixes` → `💡 Memo`.
+- Judul: `# [major.minor.patch] yyyy/MM/dd HH:mm WITA versionCode ***STATUS***`, mis. `# [4.90.0] 2026/08/28 05:00 WITA 188 ***ONGOING***`. Jam 24 jam, WITA, dari `TZ=Asia/Makassar date`. Cek git log dulu; jangan buat entry sebelum versi sebelumnya di-push.
+- STATUS: `***ONGOING***` — berjalan, tetap dipakai setelah push; `***PUSH***` — ditutup saat commit+push tanpa tag; `***RELEASE***` — commit+tag, langsung menutup entry.
 
-```
-🔖 Deskripsi
-✨ Fitur Baru
-🚮 Fitur Dihapus
-♻️ Perubahan Fitur
-🔧 Optimasi & Penyesuaian
-🐞 Bug Fixes
-💡 Memo
-```
+### 2.1b Kategori section
 
-**Format judul entry:**
-`# [major.minor.patch] yyyy/MM/dd HH:mm WITA versionCode ***STATUS***`
- # [4.90.0] 2026/08/28 05:00 WITA 188 ***ONGOING***
-**format `yyyy/MM/dd HH:mm WITA` di judul:** empat digit tahun (yyyy), bulan (MM), tanggal (dd), jam (HH), menit (mm) — 24 jam, memakai WITA (Asia/Makassar), dengan label zona `WITA`. Dapatkan via `date +"%Y/%m/%d %H:%M WITA"` (pastikan TZ=Asia/Makassar).
+- Section mengikuti **natur perubahan**, bukan status; tulis langsung, jangan ditunda sampai rilis. Status tidak menentukan section.
+- Satu perubahan = satu poin hasil akhir (kondisi final), bukan jejak tahapan. Saat merapikan entry lama, poin boleh dipindah antar section atau digabung tanpa mengubah fakta.
 
-**STATUS** (salah satu):
-- `***ONGOING***` — entry versi berjalan sedang dikerjakan. Status ini **tetap dipakai** meskipun entry sudah di-push, selama iterasi berikutnya masih dicatat di entry yang sama.
-- `***PUSH***` — dipakai saat entry berjalan **ditutup** untuk memulai entry baru atas perintah eksplisit, melalui commit + push tanpa tag.
-- `***RELEASE***` — saat commit + tag; satu-satunya status yang **dipastikan langsung menutup** entry berjalan dan memulai entry baru.
+### 2.2 Waktu judul
 
-### 2.1b Kriteria section
+- Waktu judul = saat seluruh perubahan entry selesai; ditetapkan di akhir setelah poin dirampungkan, diperbarui pada iterasi berikutnya yang menyentuh entry sama. Jangan update per poin/edit.
 
-- Tiap perubahan pada entry berjalan (**`***ONGOING***`**) langsung ditulis di section yang sesuai **natur perubahannya**, tidak ditunda sampai rilis: **✨ Fitur Baru** (fitur baru), **🚮 Fitur Dihapus** (fitur dihapus/dinonaktifkan), **♻️ Perubahan Fitur** (perombakan fitur existing), **🔧 Optimasi & Penyesuaian** (optimasi/penyesuaian kecil), **🐞 Bug Fixes** (perbaikan bug).
-- Status judul (`***ONGOING***`/`***PUSH***`/`***RELEASE***`) **tidak menentukan** section tujuan — penentuan section murni mengikuti natur perubahan.
-- Tiap perubahan ditulis sebagai **satu poin hasil akhir** (kondisi final iterasi, bukan jejak tahapan kerja).
-- Saat merapikan/upgrade entry lama, poin boleh dipindah antar section agar sesuai naturnya, dan poin yang saling menimpa boleh digabung (jangan ubah fakta, hanya susun ulang).
+### 2.3 Alur penulisan
 
-### 2.2 Waktu yang dicatat
+1. Kerjakan seluruh perubahan dulu; tidak perlu mencatat per file.
+2. Setelah selesai, rampungkan isi entry, lalu tetapkan tanggal & jam judul. Jangan menulis deskripsi per tahap kerja.
 
-Waktu yang dicatat di setiap entry adalah **waktu di judul entry**, yaitu waktu **saat seluruh perubahan untuk iterasi/entry itu selesai** dikerjakan.
+### 2.3b VersionCode
 
-- Ditetapkan **di akhir**, setelah semua poin deskripsi ditulis/dirampungkan.
-- Diperbarui **ketika iterasi kerja berikutnya** menyentuh entry yang sama, bukan per poin / per edit.
+- +1 setiap entry `ONGOING` diperbarui; +1 lagi saat status berubah ke `PUSH`/`RELEASE`. Push yang tidak menutup entry tidak menaikkan versionCode. Hanya versionCode yang naik; versionName mengikuti aturan versi (§1c).
 
-### 2.3 Alur pencatatan yang benar
+### 2.4 Isi entry
 
-1. **Kerjakan seluruh perubahan untuk iterasi** — tidak perlu mencatat apa pun per file.
-2. **Setelah seluruh perubahan selesai** → rampungkan isi entry (poin deskripsi hasil akhir, lihat § 2.4), lalu **tetapkan tanggal & jam judul** di akhir dengan `date +"%Y/%m/%d %H:%M WITA"` (TZ=Asia/Makassar).
+- `🔖`: 1–2 kalimat pengantar tema versi (boleh menyebut teknik/struktur untuk arah), tanpa mengulang detail section; pola baiknya kalimat inti + ajakan membaca section.
+- Poin: satu baris pendek, sudut pandang user (nama fitur & perilaku), bukan kelas/method/tabel/parameter/angka internal — kecuali memengaruhi perilaku user.
+- Jangan menumpuk poin yang saling menimpa; perbarui/tulis ulang, lalu cek konsistensi (tidak boleh bertentangan/duplikat).
 
-**JANGAN:**
-- Meng-update judul setiap kali satu perubahan selesai.
-- Menulis isi/deskripsi entry per tahap kerja (hanya hasil akhir, lihat § 2.4).
+### 2.5 Entry yang di-merge
 
-### 2.3b VersionCode naik saat entry diperbarui
+- Pindah seluruhnya ke `app/src/main/assets/old-CHANGELOG.md` (dibaca aplikasi di Dokumentasi; tidak ada salinan di root). Koreksi versi lama diedit langsung di sana — pengecualian eksplisit dari aturan §2.8.
 
-- **versionCode naik +1** setiap kali entry `***ONGOING***` diperbarui (ada perubahan pada iterasi tersebut).
-- **versionCode naik +1 lagi** setiap kali status judul berubah menjadi `***PUSH***` / `***RELEASE***`.
-- Push yang tidak menutup entry **tidak** mengubah status judul; versionCode hanya naik jika entry memang diperbarui pada iterasi tersebut.
-- Yang dinaikkan **hanya versionCode**; versionName diatur aturannya sendiri (lihat § 4).
+### 2.6 Verifikasi
 
-### 2.4 Isi entry (untuk pembaca user, bukan riwayat kerja)
+- Wajib cek git log untuk status commit; wajib ambil waktu via `TZ=Asia/Makassar date` (jangan asal pilih).
 
-**Deskripsi (paragraf `🔖`) dibuat singkat sebagai pengantar versi:** beri tahu gambaran umum apa yang dibawa rilis ini (tema/intinya) dalam 1–2 kalimat.
+### 2.7 Dilarang dicatat di CHANGELOG
 
-- JANGAN mencantumkan detail yang sudah dijelaskan di tiap section perubahan (✨/🚮/♻️/🔧/🐞). Deskripsi harus mendorong pembaca membaca section yang memuat poin perubahan sebagai penjelasan utama, bukan menggantikannya.
-- Boleh menyebut teknik/struktur (mis. "Pembaruan utama rilis ini berpusat pada pemantauan baterai dan overlay bidikan") untuk memberi arah, tanpa merinci isi fiturnya.
-- Satu kalimat inti + ajakan singkat agar section di bawah tetap terbaca adalah pola yang baik.
+- Build system: `build.gradle` (root/app/`shared/*`), `settings.gradle`, `gradle.properties`, `gradle/wrapper/`, `gradlew*`, `proguard-rules.pro`, `build/`.
+- CI/signing: `.github/workflows/`, `keystore.properties`, `key/`.
+- Root/internal: `AGENTS.md`, `README.md`, `CHANGELOG.md`, `PANDUAN.md`, `STRUKTUR.md`, `_schedule/`, `_temp/`, `local.properties`.
+- Topik yang lahir dari situ (build/CI/signing/rilis, bump version, restrukturisasi internal/ganti import) juga tidak diumbar.
 
-- **Satu perubahan = satu poin, tulis hasil akhir.** Jika dirombak berkali-kali, catat kondisi final saja.
-- **Satu poin maksimal satu baris pendek.** Jika perlu lebih dari itu, biasanya detail internal harus dibuang.
-- **Tulis dari sudut pandang pembaca user:** nama fitur dan perilakunya, bukan nama kelas, method, tabel, parameter, atau angka internal.
-- **Jangan menumpuk poin yang saling menimpa** — perbarui/tulis ulang poin yang sudah ada, jangan tambah poin baru yang berkonflik.
-- **Jangan catat detail internal** (nama helper, cara polling, key prefs, dll) kecuali memengaruhi perilaku user.
-- **Cek konsistensi** sebelum selesai: tidak boleh ada poin yang bertentangan/menduplikasi dalam satu entry.
-- **Merapikan entry lama** = jangan ubah fakta; hanya gabungkan poin yang saling menimpa atau hapus jejak iterasi yang obsolete.
+### 2.8 Sumber dokumen
 
-### 2.5 Entry yang di-merge (tersimpan di old-CHANGELOG.md)
-
-- Versi yang di-merge **tidak lagi berada di CHANGELOG aktif** — keseluruhan isinya dipindah ke arsip **`old-CHANGELOG.md`** yang berada di `app/src/main/assets/` (dibaca dalam aplikasi di daftar Dokumentasi; **tidak ada salinannya di root**). Maka versi yang di-merge hanya ada di sana.
-- Jika kemudian ada perubahan yang menyangkut versi lama yang sudah di-merge, **edit langsung di `old-CHANGELOG.md`** (arsip di assets), bukan di CHANGELOG aktif.
-- ⚠️ **Penegasan §2.8:** dokumen di `app/src/main/assets/` umumnya ditimpa `syncDocs` saat build dan **jangan disentuh manual** — **kecuali diperintah secara eksplisit** (kasus khusus ini, edit `old-CHANGELOG.md` di assets, mengecualikan aturan itu).
-
-### 2.6 Verifikasi waktu & status commit
-
-- **WAJIB cek git log** untuk tahu status commit. JANGAN buat entry baru sebelum versi sebelumnya di-push.
-- **WAJIB dapat waktu WITA** via `TZ=Asia/Makassar date` — JANGAN asal pilih.
-
-### 2.7 File yang DILARANG dicatat di changelog
-
-Perubahan pada file ini tidak boleh dicatat di entry manapun (tidak boleh muncul sebagai poin deskripsi):
-
-- **Build system:** `build.gradle` (root, `app/`, module `shared/*/build.gradle`), `settings.gradle`, `gradle.properties`, `gradle/wrapper/`, `gradlew`, `gradlew.bat`, `proguard-rules.pro`, folder `build/`.
-- **CI/CD & signing:** `.github/workflows/`, `keystore.properties`, folder `key/`.
-- **Dokumen root & kerja internal:** `AGENTS.md`, `agent-rules.md`, `README.md`, `CHANGELOG.md`, `PANDUAN.md`, `STRUKTUR.md`, `_schedule/`, `_temp/`, `local.properties`.
-
-Konsekuensi: topik yang lahir dari file tersebut (bukan build/CI/signing/rilis, bump version, restrukturisasi internal/ganti import) juga tidak diumbar.
-
-### 2.8 Sumber dokumen = root (jangan sentuh assets)
-
-Perubahan pada dokumen **hanya dilakukan di file root** (`README.md`, `CHANGELOG.md`, `PANDUAN.md`, `STRUKTUR.md`), **tidak perlu & jangan menyentuh** salinannya di `app/src/main/assets/`. Saat build, task `syncDocs` (`app/build.gradle`) otomatis menimpa `assets/` dari sumber root — mengubah `assets/` manual itu sia-sia (akan tertimpa) dan hanya membuang waktu.
-
----
+- Edit dokumen hanya di root (`README.md`, `CHANGELOG.md`, `PANDUAN.md`, `STRUKTUR.md`). Salinan di `assets/` ditimpa `syncDocs` saat build — jangan disentuh manual.
 
 ## 3. Workflow
 
-### Edit Biasa
-1. Update kode — **tidak perlu mencatat per file**.
-2. Rampungkan CHANGELOG entry berjalan — isi entry (poin deskripsi hasil akhir) **setelah seluruh perubahan untuk iterasi selesai**; **tetapkan tanggal & jam judul di akhir**.
-3. Naikkan versionCode +1 saat entry diperbarui (lihat § 2.3b).
-4. Self-check hasil perubahan.
-5. **JANGAN commit / tag / push.** Kecuali perintah mencakup push/tag (lihat di bawah).
-6. Ulang sampai user perintah commit (dengan/tanpa push/tag).
+- **Edit biasa:** update kode → rampungkan entry + naikkan versionCode → self-check (`git diff`) → jangan commit/tag/push; ulang sampai perintah commit.
+- **Pre-release:** perbarui Last Updated dokumen terkait, rapikan poin CHANGELOG (§2.1b, §2.4), pastikan `ONGOING` + waktu WITA terbaru, bilang siap; tetap jangan commit/tag/push.
+- **Commit (jika diperintah):** `git add -A && git commit -m "vX.X.X deskripsi"`; status tetap `ONGOING` kecuali perintah penutupan/tag; jangan push/tag.
+- **Push (jika diperintah):** status tetap `ONGOING`, +1 versionCode bila entry diperbarui, commit lalu push.
+- **Tag (jika diperintah):** status → `RELEASE`, +1 versionCode, perbarui waktu, commit + `git tag vX.X.X` (push bila diminta); entry langsung tutup, buat entry baru `ONGOING`.
+- **Tutup entry (jika diperintah):** status → `PUSH`, +1 versionCode, perbarui waktu, commit + push; segera buat entry baru teratas `ONGOING` mengikuti format judul yang ada (`[x.xx.x]` dulu, disesuaikan saat ada perubahan).
+- **Setelah `RELEASE`:** buat entry baru `ONGOING` teratas dengan format judul sama, lalu kembali ke edit biasa.
 
-### Pre-release
-1. Periksa & perbarui dokumen yang menyangkut perubahan fitur: Last Updated `README.md`, `PANDUAN.md`, `STRUKTUR.md`, `CHANGELOG.md`.
-2. Analisa & rapikan poin-poin CHANGELOG entry berjalan — kategori sesuai natur perubahan (§ 2.1b), tulis hasil akhir, gabung poin yang menimpa (§ 2.4).
-3. Pastikan status judul `***ONGOING***` dengan tanggal & jam WITA terbaru.
-4. Bilang user siap commit/push/tag. **JANGAN commit / tag / push.**
+## 4. Catatan Komunikasi
 
-### Commit (hanya jika diperintah)
-1. `git add -A && git commit -m "vX.X.X deskripsi"`.
-2. Status judul **tetap** `***ONGOING***` — kecuali perintah mencakup penutupan entry atau tag (lihat di bawah).
-3. **JANGAN push / tag** jika tidak diperintah.
-
-### Push (commit + push)
-1. Sebelum commit: status judul **tetap `***ONGOING***`** karena entry masih berjalan untuk iterasi berikutnya; **naikkan versionCode +1** bila entry diperbarui pada iterasi ini (§ 2.3b).
-2. `git commit` lalu `git push`.
-3. Entry **tetap** menjadi entry berjalan — iterasi berikutnya tetap dicatat di entry ini.
-
-### Tag (commit + tag)
-1. Sebelum commit: ubah status judul → `***RELEASE***`, **naikkan versionCode +1** (§ 2.3b), perbarui tanggal & jam WITA.
-2. `git commit` mencakup perubahan status, lalu `git tag vX.X.X` (dan push bila diperintah).
-3. Entry berjalan **langsung ditutup**; segera buat entry baru (`***ONGOING***`) di posisinya.
-
-### Tutup entry (hanya jika diperintah)
-1. Sebelum commit: ubah status judul entry berjalan → `***PUSH***`, **naikkan versionCode +1** (§ 2.3b), perbarui tanggal & jam WITA.
-2. `git commit` mencakup perubahan status, lalu `git push`.
-3. **Segera** buat entry CHANGELOG baru (teratas, `***ONGOING***`). Ikuti format judul entry yang ada di `CHANGELOG.md` (`# [major.minor.patch] yyyy/MM/dd HH:mm WITA versionCode ***ONGOING***`); versionName cukup isi `[x.xx.x]` saat entry baru dibuat dan disesuaikan ketika sudah ada perubahan.
-4. Kembali ke Edit Biasa.
-
-### Setelah status RELEASE
-1. Entry `***RELEASE***` sudah ditutup otomatis; **segera** buat entry CHANGELOG baru (teratas, `***ONGOING***`) dengan format judul yang sama seperti di atas.
-2. Kembali ke Edit Biasa.
+- Kabar progres: ikuti §0; tawaran/pertanyaan balik: ikuti §1 poin 6.
+- Tanpa tabel markdown dan tanpa laporan section (Accomplished, Next Steps, Ringkasan, dll) di chat — langsung ke inti.
+- Jelas, manusiawi, praktis, akurat: programmer, bukan AI yang hafal seluruh ekosistem Android.
+- Bahasa Indonesia untuk thinking & respons.

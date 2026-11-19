@@ -18,6 +18,10 @@
             <action android:name="android.intent.action.MAIN"/>
             <category android:name="android.intent.category.LAUNCHER"/>
         </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:mimeType="application/vnd.android.package-archive"/>
+        </intent>
     </queries>
 
     <application
@@ -132,6 +136,14 @@
             android:name=".ui.SessionListActivity"
             android:exported="false"/>
 
+        <activity
+            android:name=".ui.AppManagerActivity"
+            android:exported="false"/>
+
+        <activity
+            android:name=".ui.AppDetailActivity"
+            android:exported="false"/>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -180,6 +192,18 @@
                 <action android:name="exp.ftxt.ACTION_TOGGLE_OVERLAY"/>
                 <action android:name="exp.ftxt.ACTION_KILL_SERVICE"/>
                 <action android:name="exp.ftxt.ACTION_OPEN_APP"/>
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".ui.AppManagerPackageReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_ADDED"/>
+                <action android:name="android.intent.action.PACKAGE_REMOVED"/>
+                <action android:name="android.intent.action.PACKAGE_REPLACED"/>
+                <data android:scheme="package"/>
             </intent-filter>
         </receiver>
 

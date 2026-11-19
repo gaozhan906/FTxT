@@ -3,7 +3,7 @@
 #
 # Pemakaian:
 #   bash _tools/env-setup.sh --check   # default: hanya cek, tidak mengubah apa pun
-#   bash _tools/env-setup.sh --fix     # perbaiki config non-destruktif + perbarui blok status di agent-rules.md
+#   bash _tools/env-setup.sh --fix     # perbaiki config non-destruktif + perbarui blok status di AGENTS.md
 #   bash _tools/env-setup.sh --prune   # --fix + hapus JDK lama & /opt/gradle (DESTRUKTIF, perlu perintah eksplisit)
 #
 # Exit code: 0 = bersih/berhasil, 1 = ada drift (mode --check) atau error.
@@ -11,7 +11,7 @@
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RULES="$ROOT/agent-rules.md"
+RULES="$ROOT/AGENTS.md"
 PROFILE="/etc/profile"
 PROFILE_BACKUP="/etc/profile.ftxt.bak"
 LOCAL_PROPS="$ROOT/local.properties"
@@ -224,7 +224,7 @@ fi
 LOCAL_DIFF=0
 cmp -s "$LOCAL_PROPS" "$LOCAL_DESIRED" 2>/dev/null || { LOCAL_DIFF=1; DRIFT=1; }
 
-# --- blok status otomatis di agent-rules.md ---
+# --- blok status otomatis di AGENTS.md ---
 STATE_BLOCK="$(tmpfile)"
 {
   printf -- '- **JDK:** `%s` (OpenJDK `%s`) di `%s`\n' "$(basename "$JDK_PATH")" "$JDK_VER" "$JDK_PATH"
@@ -250,7 +250,7 @@ if grep -q '^<!-- BEGIN FTxT-ENV-STATE' "$RULES" 2>/dev/null; then
 else
   awk -v block="$STATE_BLOCK" '
     {print}
-    /^## 3\. Environment Build/ && !done {
+    /^## 1b\. Environment build/ && !done {
       print ""
       print "<!-- BEGIN FTxT-ENV-STATE (dihasilkan _tools/env-setup.sh; jangan edit manual) -->"
       while ((getline line < block) > 0) print line
