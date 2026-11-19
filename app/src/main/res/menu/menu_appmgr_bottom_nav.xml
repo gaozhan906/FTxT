@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/appMgrNavOverview"
+        android:icon="@drawable/ic_monitor"
+        android:title="Gambaran Umum" />
+
+    <item
+        android:id="@+id/appMgrNavApps"
+        android:icon="@drawable/ic_apps"
+        android:title="Aplikasi" />
+
+</menu>

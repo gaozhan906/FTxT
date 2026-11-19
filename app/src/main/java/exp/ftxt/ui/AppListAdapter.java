@@ -6,7 +6,6 @@ import android.text.style.BackgroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -93,9 +92,8 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.Holder> 
         }
 
         final boolean checked = selected.contains(app.packageName);
-        holder.check.setOnCheckedChangeListener(null);
-        holder.check.setChecked(checked);
-        holder.check.setOnCheckedChangeListener((button, isChecked) -> toggle(app.packageName));
+        holder.check.setVisibility(checked ? View.VISIBLE : View.GONE);
+        holder.check.setOnClickListener(v -> toggle(app.packageName));
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onOpen(app);
         });
@@ -130,7 +128,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.Holder> 
     }
 
     static class Holder extends RecyclerView.ViewHolder {
-        final CheckBox check;
+        final ImageView check;
         final ImageView icon;
         final TextView name;
         final TextView meta;

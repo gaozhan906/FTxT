@@ -22,6 +22,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import rikka.shizuku.Shizuku;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -46,7 +48,9 @@ public class AppDetailActivity extends AppCompatActivity {
 
     private final Shizuku.OnRequestPermissionResultListener shizukuListener =
             (requestCode, grantResult) -> {
-                if (requestCode == SHIZUKU_REQUEST) updateShizukuButton();
+                if (requestCode == SHIZUKU_REQUEST && pagerAdapter != null) {
+                    pagerAdapter.notifyDataSetChanged();
+                }
             };
 
     private String packageName;
@@ -54,7 +58,6 @@ public class AppDetailActivity extends AppCompatActivity {
     private AppDetails.Result details;
     private int primaryColor;
     private DetailPagerAdapter pagerAdapter;
-    private TextView shizukuButton;
 
     public static void start(android.content.Context context, String packageName) {
         Intent intent = new Intent(context, AppDetailActivity.class);
@@ -73,13 +76,12 @@ public class AppDetailActivity extends AppCompatActivity {
             return;
         }
 
-        android.util.TypedArray ta = obtainStyledAttributes(
+        android.content.res.TypedArray ta = obtainStyledAttributes(
                 new int[]{android.R.attr.textColorPrimary});
         primaryColor = ta.getColor(0, android.graphics.Color.BLACK);
         ta.recycle();
 
         findViewById(R.id.appDetailBack).setOnClickListener(v -> finish());
-        shizukuButton = findViewById(R.id.appDetailForceStopShizuku);
 
         pagerAdapter = new DetailPagerAdapter();
         androidx.viewpager2.widget.ViewPager2 pager = findViewById(R.id.appDetailPager);
@@ -99,7 +101,6 @@ public class AppDetailActivity extends AppCompatActivity {
             Shizuku.addRequestPermissionResultListener(shizukuListener);
         } catch (Throwable ignored) {
         }
-        updateShizukuButton();
     }
 
     @Override
@@ -134,6 +135,7 @@ public class AppDetailActivity extends AppCompatActivity {
 
     private void bindHeader() {
         if (app == null) return;
+        ((android.widget.ImageView) findViewById(R.id.appDetailIcon)).setImageDrawable(app.icon);
         ((TextView) findViewById(R.id.appDetailName)).setText(app.label);
         ((TextView) findViewById(R.id.appDetailPkg)).setText(app.packageName);
     }
@@ -150,71 +152,38 @@ public class AppDetailActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        findViewById(R.id.appDetailUninstall).setOnClickListener(v -> {
+        findViewById(R.id.appDetailInfo).setOnClickListener(v -> {
             if (app == null) return;
-            new AlertDialog.Builder(this)
-                    .setTitle("Hapus aplikasi")
-                    .setMessage("Hapus " + app.label + "?")
-                    .setNegativeButton("Batal", null)
-                    .setPositiveButton("Hapus", (dialog, which) ->
-                            startActivity(AppActions.uninstall(app)))
-                    .show();
-        });
-
-        findViewById(R.id.appDetailShare).setOnClickListener(v -> {
-            if (app == null) return;
-            executor.execute(() -> {
-                java.util.List<AppInfo> list = new java.util.ArrayList<>();
-                list.add(app);
-                final List<android.net.Uri> uris =
-                        AppShareHelper.prepare(getApplicationContext(), list);
-                uiHandler.post(() -> {
-                    if (uris.isEmpty()) {
-                        Toast.makeText(this, "APK tidak dapat disiapkan", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    startActivity(AppShareHelper.sendIntent(this, uris));
-                });
-            });
-        });
-
-        findViewById(R.id.appDetailSettings).setOnClickListener(v -> {
-            if (app != null) startActivity(AppActions.settings(app));
-        });
-
-        findViewById(R.id.appDetailForceStop).setOnClickListener(v -> {
-            if (app == null) return;
-            Toast.makeText(this, "Paksa berhenti dibuka lewat Settings", Toast.LENGTH_SHORT).show();
             startActivity(AppActions.settings(app));
-        });
-
-        shizukuButton.setOnClickListener(v -> forceStopWithShizuku());
-
-        findViewById(R.id.appDetailClearCache).setOnClickListener(v -> {
-            if (app == null) return;
-            Toast.makeText(this, "Hapus cache dibuka lewat Settings", Toast.LENGTH_SHORT).show();
-            startActivity(AppActions.settings(app));
-        });
-
-        findViewById(R.id.appDetailClearData).setOnClickListener(v -> {
-            if (app == null) return;
-            new AlertDialog.Builder(this)
-                    .setTitle("Hapus data")
-                    .setMessage("Hapus semua data " + app.label
-                            + "? Tindakan ini tidak dapat dibatalkan.")
-                    .setNegativeButton("Batal", null)
-                    .setPositiveButton("Lanjut di Settings", (dialog, which) ->
-                            startActivity(AppActions.settings(app)))
-                    .show();
         });
     }
 
-    private void updateShizukuButton() {
-        if (shizukuButton == null) return;
-        boolean granted = ShizukuHelper.hasPermission();
-        boolean alive = ShizukuHelper.isBinderAlive();
-        shizukuButton.setText(!alive ? "Shizuku Nonaktif"
-                : granted ? "Force Stop (Shizuku)" : "Izin Shizuku");
+    private void confirmUninstallApp() {
+        if (app == null) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Hapus aplikasi")
+                .setMessage("Hapus " + app.label + "?")
+                .setNegativeButton("Batal", null)
+                .setPositiveButton("Hapus", (dialog, which) ->
+                        startActivity(AppActions.uninstall(app)))
+                .show();
+    }
+
+    private void shareApp() {
+        if (app == null) return;
+        executor.execute(() -> {
+            java.util.List<AppInfo> list = new java.util.ArrayList<>();
+            list.add(app);
+            final List<android.net.Uri> uris =
+                    AppShareHelper.prepare(getApplicationContext(), list);
+            uiHandler.post(() -> {
+                if (uris.isEmpty()) {
+                    Toast.makeText(this, "APK tidak dapat disiapkan", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                startActivity(AppShareHelper.sendIntent(this, uris));
+            });
+        });
     }
 
     private void forceStopWithShizuku() {
@@ -322,6 +291,11 @@ public class AppDetailActivity extends AppCompatActivity {
         addLine(container, "Process: " + app.processName);
         addLine(container, "APK: " + app.sourceDir);
         addLine(container, "Data: " + app.dataDir);
+
+        addHeader(container, "Aksi");
+        addActionRow(container, "Bagikan APK", v -> shareApp());
+        addActionRow(container, "Hapus aplikasi", v -> confirmUninstallApp());
+        addActionRow(container, shizukuActionLabel(), v -> forceStopWithShizuku());
     }
 
     private void renderSize(LinearLayout container) {
@@ -424,6 +398,22 @@ public class AppDetailActivity extends AppCompatActivity {
         view.setTextColor(primaryColor);
         view.setPadding(0, dp(3), 0, dp(3));
         container.addView(view);
+    }
+
+    private void addActionRow(LinearLayout container, String text, View.OnClickListener listener) {
+        TextView view = new TextView(this);
+        view.setText("› " + text);
+        view.setTextSize(13);
+        view.setTextColor(getColor(R.color.usage_accent));
+        view.setPadding(0, dp(6), 0, dp(6));
+        view.setOnClickListener(listener);
+        container.addView(view);
+    }
+
+    private String shizukuActionLabel() {
+        if (!ShizukuHelper.isBinderAlive()) return "Shizuku tidak aktif";
+        return ShizukuHelper.hasPermission()
+                ? "Paksa berhenti (Shizuku)" : "Izin Shizuku";
     }
 
     private String date(long millis) {

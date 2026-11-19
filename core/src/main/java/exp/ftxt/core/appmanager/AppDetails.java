@@ -130,7 +130,7 @@ public final class AppDetails {
         if (base == PermissionInfo.PROTECTION_DANGEROUS) return "Dangerous";
         if (base == PermissionInfo.PROTECTION_NORMAL) return "Normal";
         if (base == PermissionInfo.PROTECTION_SIGNATURE) return "Signature";
-        if (base == PermissionInfo.PROTECTION_SIGNATURE_OR_SIGNATURE) {
+        if (base == PermissionInfo.PROTECTION_SIGNATURE_OR_SYSTEM) {
             return "Signature/Privileged";
         }
         return "Lainnya";

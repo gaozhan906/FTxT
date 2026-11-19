@@ -4,55 +4,74 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="8dp"
-    android:paddingEnd="10dp"
-    android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:background="@drawable/appmgr_item_bg"
+    android:layout_marginStart="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:padding="12dp"
+    android:minHeight="72dp">
 
-    <CheckBox
-        android:id="@+id/itemAppCheck"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minWidth="36dp"
-        android:contentDescription="Pilih aplikasi"/>
+    <FrameLayout
+        android:layout_width="56dp"
+        android:layout_height="56dp">
 
-    <ImageView
-        android:id="@+id/itemAppIcon"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:contentDescription="Ikon aplikasi"/>
+        <ImageView
+            android:id="@+id/itemAppIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:contentDescription="Ikon aplikasi" />
+
+        <ImageView
+            android:id="@+id/itemAppCheck"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="end|bottom"
+            android:src="@drawable/appmgr_badge_check"
+            android:contentDescription="Pilih aplikasi"
+            android:visibility="gone" />
+
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="12dp"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/itemAppName"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textStyle="bold"
-            android:singleLine="true"/>
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textColor="?android:attr/textColorPrimary" />
 
         <TextView
             android:id="@+id/itemAppMeta"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
+            android:textSize="12sp"
             android:singleLine="true"
-            android:textColor="@color/bat_monitor_label"/>
+            android:ellipsize="end"
+            android:textColor="@color/appmgr_label" />
 
         <TextView
             android:id="@+id/itemAppBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:textColor="@color/bat_monitor_active"
-            android:visibility="gone"/>
+            android:textColor="@color/white"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:background="@drawable/appmgr_tag_bg"
+            android:visibility="gone" />
 
     </LinearLayout>
 

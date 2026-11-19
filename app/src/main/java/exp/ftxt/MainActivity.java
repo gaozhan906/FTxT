@@ -71,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         "{\"id\":\"navClock\",\"l\":\"Clock Module\"}," +
         "{\"id\":\"navCrosshair\",\"l\":\"Crosshair\"}," +
         "{\"id\":\"navMemory\",\"l\":\"Info Memori\"}," +
+        "{\"id\":\"navAppManager\",\"l\":\"App Manager\"}," +
         "{\"id\":\"navLogo\",\"l\":\"Logo Display (coming soon)\"}," +
         "{\"id\":\"navColorPicker\",\"l\":\"Color Picker\"}," +
         "{\"id\":\"navDebuging\",\"l\":\"Debugging\"}]";
@@ -384,7 +385,6 @@ public class MainActivity extends AppCompatActivity {
         popup.getMenu().add("Muat Preset");
         popup.getMenu().add("Konfigurasi");
         popup.getMenu().add("Dokumentasi");
-        popup.getMenu().add("App Manager");
         popup.getMenu().add("Tentang Aplikasi");
         popup.setOnMenuItemClickListener(item -> {
             String title = item.getTitle().toString();
@@ -396,8 +396,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, SettingsActivity.class));
             } else if (title.equals("Dokumentasi")) {
                 startActivity(new Intent(this, DocumentationActivity.class));
-            } else if (title.equals("App Manager")) {
-                startActivity(new Intent(this, AppManagerActivity.class));
             } else if (title.equals("Tentang Aplikasi")) {
                 startActivity(new Intent(this, AboutActivity.class));
             }
@@ -624,6 +622,7 @@ public class MainActivity extends AppCompatActivity {
             case "navClock": return R.drawable.ic_schedule;
             case "navCrosshair": return R.drawable.ic_crosshair;
             case "navMemory": return R.drawable.ic_memory;
+            case "navAppManager": return R.drawable.ic_apps;
             case "navLogo": return R.drawable.ic_image;
             case "navColorPicker": return R.drawable.ic_palette;
             case "navDebuging": return R.drawable.ic_build;
@@ -672,6 +671,12 @@ public class MainActivity extends AppCompatActivity {
                 textView = tv;
                 tv.setOnClickListener(v -> {
                     int itemId = v.getId();
+                    if (itemId == R.id.navAppManager) {
+                        AppManagerActivity.start(MainActivity.this);
+                        DrawerLayout drawer = findViewById(R.id.drawerLayout);
+                        drawer.closeDrawers();
+                        return;
+                    }
                     updateNavSelection(itemId);
                     getSharedPreferences("ftxt_prefs", MODE_PRIVATE)
                             .edit().putInt("nav_selected_item", itemId).apply();

@@ -6,9 +6,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -21,6 +21,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 
 import java.io.File;
@@ -36,6 +39,7 @@ import exp.ftxt.R;
 import exp.ftxt.core.appmanager.AppActions;
 import exp.ftxt.core.appmanager.AppInfo;
 import exp.ftxt.core.appmanager.InstalledApps;
+import exp.ftxt.features.gamefps.reader.ShizukuHelper;
 
 public class AppManagerActivity extends AppCompatActivity {
     private static final String[] SORTS = {
@@ -56,16 +60,29 @@ public class AppManagerActivity extends AppCompatActivity {
     private InstalledApps apps;
     private AppListAdapter adapter;
     private EditText search;
-    private ChipGroup filters;
-    private Spinner sortSpinner;
     private Spinner categorySpinner;
     private TextView countText;
+    private TextView countBadge;
+    private TextView emptyView;
+    private View clearButton;
     private LinearLayout actionBar;
     private ProgressBar loading;
     private long filterVersion;
     private boolean resumedOnce;
+    private String selectedCategory = "Semua";
+    private int currentFilterId = R.id.appMgrChipAll;
+    private int currentSort = 0;
+
+    private BottomNavigationView bottomNav;
+    private View tabOverview;
+    private View tabApps;
+    private TextView overviewStats;
+    private ChipGroup tagChips;
+    private TextView shizukuStatus;
+    private int currentTabId = R.id.appMgrNavOverview;
 
     public static void start(android.content.Context context) {
+        InstalledApps.init(context);
         context.startActivity(new Intent(context, AppManagerActivity.class));
     }
 
@@ -77,19 +94,30 @@ public class AppManagerActivity extends AppCompatActivity {
         InstalledApps.init(getApplicationContext());
         apps = InstalledApps.get();
 
+        countBadge = findViewById(R.id.appMgrCount);
+        overviewStats = findViewById(R.id.appMgrOverviewStats);
+        tagChips = findViewById(R.id.appMgrTagChips);
+        shizukuStatus = findViewById(R.id.appMgrShizukuStatus);
+
+        bottomNav = findViewById(R.id.appMgrBottomNav);
+        tabOverview = findViewById(R.id.appMgrTabOverview);
+        tabApps = findViewById(R.id.appMgrTabApps);
+
         search = findViewById(R.id.appMgrSearch);
-        filters = findViewById(R.id.appMgrFilters);
-        sortSpinner = findViewById(R.id.appMgrSort);
-        categorySpinner = findViewById(R.id.appMgrCategory);
         countText = findViewById(R.id.appMgrSelectedCount);
+        emptyView = findViewById(R.id.appMgrEmpty);
+        clearButton = findViewById(R.id.appMgrClearSearch);
         actionBar = findViewById(R.id.appMgrActionBar);
         loading = findViewById(R.id.appMgrLoading);
 
         findViewById(R.id.appMgrBack).setOnClickListener(v -> finish());
-
-        setupSpinners();
-        setupSearch();
-        setupFilters();
+        clearButton.setOnClickListener(v -> search.setText(""));
+        findViewById(R.id.appMgrFilterButton).setOnClickListener(v -> showFilterSheet());
+        findViewById(R.id.appMgrOpenOverviewApps).setOnClickListener(v ->
+                bottomNav.setSelectedItemId(R.id.appMgrNavApps));
+        findViewById(R.id.appMgrActionCancel).setOnClickListener(v -> adapter.clearSelection());
+        findViewById(R.id.appMgrActionUninstall).setOnClickListener(v -> confirmUninstall());
+        findViewById(R.id.appMgrActionShare).setOnClickListener(v -> shareSelected());
 
         adapter = new AppListAdapter(new AppListAdapter.Listener() {
             @Override
@@ -107,10 +135,9 @@ public class AppManagerActivity extends AppCompatActivity {
         recycler.setLayoutManager(new LinearLayoutManager(this));
         recycler.setAdapter(adapter);
 
-        findViewById(R.id.appMgrActionCancel).setOnClickListener(v -> adapter.clearSelection());
-        findViewById(R.id.appMgrActionUninstall).setOnClickListener(v -> confirmUninstall());
-        findViewById(R.id.appMgrActionShare).setOnClickListener(v -> shareSelected());
-
+        setupBottomNav();
+        setupSearch();
+        setupTagChips();
         loadApps();
     }
 
@@ -121,67 +148,85 @@ public class AppManagerActivity extends AppCompatActivity {
         resumedOnce = true;
     }
 
-    private void setupSpinners() {
-        ArrayAdapter<String> sortAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item, SORTS);
-        sortAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sortSpinner.setAdapter(sortAdapter);
-        sortSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(android.widget.AdapterView<?> parent, View view,
-                                       int position, long id) {
-                if (position == SORTS.length - 1) {
-                    Toast.makeText(AppManagerActivity.this,
-                            "Data use belum tersedia di perangkat ini", Toast.LENGTH_SHORT).show();
-                }
-                applyFilters();
+    private void setupBottomNav() {
+        bottomNav.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.appMgrNavOverview) {
+                showTab(tabOverview);
+                updateOverview();
+            } else {
+                showTab(tabApps);
             }
-
-            @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {
-            }
+            currentTabId = id;
+            return true;
         });
-        setCategoryAdapter();
+        showTab(tabOverview);
+        updateOverview();
     }
 
-    private void setCategoryAdapter() {
-        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                apps == null ? new String[]{"Semua"} : apps.allCategories());
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        categorySpinner.setAdapter(categoryAdapter);
-        categorySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(android.widget.AdapterView<?> parent, View view,
-                                       int position, long id) {
-                applyFilters();
-            }
+    private void showTab(View tab) {
+        tabOverview.setVisibility(tab == tabOverview ? View.VISIBLE : View.GONE);
+        tabApps.setVisibility(tab == tabApps ? View.VISIBLE : View.GONE);
+    }
 
-            @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) {
-            }
-        });
+    private void refreshCurrentTab() {
+        if (currentTabId == R.id.appMgrNavOverview) updateOverview();
+    }
+
+    private void updateOverview() {
+        if (apps == null) return;
+        int total = apps.snapshot().size();
+        int user = 0;
+        int system = 0;
+        int recent = 0;
+        Set<String> active = apps.getRecentlyActive();
+        for (AppInfo app : apps.snapshot()) {
+            if (app.system) system++;
+            else user++;
+            if (active.contains(app.packageName)) recent++;
+        }
+        overviewStats.setText("Total aplikasi: " + total
+                + "\nAplikasi pengguna: " + user
+                + "\nAplikasi sistem: " + system
+                + "\nAktif baru saja: " + recent
+                + "\nKategori: " + Math.max(0, apps.allCategories().size() - 1));
+        boolean alive = ShizukuHelper.isBinderAlive();
+        boolean granted = ShizukuHelper.hasPermission();
+        shizukuStatus.setText(!alive ? "Shizuku: tidak aktif"
+                : granted ? "Shizuku: aktif dan diizinkan" : "Shizuku: aktif, izin belum diberikan");
+    }
+
+    private void setupTagChips() {
+        if (apps == null) return;
+        tagChips.removeAllViews();
+        for (final String category : apps.allCategories()) {
+            Chip chip = new Chip(this);
+            chip.setText(category);
+            chip.setCheckable(true);
+            chip.setChecked(category.equals(selectedCategory));
+            chip.setOnClickListener(v -> {
+                selectedCategory = category;
+                if (categorySpinner != null) {
+                    List<String> categories = apps == null
+                            ? Collections.singletonList("Semua") : apps.allCategories();
+                    int position = categories.indexOf(category);
+                    if (position >= 0) categorySpinner.setSelection(position);
+                }
+                applyFilters();
+            });
+            tagChips.addView(chip);
+        }
     }
 
     private void setupSearch() {
         search.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
+            @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
+            @Override public void onTextChanged(CharSequence s, int a, int b, int c) {
+                clearButton.setVisibility(s == null || s.length() == 0 ? View.GONE : View.VISIBLE);
                 applyFilters();
             }
+            @Override public void afterTextChanged(Editable s) { }
         });
-    }
-
-    private void setupFilters() {
-        filters.setOnCheckedChangeListener((group, checkedId) -> applyFilters());
     }
 
     private void loadApps() {
@@ -190,9 +235,11 @@ public class AppManagerActivity extends AppCompatActivity {
             final List<AppInfo> refreshed = apps.refresh();
             uiHandler.post(() -> {
                 loading.setVisibility(View.GONE);
-                setCategoryAdapter();
+                countBadge.setText(refreshed.size() + " aplikasi");
                 adapter.setApps(refreshed);
+                setupTagChips();
                 applyFilters();
+                refreshCurrentTab();
             });
         });
     }
@@ -200,10 +247,9 @@ public class AppManagerActivity extends AppCompatActivity {
     private void applyFilters() {
         final long version = ++filterVersion;
         final String query = search.getText().toString().trim().toLowerCase(Locale.US);
-        final int filter = filterOf(filters.getCheckedChipId());
-        final int sort = sortSpinner.getSelectedItemPosition();
-        final Object categoryObj = categorySpinner.getSelectedItem();
-        final String category = categoryObj == null ? "Semua" : categoryObj.toString();
+        final int filter = filterOf(currentFilterId);
+        final int sort = currentSort;
+        final String category = selectedCategory;
 
         executor.execute(() -> {
             List<AppInfo> result = new ArrayList<>();
@@ -223,9 +269,56 @@ public class AppManagerActivity extends AppCompatActivity {
             uiHandler.post(() -> {
                 adapter.setQuery(query);
                 adapter.setApps(finalList);
+                emptyView.setVisibility(finalList.isEmpty() ? View.VISIBLE : View.GONE);
                 countText.setText(adapter.getSelected().size() + " dipilih");
             });
         });
+    }
+
+    private void showFilterSheet() {
+        View sheet = LayoutInflater.from(this).inflate(R.layout.dialog_appmgr_filter, null);
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        dialog.setContentView(sheet);
+
+        ChipGroup filterGroup = sheet.findViewById(R.id.appMgrFilters);
+        ChipGroup sortGroup = sheet.findViewById(R.id.appMgrSortChips);
+        filterGroup.check(currentFilterId);
+        sortGroup.check(sortChipId(currentSort));
+
+        sheet.findViewById(R.id.appMgrFilterClose).setOnClickListener(v -> dialog.dismiss());
+        filterGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == View.NO_ID) return;
+            currentFilterId = checkedId;
+            applyFilters();
+        });
+        sortGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            currentSort = sortIndexOf(checkedId);
+            if (currentSort == SORTS.length - 1) {
+                Toast.makeText(this, "Data use belum tersedia di perangkat ini", Toast.LENGTH_SHORT).show();
+            }
+            applyFilters();
+        });
+
+        final List<String> categories = apps == null
+                ? Collections.singletonList("Semua") : apps.allCategories();
+        categorySpinner = sheet.findViewById(R.id.appMgrCategory);
+        ArrayAdapter<String> categoryAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_item, categories);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(categoryAdapter);
+        int categoryPosition = categories.indexOf(selectedCategory);
+        if (categoryPosition >= 0) categorySpinner.setSelection(categoryPosition);
+        categorySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                selectedCategory = categories.get(position);
+                applyFilters();
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+        });
+        dialog.show();
     }
 
     private int filterOf(int checkedId) {
@@ -252,6 +345,28 @@ public class AppManagerActivity extends AppCompatActivity {
             default:
                 return true;
         }
+    }
+
+    private int sortChipId(int index) {
+        switch (index) {
+            case 1: return R.id.appMgrSortName;
+            case 2: return R.id.appMgrSortSize;
+            case 3: return R.id.appMgrSortOpened;
+            case 4: return R.id.appMgrSortUsed;
+            case 5: return R.id.appMgrSortScreen;
+            case 6: return R.id.appMgrSortData;
+            default: return R.id.appMgrSortInstall;
+        }
+    }
+
+    private int sortIndexOf(int chipId) {
+        if (chipId == R.id.appMgrSortName) return 1;
+        if (chipId == R.id.appMgrSortSize) return 2;
+        if (chipId == R.id.appMgrSortOpened) return 3;
+        if (chipId == R.id.appMgrSortUsed) return 4;
+        if (chipId == R.id.appMgrSortScreen) return 5;
+        if (chipId == R.id.appMgrSortData) return 6;
+        return 0;
     }
 
     private void sortApps(List<AppInfo> list, int sort) {

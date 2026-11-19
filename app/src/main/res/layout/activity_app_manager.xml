@@ -11,36 +11,32 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@color/bat_monitor_card"
+        android:background="@color/appmgr_card"
         android:elevation="4dp"
-        android:paddingStart="4dp"
+        android:paddingStart="6dp"
         android:paddingEnd="14dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
-        <TextView
+        <ImageButton
             android:id="@+id/appMgrBack"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="←"
-            android:textSize="22sp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:padding="8dp"
-            android:clickable="true"
-            android:focusable="true"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:src="@drawable/ic_arrow_left"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Kembali"/>
+            android:contentDescription="Kembali"
+            app:tint="@color/appmgr_label" />
 
         <TextView
             android:id="@+id/appMgrTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"
+            android:layout_marginStart="4dp"
             android:text="App Manager"
-            android:textSize="17sp"
+            android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/bat_monitor_header"/>
+            android:textColor="?android:attr/textColorPrimary" />
 
         <TextView
             android:id="@+id/appMgrCount"
@@ -49,157 +45,9 @@
             android:textSize="11sp"
             android:textStyle="bold"
             android:textColor="@color/white"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:background="@drawable/bat_badge_active_bg"/>
-
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/appMgrSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:layout_marginTop="10dp"
-        android:hint="Cari nama atau package aplikasi"
-        android:inputType="text"
-        android:singleLine="true"
-        android:textSize="14sp"
-        android:padding="10dp"
-        android:background="@color/bat_monitor_card"/>
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="8dp">
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/appMgrFilters"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:selectionRequired="true">
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipAll"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Semua"
-                android:checked="true"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipUser"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipRunning"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Berjalan"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipSystem"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sistem"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChip32"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="32Bit"/>
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChip64"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="64Bit"/>
-
-        </com.google.android.material.chip.ChipGroup>
-    </HorizontalScrollView>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp">
-
-        <Spinner
-            android:id="@+id/appMgrSort"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="40dp"/>
-
-        <Spinner
-            android:id="@+id/appMgrCategory"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:minHeight="40dp"
-            android:layout_marginStart="8dp"/>
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/appMgrActionBar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/usage_accent_track"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:visibility="gone">
-
-        <TextView
-            android:id="@+id/appMgrSelectedCount"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="0 dipilih"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="@color/usage_accent"/>
-
-        <Button
-            android:id="@+id/appMgrActionUninstall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hapus"
-            android:textSize="12sp"/>
-
-        <Button
-            android:id="@+id/appMgrActionShare"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bagikan"
-            android:textSize="12sp"/>
-
-        <Button
-            android:id="@+id/appMgrActionCancel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Batal"
-            android:textSize="12sp"/>
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:background="@drawable/appmgr_tag_bg" />
 
     </LinearLayout>
 
@@ -208,19 +56,252 @@
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <ProgressBar
-            android:id="@+id/appMgrLoading"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/appMgrRecycler"
+        <ScrollView
+            android:id="@+id/appMgrTabOverview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scrollbars="vertical"/>
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Gambaran Umum"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:id="@+id/appMgrOverviewStats"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/appmgr_item_bg"
+                    android:padding="16dp"
+                    android:text="Memuat data aplikasi…"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="6dp"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:id="@+id/appMgrShizukuStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/appmgr_item_bg"
+                    android:padding="16dp"
+                    android:textSize="14sp"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/appMgrOpenOverviewApps"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Lihat semua aplikasi"
+                    app:icon="@drawable/ic_apps"
+                    app:iconTint="@color/appmgr_accent" />
+
+            </LinearLayout>
+        </ScrollView>
+
+        <LinearLayout
+            android:id="@+id/appMgrTabApps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/appmgr_search_bg">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_appmgr_search"
+                    android:scaleType="center"
+                    android:contentDescription="Cari"
+                    app:tint="@color/appmgr_label" />
+
+                <EditText
+                    android:id="@+id/appMgrSearch"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:hint="Cari nama atau package aplikasi"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:imeOptions="actionSearch"
+                    android:textSize="14sp"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textColorHint="@color/appmgr_label" />
+
+                <ImageButton
+                    android:id="@+id/appMgrClearSearch"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_appmgr_close"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Hapus teks"
+                    android:visibility="gone"
+                    app:tint="@color/appmgr_label" />
+
+                <ImageButton
+                    android:id="@+id/appMgrFilterButton"
+                    android:layout_width="44dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/ic_appmgr_filter"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Filter dan urutkan"
+                    app:tint="@color/appmgr_label" />
+
+            </LinearLayout>
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginTop="8dp">
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/appMgrTagChips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:singleSelection="true"
+                    app:selectionRequired="true" />
+
+            </HorizontalScrollView>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <ProgressBar
+                    android:id="@+id/appMgrLoading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/appMgrEmpty"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="Tidak ada aplikasi yang cocok"
+                    android:textSize="14sp"
+                    android:textColor="@color/appmgr_label"
+                    android:visibility="gone" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/appMgrRecycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:scrollbars="vertical" />
+
+            </FrameLayout>
+
+            <LinearLayout
+                android:id="@+id/appMgrActionBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@color/appmgr_card"
+                android:elevation="4dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/appMgrSelectedCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="0 dipilih"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/appmgr_accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/appMgrActionCancel"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Batal"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_appmgr_close"
+                    app:iconGravity="top"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/appmgr_accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/appMgrActionShare"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bagikan"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_apps"
+                    app:iconGravity="top"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/appmgr_accent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/appMgrActionUninstall"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hapus"
+                    android:textSize="12sp"
+                    app:icon="@drawable/ic_exit"
+                    app:iconGravity="top"
+                    app:iconSize="22dp"
+                    app:iconTint="@color/appmgr_accent" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
     </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/appMgrBottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="45dp"
+        app:menu="@menu/menu_appmgr_bottom_nav"
+        app:labelVisibilityMode="labeled"
+        app:itemIconSize="18dp"
+        app:itemTextAppearance="@style/AppMgrNavTextAppearance"
+        app:itemTextColor="@color/appmgr_nav_item_color"
+        app:itemIconTint="@color/appmgr_nav_item_color"
+        app:itemPaddingTop="1dp"
+        app:itemPaddingBottom="2dp"
+        app:itemActiveIndicatorStyle="@style/AppMgrNavActiveIndicator" />
 
 </LinearLayout>

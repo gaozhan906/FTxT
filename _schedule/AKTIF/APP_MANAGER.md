@@ -14,6 +14,7 @@ Yang dijadikan acuan:
 
 - Sumber daftar `PackageManager.getInstalledPackages(0)`, diperkaya `LauncherApps` dan receiver package.
 - Filter 6 kriteria, sort 7 kriteria, pencarian dengan highlight, chip New/Updated.
+- Bottom navigation dua tab (Gambaran Umum, Aplikasi) mengikuti pola `BottomNavigationView` di panel Battery Info; kategori dan pengaturan tidak dijadikan tab tersendiri.
 - Multi-select dengan action bar + konfirmasi untuk aksi massal.
 - Halaman detail bertab: info, ukuran, izin, special access, komponen, sertifikat, grafis, pemakaian.
 - Aksi aman lewat API public: buka, uninstall, bagikan APK, buka Settings.
@@ -65,7 +66,7 @@ Field berat tidak dimuat saat daftar dibuka. `AppInfo` tetap ringan: paket, labe
 
 - Kategori otomatis (Games, Social, News, Tools, dll) dari nama/package, dengan opsi ubah manual oleh user.
 - Disimpan sebagai preferensi di `ftxt_prefs` (package → kategori), tanpa tabel database baru.
-- Bisa difilter dari halaman daftar; bukan bookmark/favorite klasik (acuan tidak memilikinya).
+- Bisa difilter dari chip kategori di tab Aplikasi; bukan bookmark/favorite klasik (acuan tidak memilikinya).
 
 ---
 
@@ -97,7 +98,7 @@ App Manager **bukan overlay**: tidak masuk `SmartPanelRegistry`, tidak punya `Ov
 | `app/src/main/java/exp/ftxt/ui/AppManagerPackageReceiver.java` | Invalidasi cache saat paket berubah |
 | `app/src/main/res/layout/activity_app_manager.xml`, `activity_app_detail.xml`, `item_app.xml`, `item_detail_page.xml` | Layout daftar, detail, item, dan halaman tab |
 | `app/src/main/AndroidManifest.xml` | Registrasi 2 activity + receiver, perluasan `<queries>` |
-| `app/src/main/java/exp/ftxt/MainActivity.java` | Menu "App Manager" di `showSettingsPopup()` |
+| `app/src/main/java/exp/ftxt/MainActivity.java` | Entri "App Manager" di sidebar navigasi `DrawerLayout` |
 | `_schedule/RENCANA/APP_RUNNER.md` | Path helper bersama sudah disinkronkan |
 
 Catatan: helper/shell Shizuku berada di `app` (`exp.ftxt.features.gamefps.reader`), bukan `core`. Karena itu `AppActions` di `core` hanya membuat intent; eksekusi `am force-stop` tetap dipanggil dari `app`.
@@ -106,10 +107,11 @@ Catatan: helper/shell Shizuku berada di `app` (`exp.ftxt.features.gamefps.reader
 
 ## 5. UI/UX
 
-- Daftar: `Toolbar`, kolom pencarian, chip filter, dropdown sort, RecyclerView dengan ikon/nama/kategori/versi/waktu update, action bar saat multi-select; ukuran ditampilkan di tab detail.
-- Detail: header ikon + nama + versi, lalu tab ringan. Tab lanjutan dan pemakaian dimuat saat dibuka agar halaman awal tetap cepat.
-- Konfirmasi: uninstall, uninstall massal (tampilkan jumlah), clear data. Force stop/clear cache cukup pesan bahwa akan membuka Settings.
-- Entry point: menu popup `MainActivity.showSettingsPopup()`; tombol kembali manual `finish()` seperti halaman non-overlay lain.
+- Bottom nav dua tab: Gambaran Umum (hitung aplikasi pengguna/sistem/aktif per kategori + status Shizuku) dan Aplikasi (daftar utama). Pola show/hide container mengikuti `BatteryPanelFragment`; tab Kategori dan Pengaturan dihapus.
+- Daftar: header + kolom pencarian berbentuk pill, chip kategori di bawah pencarian, tombol filter membuka bottom sheet Filter & Urutkan, RecyclerView dengan ikon/nama/metadata, badge New/Updated, tanda pilih berbentuk centang, dan action bar saat multi-select; ukuran ditampilkan di tab detail.
+- Detail: header ikon + nama + package + satu tombol "Info Aplikasi", tab ringan, dan FAB "Buka"; tidak ada bar aksi bawah. Bagikan APK, Hapus, dan Shizuku dipindah ke seksi Aksi pada tab Info. Tab lanjutan dan pemakaian dimuat saat dibuka agar halaman awal tetap cepat.
+- Konfirmasi: uninstall, uninstall massal (tampilkan jumlah), clear data lewat "Info Aplikasi". Force stop/clear cache tidak lagi punya tombol sendiri.
+- Entry point: sidebar navigasi `MainActivity`; tombol kembali manual `finish()` seperti halaman non-overlay lain. Bottom nav hanya di halaman daftar, detail tetap memakai tombol kembali.
 
 ---
 
@@ -133,7 +135,7 @@ Catatan: helper/shell Shizuku berada di `app` (`exp.ftxt.features.gamefps.reader
 
 Tanpa Fase 3 (App Manager mandiri): ≈15–21 jam. Angka ini menggantikan estimasi lama 13–19 jam yang belum menghitung cache/invalidasi, uji visibility, dan integrasi.
 
-Aktual per 2026/11/19: Fase 1–2 selesai; tag/kategori dan opsi Shizuku sudah ada, integrasi supervisor App Runner dan uji ROM belum dikerjakan.
+Aktual per 2026/11/19: Fase 1–2 selesai; tag/kategori dan opsi Shizuku sudah ada, tampilan daftar memakai bottom nav dua tab dengan kategori di dalam tab Aplikasi, detail memakai satu akses "Info Aplikasi" di header, integrasi supervisor App Runner dan uji ROM belum dikerjakan.
 
 ---
 

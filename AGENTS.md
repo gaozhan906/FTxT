@@ -4,15 +4,36 @@
 
 ## 0. Kabar Progres (Prioritas Tinggi)
 
-Jaga pengguna memahami keadaan kerja lewat laporan relevan, bukan narasi tiap tindakan.
+Jaga pengguna memahami keadaan kerja lewat laporan relevan, bukan narasi tiap tindakan. Kabar ini **wajib**, bukan tambahan opsional: pengguna mengawasi jalannya kerja, bukan hanya hasil akhir.
 
-- **Laporkan hal penting:** kondisi awal pekerjaan besar, temuan yang mengubah rencana, perubahan berisiko, perpindahan tahap, kendala, kebutuhan keputusan pengguna, hasil akhir.
-- **Pilih waktu sendiri:** sampaikan begitu informasi baru memengaruhi pemahaman, keputusan, atau ekspektasi; jangan tunggu diminta, dan jangan bekerja dalam diam melewati tahap penting.
-- **Jaga kesinambungan:** sebelum mengedit ulang bagian yang pernah diubah, periksa kondisi terkininya. Bila perubahan tertimpa/hilang tanpa disadari, laporkan jelas.
-- **Hindari laporan sepele:** jangan laporkan tiap tool call, pencarian, pembacaan file, atau tindakan rutin tanpa informasi penting.
-- **Kalimat efisien:** keadaan/temuan/perubahan + dampaknya; cukup untuk konteks, tidak berlebihan.
-- Tanpa label kaku ("Sitrep", "Status", "Progress Update"); daftar hanya bila perlu atau diminta.
-- **Filter:** informasi baru, memengaruhi keputusan, atau bisa membuat pengguna salah paham bila tidak disampaikan → laporkan. Jika tidak → lanjut kerja.
+### Wajib dikabar segera, sebelum lanjut
+
+- **Arah/keputusan baru:** begitu instruksi mengubah rencana yang sudah berjalan, sampaikan pemahaman + arah baru + cakupan yang terkena (contoh: bottom nav yang semula tidak ditiru lalu diminta dipakai).
+- **Temuan yang menyentuh kode:** asumsi yang ternyata salah (kelas/API/konstanta tidak ada, pola modul berbeda, file hilang di luar perintah) → laporkan temuan, dampak, dan tindakan sebelum mengubah banyak file.
+- **Risiko regresi:** sebelum atau saat menimpa logika lama, sebut bagian yang bisa berubah; bandingkan dengan `HEAD`/kondisi sebelumnya, lalu laporkan bila ada perilaku lama yang perlu dikembalikan.
+- **Perpindahan tahap:** analisis → aset → layout → wiring Java → dokumen/versi → verifikasi; tiap perpindahan cukup satu kalimat.
+- **Kendala dan kegagalan:** error build/test, tool tidak tersedia, atau verifikasi gagal → laporkan error ringkas + dugaan penyebab + rencana, lalu laporkan hasil perbaikannya. Jangan memperbaiki sambil diam.
+- **Kebutuhan keputusan/blokir:** bila ada pilihan berdampak yang tidak bisa ditebak, tanya sesuai §1.3; bila tidak ada, sebut asumsi dan lanjut.
+- **Kondisi awal dan hasil akhir:** ringkas kondisi saat menerima pekerjaan besar dan kondisi akhir saat selesai.
+
+### Cara menyampaikan
+
+- Sisipkan satu pesan teks di antara tool calls saat memasuki tahap baru atau menemukan hal di atas; jangan menimbun sampai akhir.
+- Urutan: **keadaan/temuan → dampak → tindakan/keputusan**. Tambahkan pertanyaan hanya bila benar-benar diperlukan.
+- Kalimat efisien dan manusiawi; cukup untuk konteks, tidak berlebihan. Daftar hanya bila perlu.
+- Tanpa label atau embel-embel di awal kalimat ("Sitrep", "Status", "Progress Update", "Kabar:"); tanpa tabel markdown di chat.
+- Sebelum mengedit ulang bagian yang pernah disentuh, periksa kondisi terkininya. Bila perubahan tertimpa/hilang tanpa disadari, laporkan jelas.
+- Kabar bukan permisi: aturan commit/push/tag/build/destruktif di §1 dan §1b tetap berlaku.
+- Hindari laporan sepele: jangan laporkan tiap tool call, pencarian, pembacaan file, atau tindakan rutin tanpa informasi penting.
+- **Filter akhir:** informasi baru, mengubah keputusan/ekspektasi, atau bisa membuat pengguna salah paham bila tidak disampaikan → laporkan. Jika tidak → lanjut kerja.
+
+### Kenapa wajib dipatuhi
+
+- Pengguna tidak melihat tool call maupun layar kerja; tanpa kabar, mereka tidak bisa mengawasi arah, menangkap asumsi yang melenceng, atau menghentikan pekerjaan sebelum terlalu jauh.
+- Kesalahan yang baru ketemu di akhir menumpuk: biaya perbaikannya naik, perubahan lama dan baru sulit dibedakan, dan regresi fitur yang sudah ada lebih mudah lolos (contoh kasus: konstanta filter, `AppShareHelper`, reload `onResume`).
+- Kabar di tengah memberi pengguna kesempatan mengoreksi sebelum agent mengubah banyak file; ini mekanisme pengaman, bukan sekadar etiket.
+- Mencegah agent bekerja diam melewati tahap penting, mengabaikan aturan §1, atau mengira pekerjaan sudah sesuai padahal arahnya berubah.
+- Hasil akhir yang benar tidak cukup jika prosesnya tidak bisa diawasi; kepercayaan kerja bergantung pada kabar yang tepat waktu.
 
 ## 1. Perilaku Kerja & Aturan Universal
 

@@ -83,4 +83,12 @@
     <color name="usage_donut_6">#4DD0E1</color>
     <color name="usage_donut_7">#FFD54F</color>
     <color name="usage_donut_other">#9E9E9E</color>
+
+    <!-- App Manager -->
+    <color name="appmgr_accent">#64B5F6</color>
+    <color name="appmgr_search">#2A2F3A</color>
+    <color name="appmgr_card">#232327</color>
+    <color name="appmgr_label">#9A9AA0</color>
+    <color name="appmgr_tag">#1565C0</color>
+    <color name="appmgr_divider">#26FFFFFF</color>
 </resources>

@@ -7,7 +7,25 @@
     <item name="navClock" type="id"/>
     <item name="navCrosshair" type="id"/>
     <item name="navMemory" type="id"/>
+    <item name="navAppManager" type="id"/>
     <item name="navLogo" type="id"/>
     <item name="navColorPicker" type="id"/>
     <item name="navDebuging" type="id"/>
+    <item name="appMgrFilterClose" type="id"/>
+    <item name="appMgrClearSearch" type="id"/>
+    <item name="appMgrFilterButton" type="id"/>
+    <item name="appMgrSortChips" type="id"/>
+    <item name="appMgrSortInstall" type="id"/>
+    <item name="appMgrSortName" type="id"/>
+    <item name="appMgrSortSize" type="id"/>
+    <item name="appMgrSortOpened" type="id"/>
+    <item name="appMgrSortUsed" type="id"/>
+    <item name="appMgrSortScreen" type="id"/>
+    <item name="appMgrSortData" type="id"/>
+    <item name="appMgrIcon" type="id"/>
+    <item name="appMgrEmpty" type="id"/>
+    <item name="appMgrOpenOverviewApps" type="id"/>
+    <item name="appMgrOverviewStats" type="id"/>
+    <item name="appMgrTagChips" type="id"/>
+    <item name="appMgrShizukuStatus" type="id"/>
 </resources>
