@@ -1,5 +1,7 @@
 # Grouped Overlay Position
 
+**Status:** Rencana — belum dikerjakan.
+
 ## Konsep
 Beberapa overlay bisa digabung posisinya tanpa mengubah struktur modul yang sudah ada. User memilih kombinasi overlay yang ingin digabung, dan saat satu digeser, yang lain ikut.
 

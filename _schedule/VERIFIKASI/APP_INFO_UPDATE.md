@@ -1,7 +1,8 @@
 # Info Aplikasi & Pembaruan — Tentang (About) Halaman Penuh
 
-> **Status:** Rencana — belum dieksekusi
-> **Revisi:** 2026-09-09 — disusun dari diskusi konsep cek pembaruan FTxT
+> **Status:** Terimplementasi — About/update sudah ada di kode; sisa uji runtime dan penyelarasan dokumentasi rilis.
+> **Revisi:** 2026/11/17 — status diselaraskan dengan implementasi aktual (v4.98.0).
+> **Asal:** 2026-09-09 — disusun dari diskusi konsep cek pembaruan FTxT.
 
 ---
 
@@ -168,13 +169,13 @@ Repo: `GaoExp/FTxT` (dari `git remote`).
 
 ## 9. Status
 
-- [ ] Activity tentang aplikasi (header, kartu info versi/versionCode)
-- [ ] Util UpdateChecker (GitHub API + simpan prefs)
-- [ ] Section pembaruan: toggle otomatis + popup frekuensi + tombol periksa/buka rilis + status
-- [ ] Cek otomatis saat aplikasi dibuka (hormati interval)
-- [ ] Item popup "Tentang Aplikasi"
-- [ ] Header sidebar "FunText vX Beta" klikabel
-- [ ] Section pengembang + tautan & akses + footer
-- [ ] Integrasi + manifest
-- [ ] Uji skenario cek pembaruan
-- [ ] Dokumen: README/PANDUAN/STRUKTUR + CHANGELOG (minor bump: **4.93.0**)
+- [x] Activity tentang aplikasi (header, kartu info versi/versionCode)
+- [x] Util UpdateChecker (GitHub API + simpan prefs)
+- [x] Section pembaruan: toggle otomatis + popup frekuensi + tombol periksa/buka rilis + status
+- [x] Cek otomatis saat aplikasi dibuka (hormati interval)
+- [x] Item popup "Tentang Aplikasi"
+- [x] Header sidebar "FunText vX Beta" klikabel
+- [x] Section pengembang + tautan & akses + footer
+- [x] Integrasi + manifest
+- [ ] Uji skenario cek pembaruan (online/offline, versi baru/sama, interval)
+- [ ] Dokumen rilis: README/PANDUAN/STRUKTUR + CHANGELOG bila belum tercatat

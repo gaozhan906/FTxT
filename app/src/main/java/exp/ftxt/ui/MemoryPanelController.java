@@ -231,11 +231,11 @@ public class MemoryPanelController implements DefaultLifecycleObserver {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.mem_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.mem_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.mem_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.mem_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.mem_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.mem_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
 
         View sectionDisplay = rootView.findViewById(R.id.mem_sectionDisplay);

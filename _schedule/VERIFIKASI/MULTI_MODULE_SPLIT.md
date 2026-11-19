@@ -1,14 +1,14 @@
-# Rencana Split Multi-Module FTxT
+# Split Multi-Module FTxT — Catatan Implementasi
 
 > **Tanggal:** 2026-09-09 (revisi penuh)
 > **Revisi sebelumnya:** 2026-08-23 — target v4.88.1 → **usang** (asumsi `BatteryMonitorService` & struktur `features/` salah)
-> **Versi baseline:** v4.92.1 (versionCode 278)
-> **Status:** Rencana aktif — P0, Fase 1–8 selesai; Fase 9 (testing akhir) berikutnya
+> **Versi baseline audit:** v4.92.1 (versionCode 278)
+> **Status aktual:** Terimplementasi — P0 dan Fase 1–8 selesai; Fase 9 (testing perangkat) tersisa. Struktur aktual diverifikasi pada v4.98.0.
 > **Pilihan jalur:** **Jalur Y** (pragmatis) — feature module murni Java (tanpa resource & tampilan)
 
 ---
 
-## 1. Kondisi Aktual (Audit v4.92.1)
+## 1. Kondisi Saat Audit (v4.92.1 — historis)
 
 Hasil audit menyeluruh — bukan asumsi dari versi lama:
 
@@ -360,7 +360,7 @@ Urutan: **clock → fps → network → floating-text → memory → crosshair �
 
 ### (Di luar scope) `:shared:resource`
 
-Resource Pack System belum dibangun di kode (hanya dokumen `_schedule/PRIORITAS/RESOURCE_PACK_SYSTEM.md`). Tidak ikut fase split. Jika nanti diimplementasikan, tambahkan sebagai module shared baru — tidak mengganggu struktur Jalur Y.
+Resource Pack System belum dibangun di kode (dokumen: `_schedule/RENCANA/RESOURCE_PACK_SYSTEM.md`). Tidak ikut fase split. Jika nanti diimplementasikan, tambahkan sebagai module shared baru — tidak mengganggu struktur Jalur Y.
 
 ---
 
@@ -427,4 +427,4 @@ Lebih baik single-module yang berfungsi daripada multi-module yang rusak.
 
 - [Android Official: Multi-module apps](https://developer.android.com/modularize)
 - [Gradle Multi-project Builds](https://docs.gradle.org/current/userguide/multi_project_builds.html)
-- Dokumen terkait: `_schedule/PRIORITAS/SMART_PANEL_CROSSHAIR.md` (fitur ditunda setelah split), `_schedule/PRIORITAS/RESOURCE_PACK_SYSTEM.md` (belum dibangun)
+- Dokumen terkait: `_schedule/AKTIF/SMART_PANEL_CROSSHAIR.md` (sudah terimplementasi), `_schedule/RENCANA/RESOURCE_PACK_SYSTEM.md` (belum dibangun)

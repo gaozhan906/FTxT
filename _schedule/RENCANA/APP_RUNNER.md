@@ -12,7 +12,7 @@ Pengguna memilih aplikasi dari daftar (semua aplikasi yang punya ikon launcher),
 Berkaitan dengan rencana lain:
 
 - `APP_MANAGER.md` — memakai sumber data yang sama (daftar aplikasi terinstall). Kalau `APP_MANAGER` dikerjakan lebih dulu, adapter/utility daftar aplikasi harus dipakai ulang, jangan diduplikasi.
-- `BYPASS_CHARGING_SHIZUKU.md` & `SHIZUKU_FPS_READER.md` — infra Shizuku (SDK, provider, helper eksekusi shell) akan sama; kerjakan sekali, pakai bersama.
+- `_schedule/VERIFIKASI/BYPASS_CHARGING_SHIZUKU.md` & `_schedule/VERIFIKASI/SHIZUKU_FPS_READER.md` — infra Shizuku (SDK, provider, helper eksekusi shell) dipakai bersama.
 
 ---
 
@@ -164,7 +164,7 @@ Kalau FTxT_activity langsung `finish()` setelah membuka app target, activity iku
 - **Fase 3 (UI):** ±3–4 jam
 - **Fase 4 (Notifikasi):** ±1 jam
 - **Fase 5 (Error handling):** ±1–2 jam
-- **Fase 6 (Shizuku):** ±3–5 jam (bisa dipakai bersama `BYPASS_CHARGING_SHIZUKU`)
+- **Fase 6 (Shizuku):** ±3–5 jam (bisa dipakai bersama `_schedule/VERIFIKASI/BYPASS_CHARGING_SHIZUKU.md`)
 - **Fase 7 (Testing):** ±2–3 jam
 - **Total:** ±13–20 jam
 

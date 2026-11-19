@@ -92,6 +92,12 @@
 
         </LinearLayout>
 
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
+
         <TextView
             android:text="Akses Izin"
             android:textSize="16sp"
@@ -216,6 +222,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"/>
 
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
+
         <TextView
             android:text="Smart Panel"
             android:textSize="16sp"
@@ -252,6 +264,12 @@
             android:textSize="12sp"
             android:textColor="#757575"
             android:layout_marginBottom="16dp"/>
+
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
 
         <TextView
             android:text="Overlay &amp; Keyboard"
@@ -299,6 +317,12 @@
                 android:layout_height="wrap_content"/>
 
         </RadioGroup>
+
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
 
         <TextView
             android:text="Notifikasi Kustom"
@@ -379,6 +403,12 @@
             </RadioGroup>
 
         </LinearLayout>
+
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
 
         <TextView
             android:text="Status Bar"
@@ -745,6 +775,12 @@
             </FrameLayout>
 
         </LinearLayout>
+
+        <View
+            android:layout_height="1dp"
+            android:background="#1F000000"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"/>
 
         <TextView
             android:text="Developer"

@@ -35,13 +35,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"/>
 
-                    <CheckBox
-                        android:id="@+id/crosshairLockSwitch"
-                        android:text="Kunci Posisi"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"/>
-
                 </LinearLayout>
 
                 <TextView
@@ -377,12 +370,34 @@
 
                 </LinearLayout>
 
-                <CheckBox
-                    android:id="@+id/crosshairSafeAreaSwitch"
-                    android:text="Gunakan Area Aman"
+                <LinearLayout
+                    android:orientation="horizontal"
                     android:layout_marginTop="8dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/crosshairLockSwitch"
+                        android:text="Kunci Posisi"
+                        android:button="@null"
+                        android:drawableStart="@drawable/ic_lock_toggle"
+                        android:drawablePadding="8dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/crosshairSafeAreaSwitch"
+                        android:text="Safe Area"
+                        android:button="@null"
+                        android:drawableStart="@drawable/ic_lock_toggle"
+                        android:drawablePadding="8dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                </LinearLayout>
 
                 </LinearLayout>
 

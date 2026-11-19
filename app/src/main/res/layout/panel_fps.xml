@@ -44,13 +44,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"/>
 
-                    <CheckBox
-                        android:id="@+id/fpsLockSwitch"
-                        android:text="Kunci Posisi"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"/>
-
                 </LinearLayout>
 
                 <TextView
@@ -456,12 +449,34 @@
 
                 </LinearLayout>
 
-                <CheckBox
-                    android:id="@+id/fpsSafeArea"
-                    android:text="Gunakan Area Aman"
+                <LinearLayout
+                    android:orientation="horizontal"
                     android:layout_marginTop="8dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical">
+
+                    <CheckBox
+                        android:id="@+id/fpsLockSwitch"
+                        android:text="Kunci Posisi"
+                        android:button="@null"
+                        android:drawableStart="@drawable/ic_lock_toggle"
+                        android:drawablePadding="8dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/fpsSafeArea"
+                        android:text="Safe Area"
+                        android:button="@null"
+                        android:drawableStart="@drawable/ic_lock_toggle"
+                        android:drawablePadding="8dp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                </LinearLayout>
 
                 </LinearLayout>
 
@@ -471,29 +486,37 @@
                     android:layout_marginVertical="8dp"
                     android:layout_width="match_parent"/>
 
-                <TextView
+                <LinearLayout
                     android:id="@+id/fps_sectionShadowHeader"
-                    android:text="▾ Shadow"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
                     android:paddingVertical="8dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="▾ Shadow"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/fpsShadowSwitch"
+                        android:text="Shadow"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/fps_sectionShadow"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
-
-                <CheckBox
-                    android:id="@+id/fpsShadowSwitch"
-                    android:text="Shadow"
-                    android:layout_marginTop="8dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
 
                 <LinearLayout
                     android:id="@+id/shadowConfigFps"
@@ -560,29 +583,37 @@
                     android:layout_marginVertical="8dp"
                     android:layout_width="match_parent"/>
 
-                <TextView
+                <LinearLayout
                     android:id="@+id/fps_sectionBackgroundHeader"
-                    android:text="▾ Background"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
                     android:clickable="true"
                     android:focusable="true"
                     android:paddingVertical="8dp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content">
+
+                    <TextView
+                        android:text="▾ Background"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"/>
+
+                    <CheckBox
+                        android:id="@+id/fpsBgSwitch"
+                        android:text="Background"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/fps_sectionBackground"
                     android:orientation="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
-
-                <CheckBox
-                    android:id="@+id/fpsBgSwitch"
-                    android:text="Background"
-                    android:layout_marginTop="8dp"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
 
                 <LinearLayout
                     android:id="@+id/bgConfigFps"

@@ -116,11 +116,11 @@ public class ClockPanelController {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.clock_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.clock_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.clock_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.clock_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.clock_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.clock_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
     }
 

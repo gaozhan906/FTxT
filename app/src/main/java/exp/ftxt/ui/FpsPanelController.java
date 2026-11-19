@@ -178,11 +178,11 @@ public class FpsPanelController {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.fps_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.fps_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.fps_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.fps_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.fps_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.fps_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
     }
 

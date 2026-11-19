@@ -142,11 +142,11 @@ public class BatteryPanelController {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.battery_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.battery_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.battery_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.battery_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.battery_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.battery_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
 
         View sectionOrder = rootView.findViewById(R.id.battery_sectionOrder);

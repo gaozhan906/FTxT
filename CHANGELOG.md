@@ -1,4 +1,4 @@
-# [4.98.0] 2026/11/17 12:49 WITA 369 ***ONGOING***
+# [4.98.0] 2026/11/17 16:30 WITA 374 ***ONGOING***
 ### 🔖 Deskripsi
 > Rilis ini menambah overlay pemakaian data per aplikasi di panel Network dan pengaturan perilaku overlay saat keyboard muncul.
 
@@ -8,6 +8,11 @@
 - **Pengaturan overlay per aplikasi** — Jumlah baris, interval, ambang aktivitas, waktu tampil, nama/ikon, skala teks dan ikon, satuan, warna, shadow, background, posisi, serta preset dapat diatur seperti overlay lainnya.
 - **Panduan izin akses penggunaan** — Overlay menampilkan petunjuk dan tombol menuju pengaturan bila izin pemakaian aplikasi belum diberikan.
 - **Perilaku overlay saat keyboard muncul** — Panel Konfigurasi menyediakan pilihan tetap diam, sembunyikan sementara, atau geser ke atas keyboard untuk seluruh overlay.
+
+### 🔧 Optimasi & Penyesuaian
+- **Tata letak kontrol overlay** — Kunci Posisi dan Safe Area kini sebaris memakai ikon gembok: terbuka abu-abu saat nonaktif dan tertutup hijau saat aktif; sakelar Shadow dan Background pindah ke baris judul section.
+- **Label Safe Area Battery Strip** — Istilah "Area Aman" pada Battery Strip diseragamkan menjadi "Safe Area".
+- **Pembatas section Konfigurasi** — Setiap kelompok pengaturan di panel Konfigurasi dipisahkan garis tipis dan samar agar lebih rapi tanpa terlalu mencolok.
 
 ### 🐞 Bug Fixes
 - **Posisi overlay setelah orientasi berubah** — Setelah salah satu overlay dimatikan (misalnya FPS), overlay lain tidak lagi mengikuti rotasi sehingga bisa menghilang di mode landscape; kini penyesuaian orientasi tetap berjalan selama masih ada overlay aktif.

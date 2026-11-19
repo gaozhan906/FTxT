@@ -159,11 +159,11 @@ public class NetworkOverlayController {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.network_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.network_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.network_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.network_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.network_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.network_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
     }
 

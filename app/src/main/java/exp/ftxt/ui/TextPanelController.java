@@ -153,11 +153,11 @@ public class TextPanelController {
         SectionHelper.setupCollapsible(sectionPositionHeader, sectionPosition);
 
         View sectionShadow = rootView.findViewById(R.id.text_sectionShadow);
-        TextView sectionShadowHeader = rootView.findViewById(R.id.text_sectionShadowHeader);
+        View sectionShadowHeader = rootView.findViewById(R.id.text_sectionShadowHeader);
         SectionHelper.setupCollapsible(sectionShadowHeader, sectionShadow);
 
         View sectionBackground = rootView.findViewById(R.id.text_sectionBackground);
-        TextView sectionBackgroundHeader = rootView.findViewById(R.id.text_sectionBackgroundHeader);
+        View sectionBackgroundHeader = rootView.findViewById(R.id.text_sectionBackgroundHeader);
         SectionHelper.setupCollapsible(sectionBackgroundHeader, sectionBackground);
     }
 
