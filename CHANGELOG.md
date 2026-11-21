@@ -1,4 +1,4 @@
-# [4.98.0] 2026/11/19 19:34 WITA 382 ***ONGOING***
+# [4.98.0] 2026/11/21 11:38 WITA 386 ***ONGOING***
 ### 🔖 Deskripsi
 > Rilis ini memperluas FTxT dengan halaman pengelola aplikasi dan overlay pemakaian data per aplikasi di panel Network. Baca bagian Fitur Baru dan Perubahan Fitur untuk alur keduanya.
 
@@ -11,7 +11,7 @@
 - **App Manager** — Diakses dari navigasi samping, halaman baru ini menelusuri aplikasi terpasang memakai pencarian, filter, dan urutan, memilih beberapa aplikasi sekaligus, melihat detail izin serta ukuran, lalu membuka, menghapus, membagikan APK, atau membuka Settings.
 
 ### ♻️ Perubahan Fitur
-- **Tampilan App Manager** — Navigasi bawah cukup dua tab, Gambaran Umum dan Aplikasi; kategori jadi chip di tab Aplikasi, pencarian serta filter/urutan memakai tampilan pill dan bottom sheet, dan halaman detail memakai satu akses "Info Aplikasi" di header dengan tombol "Buka" mengambang.
+- **Tampilan App Manager** — Navigasi bawah cukup dua tab, Gambaran Umum dan Aplikasi; Gambaran Umum kini dashboard kartu berisi statistik aplikasi, penyimpanan, RAM, riwayat pasang/update, screen time, izin, jaringan, instal berkas, aplikasi besar, aplikasi jarang dipakai, serta status akses. Tiap kartu punya aksi sendiri: ubin membuka daftar terkait, tombol kartu membuka pengaturan penyimpanan, analisis izin, panel jaringan, pemasang APK, atau akses penggunaan, dan panah kartu mengurutkan daftar aplikasi. Kategori dipindahkan ke bottom sheet bersama filter dan urutan, daftar aplikasi memakai kartu dengan checkbox seleksi, dan halaman detail memakai header ringkas dengan tombol "Buka" mengambang.
 
 ### 🔧 Optimasi & Penyesuaian
 - **Tata letak kontrol overlay** — Kunci Posisi dan Safe Area kini sebaris memakai ikon gembok: terbuka abu-abu saat nonaktif dan tertutup hijau saat aktif; sakelar Shadow dan Background pindah ke baris judul section.
@@ -20,6 +20,10 @@
 
 ### 🐞 Bug Fixes
 - **Posisi overlay setelah orientasi berubah** — Setelah salah satu overlay dimatikan (misalnya FPS), overlay lain tidak lagi mengikuti rotasi sehingga bisa menghilang di mode landscape; kini penyesuaian orientasi tetap berjalan selama masih ada overlay aktif.
+- **Posisi hasil drag Network dan App Data** — Posisi kini ditulis ke preferensi per orientasi, sehingga tidak kembali ke nilai awal setelah layanan dimulai ulang atau perangkat di-reboot.
+- **Hasil query App Data lama** — Penanda generasi mencegah hasil dari modul yang sudah dihentikan merender setelah modul dimulai ulang, misalnya saat interval diubah cepat.
+- **Reset daftar aplikasi saat start ulang** — `show()` tidak lagi mengosongkan daftar aplikasi bila overlay memang sudah terlihat; start ulang, perubahan preset, dan inset keyboard tidak menghapus hasil terakhir.
+- **Toggle Smart Panel dari notifikasi** — Status kini ikut disimpan ke preferensi, sehingga tidak kembali ke nilai lama setelah layanan dimulai ulang.
 
 ### 💡 Memo
 - Data aplikasi dan mode Aplikasi Depan memerlukan izin akses penggunaan; tanpa izin, overlay hanya menampilkan status kosong.

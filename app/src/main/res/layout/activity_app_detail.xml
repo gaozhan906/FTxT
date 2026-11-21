@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/appDetailRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -11,50 +12,51 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@color/appmgr_card"
-        android:elevation="4dp"
+        android:background="@color/appmgr_surface"
+        android:elevation="1dp"
         android:paddingStart="6dp"
-        android:paddingEnd="10dp"
-        android:paddingTop="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
         android:paddingBottom="8dp">
 
         <ImageButton
             android:id="@+id/appDetailBack"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_arrow_left"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Kembali"
-            app:tint="@color/appmgr_label" />
+            app:tint="@color/appmgr_on_surface" />
 
         <ImageView
             android:id="@+id/appDetailIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="4dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="2dp"
             android:contentDescription="Ikon aplikasi" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="12dp"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/appDetailName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="20sp"
                 android:singleLine="true"
                 android:ellipsize="end"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:textColor="@color/appmgr_on_surface" />
 
             <TextView
                 android:id="@+id/appDetailPkg"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:textSize="12sp"
                 android:singleLine="true"
                 android:ellipsize="end"
@@ -64,16 +66,12 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/appDetailInfo"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/AppMgrAction"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Info Aplikasi"
-            android:textSize="11sp"
-            android:insetLeft="4dp"
-            android:insetRight="4dp"
+            android:text="Info"
             app:icon="@drawable/ic_info"
-            app:iconSize="20dp"
-            app:iconTint="@color/appmgr_accent" />
+            app:iconSize="18dp" />
 
     </LinearLayout>
 
@@ -81,8 +79,12 @@
         android:id="@+id/appDetailTabs"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/appmgr_surface"
         app:tabMode="scrollable"
-        app:tabGravity="fill" />
+        app:tabGravity="fill"
+        app:tabIndicatorColor="@color/appmgr_accent"
+        app:tabSelectedTextColor="@color/appmgr_accent"
+        app:tabTextColor="@color/appmgr_label" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -99,8 +101,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginBottom="24dp"
             android:text="Buka"
             android:contentDescription="Buka aplikasi"
             app:icon="@drawable/ic_apps"

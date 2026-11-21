@@ -607,7 +607,7 @@ public class FloatingService extends Service {
     private void applyKeyboardVisibility(OverlayModule module) {
         if (OverlayInsets.shouldHide()) {
             module.hide();
-        } else if (!overlaysHiddenByUser) {
+        } else if (!overlaysHiddenByUser && module.isHidden()) {
             module.show();
         }
     }
@@ -644,6 +644,7 @@ public class FloatingService extends Service {
 
     public static void setSmartPanelEnabled(boolean enabled) {
         if (instance == null) return;
+        instance.prefs.edit().putBoolean("smart_panel_enabled", enabled).apply();
         if (enabled) {
             SmartPanelConfig.enabled = true;
             instance.ensureSmartPanelModule();

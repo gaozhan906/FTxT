@@ -4,7 +4,7 @@
     <item
         android:id="@+id/appMgrNavOverview"
         android:icon="@drawable/ic_monitor"
-        android:title="Gambaran Umum" />
+        android:title="Ringkasan" />
 
     <item
         android:id="@+id/appMgrNavApps"

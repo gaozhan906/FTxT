@@ -25,7 +25,6 @@
     <item name="appMgrIcon" type="id"/>
     <item name="appMgrEmpty" type="id"/>
     <item name="appMgrOpenOverviewApps" type="id"/>
-    <item name="appMgrOverviewStats" type="id"/>
     <item name="appMgrTagChips" type="id"/>
     <item name="appMgrShizukuStatus" type="id"/>
 </resources>

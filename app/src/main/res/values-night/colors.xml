@@ -85,10 +85,20 @@
     <color name="usage_donut_other">#9E9E9E</color>
 
     <!-- App Manager -->
-    <color name="appmgr_accent">#64B5F6</color>
-    <color name="appmgr_search">#2A2F3A</color>
-    <color name="appmgr_card">#232327</color>
-    <color name="appmgr_label">#9A9AA0</color>
-    <color name="appmgr_tag">#1565C0</color>
-    <color name="appmgr_divider">#26FFFFFF</color>
+    <color name="appmgr_accent">#8AB4F8</color>
+    <color name="appmgr_accent_container">#0842A0</color>
+    <color name="appmgr_search">#2C2C2E</color>
+    <color name="appmgr_surface">#1C1C1E</color>
+    <color name="appmgr_surface_variant">#2C2C2E</color>
+    <color name="appmgr_card">#2C2C2E</color>
+    <color name="appmgr_on_surface">#F2F2F7</color>
+    <color name="appmgr_label">#A1A1A6</color>
+    <color name="appmgr_outline">#3A3A3C</color>
+    <color name="appmgr_ripple">#33FFFFFF</color>
+    <color name="appmgr_tag">#8AB4F8</color>
+    <color name="appmgr_divider">#3A3A3C</color>
+    <color name="appmgr_tile_green">#34A853</color>
+    <color name="appmgr_tile_blue">#4285F4</color>
+    <color name="appmgr_tile_yellow">#FBBC05</color>
+    <color name="appmgr_tile_red">#E55934</color>
 </resources>

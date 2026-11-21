@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import exp.ftxt.shared.ui.OverlayDragHandler;
 import exp.ftxt.shared.ui.OverlayInsets;
@@ -36,6 +37,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     private boolean userHidden;
     private boolean hasContent;
     private final AtomicBoolean querying = new AtomicBoolean(false);
+    private final AtomicInteger generation = new AtomicInteger();
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private List<ConnectingAppSource.AppTraffic> lastApps = Collections.emptyList();
@@ -62,6 +64,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     @Override
     public void start(WindowManager windowManager, Context ctx) {
         if (running) return;
+        generation.incrementAndGet();
         wm = windowManager;
         context = ctx;
         prefs = ctx.getSharedPreferences("ftxt_prefs", Context.MODE_PRIVATE);
@@ -114,6 +117,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
     @Override
     public void stop() {
         running = false;
+        generation.incrementAndGet();
         handler.removeCallbacks(tickRunnable);
         if (executor != null) {
             executor.shutdownNow();
@@ -213,7 +217,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
         } else {
             params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
             view.setOnTouchListener(new OverlayDragHandler(params, wm,
-                    null,
+                    this::savePosition,
                     () -> {
                         if (AppUsageConfig.safeArea && view != null
                                 && view.getWidth() > 0 && view.getHeight() > 0) {
@@ -259,6 +263,27 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
         updatePosition();
     }
 
+    private void savePosition() {
+        if (prefs == null) return;
+        if (params != null) {
+            int width = getScreenWidth();
+            int height = getScreenHeight();
+            if (width > 0) {
+                AppUsageConfig.posX = Math.max(0, Math.min(1,
+                        (float) params.x / width));
+            }
+            if (height > 0) {
+                AppUsageConfig.posY = Math.max(0, Math.min(1,
+                        (float) params.y / height));
+            }
+        }
+        String sfx = posSuffix();
+        prefs.edit()
+                .putFloat("appdata_pos_x" + sfx, AppUsageConfig.posX)
+                .putFloat("appdata_pos_y" + sfx, AppUsageConfig.posY)
+                .apply();
+    }
+
     @Override
     public int[] getCurrentPosition() {
         if (params != null) return new int[]{params.x, params.y};
@@ -267,16 +292,21 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
 
     @Override
     public void hide() {
-        userHidden = true;
-        resetContent();
+        if (!userHidden) {
+            userHidden = true;
+            resetContent();
+        }
         if (view != null) view.setVisibility(View.GONE);
     }
 
     @Override
     public void show() {
+        boolean wasHidden = userHidden;
         userHidden = false;
-        resetContent();
-        lastActivityAt = System.currentTimeMillis();
+        if (wasHidden) {
+            resetContent();
+            lastActivityAt = System.currentTimeMillis();
+        }
         applyContentVisibility();
     }
 
@@ -367,6 +397,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
                     && querying.compareAndSet(false, true)) {
                 final long intervalMs =
                         Math.max(500L, (long) (AppUsageConfig.updateInterval * 1000f));
+                final int currentGeneration = generation.get();
                 try {
                     currentExecutor.execute(() -> {
                         List<ConnectingAppSource.AppTraffic> result = null;
@@ -378,6 +409,7 @@ public class AppUsageModule implements OverlayModule, SmartPanelTarget {
                         }
                         final List<ConnectingAppSource.AppTraffic> finalResult = result;
                         handler.post(() -> {
+                            if (currentGeneration != generation.get()) return;
                             querying.set(false);
                             renderResult(finalResult);
                         });

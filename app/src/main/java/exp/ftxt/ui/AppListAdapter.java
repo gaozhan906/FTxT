@@ -13,6 +13,8 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.checkbox.MaterialCheckBox;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +43,11 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.Holder> 
     public void setApps(List<AppInfo> list) {
         apps.clear();
         if (list != null) apps.addAll(list);
+        Set<String> visible = new HashSet<String>();
+        for (AppInfo app : apps) visible.add(app.packageName);
+        selected.retainAll(visible);
         notifyDataSetChanged();
+        if (listener != null) listener.onSelectionChanged(selected.size());
     }
 
     public void setQuery(String value) {
@@ -92,10 +98,19 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.Holder> 
         }
 
         final boolean checked = selected.contains(app.packageName);
-        holder.check.setVisibility(checked ? View.VISIBLE : View.GONE);
-        holder.check.setOnClickListener(v -> toggle(app.packageName));
+        holder.check.setOnCheckedChangeListener(null);
+        holder.check.setChecked(checked);
+        holder.check.setOnCheckedChangeListener((button, isChecked) -> {
+            if (isChecked != selected.contains(app.packageName)) {
+                toggle(app.packageName);
+            }
+        });
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onOpen(app);
+        });
+        holder.itemView.setOnLongClickListener(v -> {
+            toggle(app.packageName);
+            return true;
         });
     }
 
@@ -128,7 +143,7 @@ public class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.Holder> 
     }
 
     static class Holder extends RecyclerView.ViewHolder {
-        final ImageView check;
+        final MaterialCheckBox check;
         final ImageView icon;
         final TextView name;
         final TextView meta;

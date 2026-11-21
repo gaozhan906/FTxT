@@ -1,7 +1,7 @@
 # Data Usage Hari Ini — Rekap Konsumsi Data
 
 **Status:** Sebagian terimplementasi — rekap, riwayat, filter, grafik, dan daftar aplikasi sudah berjalan; opsi ringkas harian di overlay belum.
-**Terakhir diverifikasi:** 2026/11/17
+**Terakhir diverifikasi:** 2026/11/21
 **Tujuan:** Menampilkan pemakaian data harian di panel Network, termasuk rincian per jaringan dan per aplikasi, tanpa mengganggu perilaku overlay kecepatan.
 
 ---
@@ -50,3 +50,10 @@ Implementasi tidak memakai `DataUsageTracker`, `TrafficStats`, atau `SharedPrefe
 - Angka mengikuti data yang masih disediakan `NetworkStatsManager`; SQLite hanya mengisi bagian yang sudah tidak tersedia.
 - Data hari berjalan masih bisa berubah dan disimpan dengan replace, bukan penambahan.
 - Perbedaan retensi sistem antarperangkat dapat membuat sebagian riwayat hanya tersedia dari cache.
+
+## 6. Catatan Overlay
+
+- Posisi hasil drag pada overlay Network dan App Data kini disimpan di `ftxt_prefs` memakai kunci `network_pos_*` dan `appdata_pos_*` per orientasi, sejajar dengan slider dan D-pad.
+- Query overlay App Data memakai penanda generasi agar hasil lama tidak merender setelah modul dimulai ulang saat interval diubah.
+- `show()`/`hide()` overlay App Data hanya mereset daftar saat ada transisi state, sehingga start ulang dan perubahan inset keyboard tidak mengosongkan hasil terakhir.
+- Perbaikan ini tidak mengubah sumber data, retensi, maupun mode `TOP_TALKERS` yang memang ditetapkan di `ConfigLoader`.

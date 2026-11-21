@@ -188,6 +188,25 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
         updatePosition();
     }
 
+    private void savePosition() {
+        if (prefs == null) return;
+        if (params != null) {
+            int width = getScreenWidth();
+            int height = getScreenHeight();
+            if (width > 0) {
+                NetworkConfig.posX = Math.max(0, Math.min(1, (float) params.x / width));
+            }
+            if (height > 0) {
+                NetworkConfig.posY = Math.max(0, Math.min(1, (float) params.y / height));
+            }
+        }
+        String sfx = posSuffix();
+        prefs.edit()
+                .putFloat("network_pos_x" + sfx, NetworkConfig.posX)
+                .putFloat("network_pos_y" + sfx, NetworkConfig.posY)
+                .apply();
+    }
+
     @Override
     public void reloadPosition() {
         orientationSuffix = null;
@@ -314,7 +333,7 @@ public class NetworkModule implements OverlayModule, SmartPanelTarget {
         } else {
             params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
             view.setOnTouchListener(new OverlayDragHandler(params, wm,
-                    null,
+                    this::savePosition,
                     () -> {
                         if (NetworkConfig.safeArea && view != null && view.getWidth() > 0 && view.getHeight() > 0) {
                             params.x = Math.max(0, Math.min(params.x, getScreenWidth() - view.getWidth()));

@@ -1,115 +1,899 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/appMgrRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="?android:attr/colorBackground">
 
-    <LinearLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/appMgrToolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/appmgr_card"
-        android:elevation="4dp"
-        android:paddingStart="6dp"
-        android:paddingEnd="14dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
-
-        <ImageButton
-            android:id="@+id/appMgrBack"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:src="@drawable/ic_arrow_left"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Kembali"
-            app:tint="@color/appmgr_label" />
-
-        <TextView
-            android:id="@+id/appMgrTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="App Manager"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary" />
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/appmgr_surface"
+        android:elevation="0dp"
+        app:navigationIcon="@drawable/ic_arrow_left"
+        app:navigationIconTint="@color/appmgr_on_surface"
+        app:title="App Manager"
+        app:titleTextAppearance="@style/AppMgrToolbarTitle"
+        app:titleTextColor="@color/appmgr_on_surface">
 
         <TextView
             android:id="@+id/appMgrCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
+            android:layout_gravity="end|center_vertical"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/appmgr_tag_bg"
             android:paddingHorizontal="10dp"
             android:paddingVertical="5dp"
-            android:background="@drawable/appmgr_tag_bg" />
+            android:textColor="@color/white"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
-    </LinearLayout>
+    </com.google.android.material.appbar.MaterialToolbar>
 
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <ScrollView
+        <androidx.core.widget.NestedScrollView
             android:id="@+id/appMgrTabOverview"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:clipToPadding="false"
+            android:fillViewport="true"
+            android:paddingBottom="104dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingStart="@dimen/appmgr_card_margin"
+                android:paddingTop="8dp"
+                android:paddingEnd="@dimen/appmgr_card_margin"
+                android:paddingBottom="24dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Gambaran Umum"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="?android:attr/textColorPrimary" />
-
-                <TextView
-                    android:id="@+id/appMgrOverviewStats"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/appmgr_item_bg"
-                    android:padding="16dp"
-                    android:text="Memuat data aplikasi…"
-                    android:textSize="14sp"
-                    android:lineSpacingExtra="6dp"
-                    android:textColor="?android:attr/textColorPrimary" />
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/appMgrShizukuStatus"
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/appMgrTileInstalledCard"
+                        style="@style/AppMgrSummaryCard"
+                        android:layout_width="0dp"
+                        android:layout_height="88dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/appmgr_tile_green">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:id="@+id/appMgrTileInstalledValue"
+                                style="@style/AppMgrMetric"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|start"
+                                android:text="Aplikasi pengguna"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="bottom|end"
+                                android:alpha="0.85"
+                                android:contentDescription="Statistik aplikasi pengguna"
+                                android:src="@drawable/ic_apps"
+                                app:tint="@color/white" />
+
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/appMgrTileSystemCard"
+                        style="@style/AppMgrSummaryCard"
+                        android:layout_width="0dp"
+                        android:layout_height="88dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/appmgr_tile_blue">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:id="@+id/appMgrTileSystemValue"
+                                style="@style/AppMgrMetric"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|start"
+                                android:text="Aplikasi sistem"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="bottom|end"
+                                android:alpha="0.85"
+                                android:contentDescription="Statistik aplikasi sistem"
+                                android:src="@drawable/ic_apps"
+                                app:tint="@color/white" />
+
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/appmgr_item_bg"
-                    android:padding="16dp"
-                    android:textSize="14sp"
-                    android:textColor="?android:attr/textColorPrimary" />
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/appMgrOpenOverviewApps"
-                    style="@style/Widget.Material3.Button.TonalButton"
-                    android:layout_width="wrap_content"
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/appMgrTileRecentCard"
+                        style="@style/AppMgrSummaryCard"
+                        android:layout_width="0dp"
+                        android:layout_height="88dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/appmgr_tile_yellow">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:id="@+id/appMgrTileRecentValue"
+                                style="@style/AppMgrMetric"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|start"
+                                android:text="Aktif 10 menit"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="bottom|end"
+                                android:alpha="0.85"
+                                android:contentDescription="Aplikasi aktif"
+                                android:src="@drawable/ic_monitor"
+                                app:tint="@color/white" />
+
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="1dp" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/appMgrTileDisabledCard"
+                        style="@style/AppMgrSummaryCard"
+                        android:layout_width="0dp"
+                        android:layout_height="88dp"
+                        android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        app:cardBackgroundColor="@color/appmgr_tile_red">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:id="@+id/appMgrTileDisabledValue"
+                                style="@style/AppMgrMetric"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/white" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="bottom|start"
+                                android:text="Dinonaktifkan"
+                                android:textColor="@color/white"
+                                android:textSize="12sp" />
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_gravity="bottom|end"
+                                android:alpha="0.85"
+                                android:contentDescription="Aplikasi dinonaktifkan"
+                                android:src="@drawable/ic_exit"
+                                app:tint="@color/white" />
+
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Lihat semua aplikasi"
-                    app:icon="@drawable/ic_apps"
-                    app:iconTint="@color/appmgr_accent" />
+                    android:layout_marginTop="16dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Penyimpanan" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrStorageAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Detail" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/appMgrStorageUsed"
+                                style="@style/AppMgrBody"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:id="@+id/appMgrStoragePercent"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <ProgressBar
+                            android:id="@+id/appMgrStorageProgress"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="10dp"
+                            android:layout_marginTop="10dp"
+                            android:max="100" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="16dp"
+                                android:layout_height="wrap_content"
+                                android:text="•" />
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Aplikasi" />
+
+                            <TextView
+                                android:id="@+id/appMgrStorageApps"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="16dp"
+                                android:layout_height="wrap_content"
+                                android:text="•" />
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Lainnya" />
+
+                            <TextView
+                                android:id="@+id/appMgrStorageOther"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="16dp"
+                                android:layout_height="wrap_content"
+                                android:text="•" />
+
+                            <TextView
+                                style="@style/AppMgrCaption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Kosong" />
+
+                            <TextView
+                                android:id="@+id/appMgrStorageFree"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Memori" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrRamAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Berjalan" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/appMgrRamSummary"
+                            style="@style/AppMgrBody"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" />
+
+                        <ProgressBar
+                            android:id="@+id/appMgrRamProgress"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent"
+                            android:layout_height="10dp"
+                            android:layout_marginTop="10dp"
+                            android:max="100" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/appMgrRamUsed"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1" />
+
+                            <TextView
+                                android:id="@+id/appMgrRamFree"
+                                style="@style/AppMgrCaption"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Dipasang &amp; diperbarui" />
+
+                            <ImageButton
+                                android:id="@+id/appMgrHistoryAction"
+                                android:layout_width="@dimen/appmgr_touch"
+                                android:layout_height="@dimen/appmgr_touch"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Lihat riwayat"
+                                android:src="@drawable/ic_arrow_right"
+                                app:tint="@color/appmgr_on_surface" />
+
+                        </LinearLayout>
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/appMgrRecentAppsRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Screen time" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrScreenTimeAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Lihat semua" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/appMgrScreenTimeSummary"
+                            style="@style/AppMgrMetric"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" />
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/appMgrScreenTimeRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Izin terbanyak" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrPermissionAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Analisis" />
+
+                        </LinearLayout>
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/appMgrPermissionRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Aplikasi besar" />
+
+                            <ImageButton
+                                android:id="@+id/appMgrLargeAction"
+                                android:layout_width="@dimen/appmgr_touch"
+                                android:layout_height="@dimen/appmgr_touch"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Lihat aplikasi besar"
+                                android:src="@drawable/ic_arrow_right"
+                                app:tint="@color/appmgr_on_surface" />
+
+                        </LinearLayout>
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/appMgrLargeAppsRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Jarang dipakai" />
+
+                            <ImageButton
+                                android:id="@+id/appMgrUnusedAction"
+                                android:layout_width="@dimen/appmgr_touch"
+                                android:layout_height="@dimen/appmgr_touch"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:contentDescription="Lihat aplikasi jarang dipakai"
+                                android:src="@drawable/ic_arrow_right"
+                                app:tint="@color/appmgr_on_surface" />
+
+                        </LinearLayout>
+
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:id="@+id/appMgrUnusedAppsRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                        </HorizontalScrollView>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                style="@style/AppMgrCardTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Penggunaan jaringan" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrNetworkAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Buka" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            style="@style/AppMgrBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Lihat pemakaian data per aplikasi di panel Jaringan." />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <ImageView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:contentDescription="Pasang paket"
+                            android:src="@drawable/ic_arrow_down"
+                            app:tint="@color/appmgr_accent" />
+
+                        <TextView
+                            style="@style/AppMgrCardTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:text="Analisis atau pasang" />
+
+                        <TextView
+                            style="@style/AppMgrBody"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center"
+                            android:text="Buka APK, APKS, XAPK, APKM, atau ZIP." />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/appMgrInstallAction"
+                            style="@style/Widget.Material3.Button.OutlinedButton.Icon"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="Pilih berkas"
+                            app:icon="@drawable/ic_arrow_down"
+                            app:iconTint="@color/appmgr_accent" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    style="@style/AppMgrCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/appmgr_card_gap">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="@dimen/appmgr_card_padding">
+
+                        <TextView
+                            style="@style/AppMgrCardTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Status akses" />
+
+                        <TextView
+                            android:id="@+id/appMgrShizukuStatus"
+                            style="@style/AppMgrBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" />
+
+                        <TextView
+                            android:id="@+id/appMgrUsageStatus"
+                            style="@style/AppMgrBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrUsageAction"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Akses penggunaan" />
+
+                            <Space
+                                android:layout_width="0dp"
+                                android:layout_height="1dp"
+                                android:layout_weight="1" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/appMgrOpenOverviewApps"
+                                style="@style/AppMgrAction"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Lihat aplikasi" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
             </LinearLayout>
-        </ScrollView>
+        </androidx.core.widget.NestedScrollView>
 
         <LinearLayout
             android:id="@+id/appMgrTabApps"
@@ -121,19 +905,19 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:orientation="horizontal"
+                android:layout_marginStart="@dimen/appmgr_card_margin"
+                android:layout_marginTop="10dp"
+                android:layout_marginEnd="@dimen/appmgr_card_margin"
+                android:background="@drawable/appmgr_search_bg"
                 android:gravity="center_vertical"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/appmgr_search_bg">
+                android:orientation="horizontal">
 
                 <ImageView
                     android:layout_width="48dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_appmgr_search"
-                    android:scaleType="center"
                     android:contentDescription="Cari"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_appmgr_search"
                     app:tint="@color/appmgr_label" />
 
                 <EditText
@@ -142,56 +926,57 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
-                    android:hint="Cari nama atau package aplikasi"
+                    android:hint="Cari nama atau package"
+                    android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:singleLine="true"
-                    android:imeOptions="actionSearch"
-                    android:textSize="14sp"
-                    android:textColor="?android:attr/textColorPrimary"
-                    android:textColorHint="@color/appmgr_label" />
+                    android:textColor="@color/appmgr_on_surface"
+                    android:textColorHint="@color/appmgr_label"
+                    android:textSize="15sp" />
 
                 <ImageButton
                     android:id="@+id/appMgrClearSearch"
                     android:layout_width="40dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_appmgr_close"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Hapus teks"
+                    android:src="@drawable/ic_appmgr_close"
                     android:visibility="gone"
                     app:tint="@color/appmgr_label" />
 
                 <ImageButton
                     android:id="@+id/appMgrFilterButton"
-                    android:layout_width="44dp"
+                    android:layout_width="48dp"
                     android:layout_height="match_parent"
-                    android:src="@drawable/ic_appmgr_filter"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="Filter dan urutkan"
+                    android:src="@drawable/ic_appmgr_filter"
                     app:tint="@color/appmgr_label" />
 
             </LinearLayout>
 
-            <HorizontalScrollView
+            <TextView
+                android:id="@+id/appMgrFilterSummary"
+                style="@style/AppMgrCaption"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:layout_marginTop="8dp">
-
-                <com.google.android.material.chip.ChipGroup
-                    android:id="@+id/appMgrTagChips"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true" />
-
-            </HorizontalScrollView>
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="6dp"
+                android:layout_marginEnd="18dp" />
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1">
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/appMgrRecycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="96dp"
+                    android:scrollbars="vertical" />
 
                 <ProgressBar
                     android:id="@+id/appMgrLoading"
@@ -202,106 +987,103 @@
 
                 <TextView
                     android:id="@+id/appMgrEmpty"
+                    style="@style/AppMgrBody"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:text="Tidak ada aplikasi yang cocok"
-                    android:textSize="14sp"
-                    android:textColor="@color/appmgr_label"
                     android:visibility="gone" />
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/appMgrRecycler"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/appMgrEmptyReset"
+                    style="@style/AppMgrAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal|bottom"
+                    android:layout_marginBottom="64dp"
+                    android:text="Reset filter"
+                    android:visibility="gone" />
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/appMgrActionBar"
+                    style="@style/AppMgrCard"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clipToPadding="false"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"
-                    android:scrollbars="vertical" />
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:layout_marginStart="@dimen/appmgr_card_margin"
+                    android:layout_marginEnd="@dimen/appmgr_card_margin"
+                    android:layout_marginBottom="@dimen/appmgr_card_margin"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="14dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingBottom="6dp">
+
+                        <TextView
+                            android:id="@+id/appMgrSelectedCount"
+                            style="@style/AppMgrBody"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="@color/appmgr_accent"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/appMgrActionCancel"
+                            style="@style/AppMgrAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Batal" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/appMgrActionShare"
+                            style="@style/AppMgrAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Bagikan" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/appMgrActionUninstall"
+                            style="@style/AppMgrAction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Hapus" />
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
             </FrameLayout>
-
-            <LinearLayout
-                android:id="@+id/appMgrActionBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@color/appmgr_card"
-                android:elevation="4dp"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/appMgrSelectedCount"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="0 dipilih"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/appmgr_accent" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/appMgrActionCancel"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Batal"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_appmgr_close"
-                    app:iconGravity="top"
-                    app:iconSize="22dp"
-                    app:iconTint="@color/appmgr_accent" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/appMgrActionShare"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Bagikan"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_apps"
-                    app:iconGravity="top"
-                    app:iconSize="22dp"
-                    app:iconTint="@color/appmgr_accent" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/appMgrActionUninstall"
-                    style="@style/Widget.Material3.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Hapus"
-                    android:textSize="12sp"
-                    app:icon="@drawable/ic_exit"
-                    app:iconGravity="top"
-                    app:iconSize="22dp"
-                    app:iconTint="@color/appmgr_accent" />
-
-            </LinearLayout>
 
         </LinearLayout>
 
     </FrameLayout>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/appmgr_divider" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/appMgrBottomNav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="45dp"
-        app:menu="@menu/menu_appmgr_bottom_nav"
-        app:labelVisibilityMode="labeled"
-        app:itemIconSize="18dp"
+        android:background="@color/appmgr_surface"
+        android:elevation="8dp"
+        android:minHeight="64dp"
+        app:itemActiveIndicatorStyle="@style/AppMgrNavActiveIndicator"
+        app:itemIconSize="24dp"
+        app:itemIconTint="@color/appmgr_nav_item_color"
+        app:itemPaddingBottom="6dp"
+        app:itemPaddingTop="6dp"
         app:itemTextAppearance="@style/AppMgrNavTextAppearance"
         app:itemTextColor="@color/appmgr_nav_item_color"
-        app:itemIconTint="@color/appmgr_nav_item_color"
-        app:itemPaddingTop="1dp"
-        app:itemPaddingBottom="2dp"
-        app:itemActiveIndicatorStyle="@style/AppMgrNavActiveIndicator" />
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/menu_appmgr_bottom_nav" />
 
 </LinearLayout>

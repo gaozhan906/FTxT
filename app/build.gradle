@@ -21,7 +21,7 @@ android {
         minSdk rootProject.ext.minSdk
         targetSdk rootProject.ext.targetSdk
 
-        versionCode 382
+        versionCode 386
         versionName "4.98.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

@@ -1,6 +1,7 @@
 package exp.ftxt.ui;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +17,11 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +51,7 @@ public class AppDetailActivity extends AppCompatActivity {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private DetailPagerAdapter pagerAdapter;
 
     private final Shizuku.OnRequestPermissionResultListener shizukuListener =
             (requestCode, grantResult) -> {
@@ -57,7 +64,6 @@ public class AppDetailActivity extends AppCompatActivity {
     private AppInfo app;
     private AppDetails.Result details;
     private int primaryColor;
-    private DetailPagerAdapter pagerAdapter;
 
     public static void start(android.content.Context context, String packageName) {
         Intent intent = new Intent(context, AppDetailActivity.class);
@@ -68,7 +74,9 @@ public class AppDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_app_detail);
+        setupWindowInsets();
 
         packageName = getIntent().getStringExtra(EXTRA_PACKAGE);
         if (packageName == null) {
@@ -92,6 +100,23 @@ public class AppDetailActivity extends AppCompatActivity {
 
         bindActions();
         load();
+    }
+
+    private void setupWindowInsets() {
+        final View root = findViewById(R.id.appDetailRoot);
+        ViewCompat.setOnApplyWindowInsetsListener(root, (view, insets) -> {
+            Insets bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(0, bars.top, 0, bars.bottom);
+            return insets;
+        });
+
+        boolean night = (getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(
+                getWindow(), getWindow().getDecorView());
+        controller.setAppearanceLightStatusBars(!night);
+        controller.setAppearanceLightNavigationBars(!night);
+        ViewCompat.requestApplyInsets(root);
     }
 
     @Override
@@ -330,9 +355,9 @@ public class AppDetailActivity extends AppCompatActivity {
         for (final AppDetails.Access access : details.specialAccess) {
             TextView row = new TextView(this);
             row.setText("› " + access.label);
-            row.setTextSize(13);
-            row.setTextColor(getColor(R.color.usage_accent));
-            row.setPadding(0, dp(6), 0, dp(6));
+            row.setTextSize(14);
+            row.setTextColor(getColor(R.color.appmgr_accent));
+            row.setPadding(0, dp(8), 0, dp(8));
             row.setOnClickListener(v -> {
                 try {
                     startActivity(AppActions.specialAccess(access.action, packageName));
@@ -384,18 +409,19 @@ public class AppDetailActivity extends AppCompatActivity {
     private void addHeader(LinearLayout container, String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextSize(14);
-        view.setTypeface(null, Typeface.BOLD);
-        view.setTextColor(getColor(R.color.bat_monitor_header));
-        view.setPadding(0, dp(12), 0, dp(4));
+        view.setTextSize(15);
+        view.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        view.setTextColor(getColor(R.color.appmgr_on_surface));
+        view.setPadding(0, dp(16), 0, dp(6));
         container.addView(view);
     }
 
     private void addLine(LinearLayout container, String text) {
         TextView view = new TextView(this);
         view.setText(text);
-        view.setTextSize(13);
+        view.setTextSize(14);
         view.setTextColor(primaryColor);
+        view.setLineSpacing(dp(3), 1f);
         view.setPadding(0, dp(3), 0, dp(3));
         container.addView(view);
     }
@@ -403,9 +429,9 @@ public class AppDetailActivity extends AppCompatActivity {
     private void addActionRow(LinearLayout container, String text, View.OnClickListener listener) {
         TextView view = new TextView(this);
         view.setText("› " + text);
-        view.setTextSize(13);
-        view.setTextColor(getColor(R.color.usage_accent));
-        view.setPadding(0, dp(6), 0, dp(6));
+        view.setTextSize(14);
+        view.setTextColor(getColor(R.color.appmgr_accent));
+        view.setPadding(0, dp(8), 0, dp(8));
         view.setOnClickListener(listener);
         container.addView(view);
     }

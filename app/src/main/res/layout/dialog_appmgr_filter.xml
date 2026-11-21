@@ -3,35 +3,35 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/appmgr_surface"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground"
     android:paddingStart="20dp"
-    android:paddingEnd="20dp"
     android:paddingTop="12dp"
-    android:paddingBottom="24dp">
+    android:paddingEnd="20dp"
+    android:paddingBottom="28dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Filter &amp; Urutkan"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:textColor="@color/appmgr_on_surface"
+            android:textSize="24sp"
+            android:textStyle="bold" />
 
         <ImageButton
             android:id="@+id/appMgrFilterClose"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@drawable/ic_appmgr_close"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Tutup"
+            android:src="@drawable/ic_appmgr_close"
             app:tint="@color/appmgr_label" />
 
     </LinearLayout>
@@ -44,70 +44,71 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         android:text="Filter"
+        android:textColor="@color/appmgr_label"
         android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="@color/appmgr_label" />
+        android:textStyle="bold" />
 
-    <HorizontalScrollView
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/appMgrFilters"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/appMgrFilters"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChipAll"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:selectionRequired="true">
+            android:checked="true"
+            android:text="Semua" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipAll"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Semua"
-                android:checked="true" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChipUser"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipUser"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="User" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChipRunning"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Berjalan" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipRunning"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Berjalan" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChipSystem"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sistem" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChipSystem"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sistem" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChip32"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="32Bit" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChip32"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="32Bit" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChip64"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="64Bit" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrChip64"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="64Bit" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrChipDisabled"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dinonaktifkan" />
 
-        </com.google.android.material.chip.ChipGroup>
-    </HorizontalScrollView>
+    </com.google.android.material.chip.ChipGroup>
 
     <View
         android:layout_width="match_parent"
@@ -118,92 +119,100 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         android:text="Urutkan"
+        android:textColor="@color/appmgr_label"
         android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="@color/appmgr_label" />
+        android:textStyle="bold" />
 
-    <HorizontalScrollView
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/appMgrSortChips"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="8dp"
+        app:selectionRequired="true"
+        app:singleSelection="true">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/appMgrSortChips"
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortInstall"
+            style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:singleSelection="true"
-            app:selectionRequired="true">
+            android:checked="true"
+            android:text="Waktu instal" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortInstall"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Waktu instal"
-                android:checked="true" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortName"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nama" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortName"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nama" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortSize"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ukuran APK" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortSize"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ukuran APK" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortOpened"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Kali dibuka" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortOpened"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Kali dibuka" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortUsed"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Terakhir dipakai" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortUsed"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Terakhir dipakai" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortScreen"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screen time" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortScreen"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Screen time" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortUpdated"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Baru diperbarui" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/appMgrSortData"
-                style="@style/Widget.Material3.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Data use" />
+        <com.google.android.material.chip.Chip
+            android:id="@+id/appMgrSortUnused"
+            style="@style/Widget.Material3.Chip.Filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Jarang dipakai" />
 
-        </com.google.android.material.chip.ChipGroup>
-    </HorizontalScrollView>
+    </com.google.android.material.chip.ChipGroup>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/appmgr_divider" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="18dp"
         android:text="Kategori"
+        android:textColor="@color/appmgr_label"
         android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="@color/appmgr_label" />
+        android:textStyle="bold" />
 
-    <Spinner
-        android:id="@+id/appMgrCategory"
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/appMgrCategories"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="44dp"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="8dp"
+        app:selectionRequired="true"
+        app:singleSelection="true" />
 
 </LinearLayout>

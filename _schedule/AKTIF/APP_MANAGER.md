@@ -107,7 +107,7 @@ Catatan: helper/shell Shizuku berada di `app` (`exp.ftxt.features.gamefps.reader
 
 ## 5. UI/UX
 
-- Bottom nav dua tab: Gambaran Umum (hitung aplikasi pengguna/sistem/aktif per kategori + status Shizuku) dan Aplikasi (daftar utama). Pola show/hide container mengikuti `BatteryPanelFragment`; tab Kategori dan Pengaturan dihapus.
+- Bottom nav dua tab: Gambaran Umum berupa dashboard kartu (ubin aplikasi pengguna/sistem/aktif/dinonaktif, penyimpanan internal, RAM, riwayat pasang/update, screen time, izin, jaringan, instal berkas, aplikasi besar, jarang dipakai, status Shizuku dan akses penggunaan) serta Aplikasi sebagai daftar utama. Tiap kartu memakai action mengikuti acuan: ubin dan panah membuka/mengurutkan daftar aplikasi, tombol teks membuka pengaturan penyimpanan, analisis izin, panel jaringan, pemasang APK, atau akses penggunaan. Pola show/hide container mengikuti `BatteryPanelFragment`; tab Kategori dan Pengaturan dihapus.
 - Daftar: header + kolom pencarian berbentuk pill, chip kategori di bawah pencarian, tombol filter membuka bottom sheet Filter & Urutkan, RecyclerView dengan ikon/nama/metadata, badge New/Updated, tanda pilih berbentuk centang, dan action bar saat multi-select; ukuran ditampilkan di tab detail.
 - Detail: header ikon + nama + package + satu tombol "Info Aplikasi", tab ringan, dan FAB "Buka"; tidak ada bar aksi bawah. Bagikan APK, Hapus, dan Shizuku dipindah ke seksi Aksi pada tab Info. Tab lanjutan dan pemakaian dimuat saat dibuka agar halaman awal tetap cepat.
 - Konfirmasi: uninstall, uninstall massal (tampilkan jumlah), clear data lewat "Info Aplikasi". Force stop/clear cache tidak lagi punya tombol sendiri.
@@ -135,7 +135,7 @@ Catatan: helper/shell Shizuku berada di `app` (`exp.ftxt.features.gamefps.reader
 
 Tanpa Fase 3 (App Manager mandiri): ≈15–21 jam. Angka ini menggantikan estimasi lama 13–19 jam yang belum menghitung cache/invalidasi, uji visibility, dan integrasi.
 
-Aktual per 2026/11/19: Fase 1–2 selesai; tag/kategori dan opsi Shizuku sudah ada, tampilan daftar memakai bottom nav dua tab dengan kategori di dalam tab Aplikasi, detail memakai satu akses "Info Aplikasi" di header, integrasi supervisor App Runner dan uji ROM belum dikerjakan.
+Aktual per 2026/11/19: Fase 1–2 selesai; tag/kategori dan opsi Shizuku sudah ada, tampilan daftar memakai bottom nav dua tab dengan kategori di dalam tab Aplikasi, Gambaran Umum memakai dashboard kartu ringkasan dengan action per kartu, detail memakai satu akses "Info Aplikasi" di header, integrasi supervisor App Runner dan uji ROM belum dikerjakan.
 
 ---
 
